@@ -1,0 +1,9 @@
+\babel@toc {italian}{}\relax 
+\babel@toc {italian}{}\relax 
+\contentsline {section}{\numberline {1}Introduzione}{2}{section.1}%
+\contentsline {section}{\numberline {2}Obiettivi}{2}{section.2}%
+\contentsline {section}{\numberline {3}Prerequisiti}{2}{section.3}%
+\contentsline {section}{\numberline {4}Dal testo agli accenti al ritmo}{2}{section.4}%
+\contentsline {section}{\numberline {5}Selezione degli strumenti}{2}{section.5}%
+\contentsline {section}{\numberline {6}Conclusioni}{3}{section.6}%
+\contentsline {section}{\numberline {A}Appendice A}{3}{appendix.Alph1}%

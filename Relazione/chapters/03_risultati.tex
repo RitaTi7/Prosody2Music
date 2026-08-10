@@ -1,0 +1,22 @@
+I risultati ottenuti possono essere presentati in forma numerica, tabellare e grafica. L'uso di tabelle e formule consente di sintetizzare in modo rigido le osservazioni sperimentali e i confronti tra approcci.\
+
+\begin{table}[H]
+\centering
+\caption{Esempio di tabella sintetica.}
+\begin{tabular}{lcc}
+\toprule
+Metodo & Valore medio & Deviazione standard \\
+\midrule
+A & 2.34 & 0.41 \\
+B & 2.85 & 0.27 \\
+C & 3.12 & 0.33 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Un risultato di interesse \`e dato dalla seguente stima:
+\begin{equation}
+\hat{\beta} = \argmin_{\beta \in \R^p} \left\{ \|\vect{y} - \mat{X}\beta\|_2^2 + \lambda \|\beta\|_1 \right\}.
+\end{equation}
+
+Questo tipo di formulazione evidenzia come la regolarizzazione possa stabilire un compromesso tra accuratezza del fit e generalizzazione del modello.

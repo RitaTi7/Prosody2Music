@@ -1,0 +1,16 @@
+In questa sezione vengono descritti i metodi adottati per l'analisi e la modellizzazione. In un contesto scientifico, \`e utile definire i principi teorici prima di introdurre procedure computazionali o sperimentali.
+
+\begin{definition}
+Un modello matematico \`e una rappresentazione semplificata di un fenomeno reale, costruita per descrivere relazioni quantificabili tra variabili.
+\end{definition}
+
+Per esempio, una funzione di costo pu\`o essere definita come
+\begin{equation}
+\mathcal{L}(\theta) = \frac{1}{n} \sum_{i=1}^{n} \ell(y_i, f_\theta(x_i)) + \lambda \|\theta\|_2^2.
+\end{equation}
+
+L'ottimizzazione di questa espressione richiede tecniche numeriche, come gradient descent o metodi quasi-Newton, a seconda della complessit\`a del problema e della dimensione dello spazio dei parametri.
+
+\begin{remark}
+La scelta della funzione di perdita influenza in modo diretto la robustezza del modello rispetto a rumore, outlier e distribuzioni non gaussiane.
+\end{remark}
