@@ -1,4 +1,4 @@
-\documentclass[a4paper,11pt]{article}
+\documentclass[a4paper,11pt]{report}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
@@ -28,6 +28,9 @@
 \usepackage{algpseudocode}
 \usepackage{listings}
 \usepackage[numbers,sort&compress]{natbib}
+
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
 
 \onehalfspacing
 \setlength{\parindent}{0pt}
@@ -80,20 +83,20 @@ Questo documento rappresenta un template di articolo scientifico in LaTeX con im
 \tableofcontents
 \newpage
 
-\section{Introduzione}
+\chapter{Introduzione}
 \input{chapters/01_introduzione}
 
-\section{Dal testo agli accenti al ritmo}
+\chapter{Dal testo agli accenti al ritmo}
 \input{chapters/02_metodi}
 
-\section{Selezione degli strumenti}
+\chapter{Selezione degli strumenti}
 \input{chapters/03_risultati}
 
-\section{Conclusioni}
+\chapter{Conclusioni}
 \input{chapters/04_conclusioni}
 
 \appendix
-\section{Appendice A}
+\chapter{Appendice A}
 \input{chapters/appendice_a}
 
 % Se si desidera usare una bibliografia esterna, decommentare le righe seguenti

@@ -1,0 +1,11 @@
+The database uses the following symbols to designate grammatical categories. Use these symbols when you want to specify the gCat argument in CHILD_beg.R and CHILD_finSeq.R functions (see README file).
+
+B = Adverb 
+C = Conjunction  
+G = Adjective 
+I = Interjection 
+N = Pronoun 
+P = Preposition
+R = Article 
+S = Noun 
+V = Verb

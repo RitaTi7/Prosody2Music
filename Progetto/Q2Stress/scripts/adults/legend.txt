@@ -1,0 +1,20 @@
+The database uses the following symbols to designate grammatical categories. Use these symbols when you want to specify the gCat argument in beg.R and finSeq.R functions (see README file).
+
+B = Adverb 
+C = Conjunction 
+E = Proper noun 
+G = Adjective 
+I = Interjection 
+N = Pronoun 
+P = Preposition 
+K = Punctuation 
+R = Article 
+S = Noun
+V = Verb
+X = Not identified 
+Z = Symbol 
+NU = Numeral 
+TC = Composed verb 
+VA Auxilliary verb
+U unknown
+@ syntagmatic word (used in combination with another code, for example S IN P@, would be a noun in a syntagmatic word)
