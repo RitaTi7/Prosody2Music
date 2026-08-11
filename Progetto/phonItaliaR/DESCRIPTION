@@ -1,0 +1,29 @@
+Package: phonItaliaR
+Type: Package
+Title: Data Package of the PhonItalia 1.10 Corpus
+Version: 1.0.0
+Date: 2024-02-25
+Authors@R: 
+    c(person(given = "Stefano",
+           family = "Coretta",
+           role = c("aut", "cre"),
+           email = paste0("stefano.coretta", "@", "gmail.com"),
+           comment = c(ORCID = "0000-0001-9627-5532")),
+      person(given = "Jeremy", family = "Goslin", role = "cph"),
+      person(given = "Claudia", family = "Galuzzi", role = "cph"),
+      person(given = "Cristina", family = "Romani", role = "cph"))
+Description: It provides users with the annotated lexical data from the
+    PhonItalia 1.10 Corpus. The Corpus is annotated with phonological information
+    like syllabic parsing, stress and frequency information. The data in this package
+    also contains a phonetic transcription of each word.
+License: CC BY 4.0
+Encoding: UTF-8
+LazyData: false
+Depends: 
+    R (>= 2.10)
+Suggests:
+    phonetisr,
+    tidyverse
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+URL: https://stefanocoretta.github.io/phonItaliaR/
