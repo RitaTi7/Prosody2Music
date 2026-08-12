@@ -274,60 +274,111 @@ def load_phonitalia_dataset(explicit_path: Optional[str] = None) -> Optional[pd.
 def detect_column(df: pd.DataFrame, possible_names: list[str]) -> Optional[str]:
     normalized = {str(col).strip().lower(): col for col in df.columns}
     for name in possible_names:
-        if name.lower() in normalized:
-            return normalized[name.lower()]
+        key = name.strip().lower()
+        if key in normalized:
+            return normalized[key]
+    for col in df.columns:
+        col_norm = str(col).strip().lower().replace(" ", "").replace("_", "")
+        for name in possible_names:
+            if col_norm == name.strip().lower().replace(" ", "").replace("_", ""):
+                return col
     return None
+
+
+def phonitalia_stress_to_class(stressed_syllable: object, total_syllables: object) -> Optional[int]:
+    """Converte il campo PhonItaliaR `StressedSyllable` nel formato interno {0,1,2,3}."""
+    try:
+        stressed = int(float(stressed_syllable))
+        total = int(float(total_syllables))
+    except (TypeError, ValueError):
+        return None
+
+    if stressed < 1 or total < 1:
+        return None
+
+    # `StressedSyllable` è 1-based: 1 = prima sillaba, N = ultima sillaba.
+    # Il modello usa 0 = ultima, 1 = penultima, 2 = antepenultima, 3 = preantepenultima.
+    class_index = total - stressed
+    if class_index < 0:
+        class_index = 0
+    if class_index > 3:
+        class_index = 3
+    return int(class_index)
+
 
 def build_phonitalia_dict(df: pd.DataFrame) -> dict:
     """
-    Costruisce un dizionario (O(1) lookup) per validare le parole 
-    direttamente dal dataframe caricato.
+    Costruisce un dizionario (O(1) lookup) per validare le parole
+    direttamente dal dataframe caricato, usando il formato reale di PhonItaliaR.
     """
-    phon_dict = {}
-    if df is None: return phon_dict
-    
-    word_col = detect_column(df, ["word", "parola", "wordform", "orthography"])
-    stress_col = detect_column(df, ["stresspattern", "stress", "accento"])
-    
-    if not word_col or not stress_col:
+    phon_dict: dict[str, int] = {}
+    if df is None:
         return phon_dict
-        
+
+    word_col = detect_column(df, ["word", "parola", "wordform", "orthography"])
+    syll_col = detect_column(df, ["sumsylls", "sum_sylls", "nsyllables", "numsyllables", "syllables"])
+    stress_col = detect_column(df, ["stressedsyllable", "stressed_syllable", "stressedsyllable", "stress", "stresspattern", "accento"])
+
+    if not word_col or not syll_col or not stress_col:
+        return phon_dict
+
     for _, row in df.iterrows():
-        w = norm_word(row.get(word_col, ""))
-        s = row.get(stress_col)
-        if w and pd.notna(s):
-            try:
-                phon_dict[w] = int(float(s))
-            except (TypeError, ValueError):
-                pass
+        word = norm_word(row.get(word_col, ""))
+        if not word:
+            continue
+
+        target = phonitalia_stress_to_class(row.get(stress_col), row.get(syll_col))
+        if target is None:
+            continue
+
+        current = phon_dict.get(word)
+        if current is None:
+            phon_dict[word] = target
+            continue
+
+        # Se ci sono duplicati per la stessa parola, preferiamo la classe più frequente
+        # o la prima occorrenza. In PhonItaliaR i duplicati sono quasi sempre ripetizioni
+        # dello stesso lemma con la stessa posizione d'accento.
+        if current != target:
+            phon_dict[word] = target
+
     return phon_dict
 
-def enrich_with_phonitalia_dataset(frame: pd.DataFrame, df_phon: Optional[pd.DataFrame]) -> pd.DataFrame:
-    if df_phon is None: return frame
-    
-    word_col = detect_column(df_phon, ["word", "parola", "wordform", "orthography"])
-    stress_col = detect_column(df_phon, ["stresspattern", "stress", "accento"])
 
-    if word_col is None or stress_col is None:
+def enrich_with_phonitalia_dataset(frame: pd.DataFrame, df_phon: Optional[pd.DataFrame]) -> pd.DataFrame:
+    if df_phon is None:
+        return frame
+
+    word_col = detect_column(df_phon, ["word", "parola", "wordform", "orthography"])
+    syll_col = detect_column(df_phon, ["sumsylls", "sum_sylls", "nsyllables", "numsyllables", "syllables"])
+    stress_col = detect_column(df_phon, ["stressedsyllable", "stressed_syllable", "stressedsyllable", "stress", "stresspattern", "accento"])
+
+    if word_col is None or syll_col is None or stress_col is None:
         return frame
 
     added = []
+    seen = set()
     for _, row in df_phon.iterrows():
         word = norm_word(row.get(word_col, ""))
-        raw_target = row.get(stress_col, None)
-
-        if not word or pd.isna(raw_target): continue
-        try:
-            target = int(float(raw_target))
-        except (TypeError, ValueError):
+        if not word:
             continue
+
+        target = phonitalia_stress_to_class(row.get(stress_col), row.get(syll_col))
+        if target is None:
+            continue
+
+        key = (word, target)
+        if key in seen:
+            continue
+        seen.add(key)
 
         features = build_word_features(word)
         features["target"] = target
         added.append(features)
 
-    if not added: return frame
-    
+    if not added:
+        return frame
+
     extra = pd.DataFrame(added)
     combined = pd.concat([frame, extra], ignore_index=True).drop_duplicates(subset=["word_len", "vowel_count", "target"])
     print(f"[phonItaliaR dataset] Utilizzato per arricchire il dataset.")

@@ -1,14 +1,14 @@
-﻿word,model_position,model_label,confidence,ipa,espeak_position,espeak_label,agreement
-ciao,0,ultima sillaba,0.5239710908833354,,,non disponibile,
-sono,0,ultima sillaba,0.3712457985699663,,,non disponibile,
-felice,1,penultima sillaba,0.47280583340931703,,,non disponibile,
-cane,1,penultima sillaba,0.5057261045005434,,,non disponibile,
-gatto,0,ultima sillaba,0.4959377690263217,,,non disponibile,
-perchè,0,ultima sillaba,0.589822758625941,,,non disponibile,
-si,0,ultima sillaba,0.7448078724988981,,,non disponibile,
-ok,0,ultima sillaba,0.9318095423171041,,,non disponibile,
-va,0,ultima sillaba,0.7185379969659381,,,non disponibile,
-bene,1,penultima sillaba,0.5287838803867213,,,non disponibile,
-bottiglia,1,penultima sillaba,0.6842122400763663,,,non disponibile,
-musica,2,antepenultima sillaba,0.570038527638645,,,non disponibile,
-accento,0,ultima sillaba,0.5657863687698227,,,non disponibile,
+﻿word,model_position,model_label,confidence,phon_position,phon_label,agreement
+ciao,0,ultima sillaba,0.3565685522270192,1.0,penultima sillaba,False
+sono,0,ultima sillaba,0.3163098034706303,1.0,penultima sillaba,False
+felice,1,penultima sillaba,0.3224461911006469,1.0,penultima sillaba,True
+cane,1,penultima sillaba,0.3269476108507953,1.0,penultima sillaba,True
+gatto,0,ultima sillaba,0.39102409149427003,1.0,penultima sillaba,False
+perchè,0,ultima sillaba,0.34538291993056397,,non disponibile,
+si,0,ultima sillaba,0.3998853083590813,0.0,ultima sillaba,True
+ok,0,ultima sillaba,0.49887582396570473,0.0,ultima sillaba,True
+va,0,ultima sillaba,0.42363305372760196,0.0,ultima sillaba,True
+bene,3,preantepenultima sillaba,0.3537581690263562,0.0,ultima sillaba,False
+bottiglia,0,ultima sillaba,0.30722560218546546,1.0,penultima sillaba,False
+musica,2,antepenultima sillaba,0.3353823686483826,2.0,antepenultima sillaba,True
+accento,1,penultima sillaba,0.3372530624049703,1.0,penultima sillaba,True
