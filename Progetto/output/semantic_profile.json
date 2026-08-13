@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "text": "Corriamo insieme, la festa è appena iniziata!",
+  "global": {
+    "valence": 0.65,
+    "energy": 1.0,
+    "movement": 0.35,
+    "tension": 0.612,
+    "intensity": 0.765,
+    "scale": "major",
+    "register_shift": 8,
+    "source": "offline_italian_semantic_lexicon"
+  },
+  "phrases": [
+    {
+      "text": "corriamo insieme",
+      "profile": {
+        "valence": 0.4,
+        "energy": 0.53,
+        "movement": 0.185,
+        "tension": 0.396,
+        "intensity": 0.4,
+        "scale": "major",
+        "register_shift": 4,
+        "source": "offline_italian_semantic_lexicon"
+      }
+    },
+    {
+      "text": "la festa è appena iniziata",
+      "profile": {
+        "valence": 0.9,
+        "energy": 1.0,
+        "movement": 0.35,
+        "tension": 0.62,
+        "intensity": 0.89,
+        "scale": "major",
+        "register_shift": 10,
+        "source": "offline_italian_semantic_lexicon"
+      }
+    }
+  ]
+}

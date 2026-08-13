@@ -6,6 +6,8 @@ from typing import Optional
 
 import re
 import unicodedata
+import argparse
+import json
 
 import pandas as pd
 import pyphen
@@ -25,6 +27,7 @@ OUTPUT_DIR = PROJECT_DIR / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 OUTPUT_MIDI = OUTPUT_DIR / "rhythmic_skeleton.mid"
+SEMANTIC_PROFILE_JSON = OUTPUT_DIR / "semantic_profile.json"
 
 
 # Tempo musicale
@@ -446,6 +449,43 @@ class PhonItaliaLookup:
 
         return value - 1
 
+    def get_syllable_count(
+        self,
+        word: str
+    ) -> Optional[int]:
+
+        """
+        Numero di sillabe secondo phonItalia (colonna SumSylls,
+        se presente nel dataset).
+
+        Serve a validare che la sillabazione ortografica di
+        Pyphen sia coerente con quella (fonologica) da cui
+        proviene l'indice di accento: se il conteggio non
+        combacia, l'indice restituito da get_stress potrebbe
+        riferirsi a una sillaba diversa da quella che finirà
+        nella lista prodotta da Pyphen, ed è più sicuro non
+        fidarsi di quel dato.
+        """
+
+        record = self.get_record(word)
+
+        if record is None:
+            return None
+
+        if "SumSylls" not in record.index:
+            return None
+
+        value = record["SumSylls"]
+
+        if pd.isna(value):
+            return None
+
+        try:
+            return int(value)
+
+        except (ValueError, TypeError):
+            return None
+
     def get_syllables(
         self,
         word: str
@@ -690,7 +730,33 @@ class ItalianWordAnalyzer:
             )
 
             if stress_index is not None:
-                source = "phonitaliaR"
+
+                # ------------------------------------------------
+                # Controllo di coerenza sillabica
+                #
+                # L'indice di accento in phonItalia si riferisce
+                # alla SUA sillabazione (fonologica), non a
+                # quella ortografica prodotta da Pyphen. Se il
+                # numero di sillabe non coincide, l'indice
+                # potrebbe puntare a una sillaba diversa da
+                # quella prevista: meglio scartare il dato
+                # piuttosto che accentare la sillaba sbagliata
+                # senza accorgersene.
+                # ------------------------------------------------
+
+                expected_count = (
+                    self.phonitalia.get_syllable_count(word)
+                )
+
+                if (
+                    expected_count is not None
+                    and expected_count != len(syllables)
+                ):
+
+                    stress_index = None
+
+                else:
+                    source = "phonitaliaR"
 
         # ----------------------------------------------------
         # SE NON TROVATA:
@@ -816,13 +882,130 @@ def tokenize_text(
 
     """
     Mantiene sia parole che punteggiatura.
+
+    Gestisce l'apostrofo di elisione italiano (es. "dell'anima",
+    "un'idea", "l'amico") tenendolo attaccato alla parola, così
+    che il lookup nei dataset e la sillabazione operino sul token
+    corretto invece che su frammenti spezzati ("dell" + "anima").
+
+    Sia l'apostrofo dritto (') sia quello tipografico (') sono
+    accettati.
     """
 
     return re.findall(
-        r"\w+|[,.!?;:]",
+        r"\w+(?:['’]\w+)*|[,.!?;:]",
         text,
         flags=re.UNICODE
     )
+
+
+# ============================================================
+# ANALISI SEMANTICA → PROFILO MUSICALE
+# ============================================================
+
+EMOTION_LEXICON = {
+    "triste": -1.0, "tristezza": -1.0, "solo": -0.8, "solitudine": -1.0,
+    "piangere": -1.0, "pianto": -1.0, "lacrima": -0.9, "dolore": -1.0,
+    "sofferenza": -1.0, "morte": -1.0, "morto": -1.0, "addio": -0.9,
+    "paura": -0.8, "terrore": -1.0, "ansia": -0.8, "disperazione": -1.0,
+    "buio": -0.7, "notte": -0.3, "perdita": -0.8,
+    "felice": 1.0, "felicità": 1.0, "gioia": 1.0, "gioioso": 1.0,
+    "amore": 0.9, "amare": 0.9, "sorriso": 0.8, "ridere": 0.9,
+    "festa": 0.9, "vittoria": 1.0, "vincere": 0.9, "speranza": 0.7,
+    "sole": 0.7, "luce": 0.7, "libertà": 0.8, "insieme": 0.4,
+    "calma": 0.2, "pace": 0.4, "sereno": 0.5, "serenità": 0.5,
+}
+
+ENERGY_WORDS = {
+    "corri": 1.0, "correre": 1.0, "scappa": 1.0, "scappare": 1.0,
+    "lotta": 0.9, "combatti": 1.0, "combattere": 1.0, "battaglia": 0.9,
+    "esplodi": 1.0, "esplosione": 1.0, "urla": 0.9, "urlare": 0.9,
+    "salta": 0.9, "saltare": 0.9, "balla": 0.9, "ballare": 0.9,
+    "festa": 0.8, "vittoria": 0.8, "coraggio": 0.7, "forza": 0.8,
+    "veloce": 1.0, "presto": 0.9, "subito": 0.8, "adesso": 0.5,
+}
+
+MOVEMENT_WORDS = {
+    "corri": 1.0, "correre": 1.0, "scappa": 1.0, "scappare": 1.0,
+    "cammina": 0.5, "camminare": 0.5, "vola": 0.8, "volare": 0.8,
+    "salta": 0.9, "saltare": 0.9, "balla": 1.0, "ballare": 1.0,
+    "muovi": 0.9, "muovere": 0.9, "fuggi": 1.0, "fuggire": 1.0,
+    "cade": 0.7, "cadere": 0.7, "sale": 0.6, "salire": 0.6,
+    "scende": 0.6, "scendere": 0.6, "ritorna": 0.4, "tornare": 0.4,
+}
+
+
+def _normalize_semantic_token(token: str) -> str:
+    token = token.lower().replace("’", "'")
+    token = re.sub(r"[^\w']+", "", token, flags=re.UNICODE)
+    return token.strip("'")
+
+
+def _lexicon_value(words: list[str], lexicon: dict[str, float]) -> float:
+    hits = [lexicon[w] for w in words if w in lexicon]
+    return sum(hits) / len(hits) if hits else 0.0
+
+
+def analyze_semantic_profile(text: str) -> dict:
+    """Analisi semantica offline: valenza, energia, movimento e tensione."""
+    tokens = tokenize_text(text)
+    words = [_normalize_semantic_token(t) for t in tokens if t not in PAUSES]
+
+    valence = _lexicon_value(words, EMOTION_LEXICON)
+    explicit_energy = _lexicon_value(words, ENERGY_WORDS)
+    movement = max(0.0, min(1.0, _lexicon_value(words, MOVEMENT_WORDS)))
+    energy = max(0.0, min(1.0, 0.35 + 0.45 * abs(valence) + 0.35 * explicit_energy))
+
+    exclamations = text.count("!")
+    questions = text.count("?")
+    energy = max(0.0, min(1.0, energy + 0.12 * min(exclamations, 3)))
+    if movement == 0.0:
+        movement = max(0.0, min(1.0, energy * 0.35))
+
+    tension = max(0.0, min(1.0, 0.20 + 0.35 * abs(valence)
+                             + 0.30 * movement + 0.10 * min(questions, 3)
+                             + 0.08 * min(exclamations, 3)))
+    intensity = max(0.0, min(1.0, 0.20 + 0.50 * abs(valence) + 0.30 * explicit_energy))
+
+    return {
+        "valence": round(max(-1.0, min(1.0, valence)), 3),
+        "energy": round(energy, 3),
+        "movement": round(movement, 3),
+        "tension": round(tension, 3),
+        "intensity": round(intensity, 3),
+        "scale": "minor" if valence < -0.20 else "major",
+        "register_shift": int(round(9 * valence + 4 * (energy - 0.5))),
+        "source": "offline_italian_semantic_lexicon",
+    }
+
+
+def build_semantic_profile(text: str, analyses) -> dict:
+    phrase_texts = []
+    current = []
+    for item in analyses:
+        if isinstance(item, str):
+            if current:
+                phrase_texts.append(" ".join(current))
+                current = []
+        else:
+            current.append(item.word)
+    if current:
+        phrase_texts.append(" ".join(current))
+
+    return {
+        "version": 1,
+        "text": text.strip(),
+        "global": analyze_semantic_profile(text),
+        "phrases": [
+            {"text": phrase, "profile": analyze_semantic_profile(phrase)}
+            for phrase in phrase_texts
+        ],
+    }
+
+
+def save_semantic_profile(profile: dict, output_path: Path) -> None:
+    with output_path.open("w", encoding="utf-8") as f:
+        json.dump(profile, f, ensure_ascii=False, indent=2)
 
 
 # ============================================================
@@ -1023,11 +1206,47 @@ def print_rhythm(
 
 def create_midi(
     events: list[RhythmicEvent],
-    output_path: Path
+    output_path: Path,
+    target_duration_seconds: Optional[float] = None,
+    bpm: float = BPM,
 ):
 
+    """
+    Scrive gli eventi ritmici come MIDI.
+
+    Se `target_duration_seconds` è None (default), viene usato il
+    tempo fisso `bpm` (configurato in cima al file).
+
+    Se invece l'utente specifica una durata desiderata, ricalcoliamo
+    il tempo (BPM effettivo) in modo che l'intero brano, con lo
+    stesso numero di sillabe/pause già calcolato, occupi esattamente
+    quella durata in secondi. Le proporzioni ritmiche restano
+    identiche (una sillaba accentata dura sempre il doppio di una
+    non accentata): cambia solo la velocità complessiva di
+    esecuzione.
+    """
+
+    total_beats = 0.0
+
+    if events:
+        last_event = events[-1]
+        total_beats = last_event.start + last_event.duration
+
+    if target_duration_seconds is not None and total_beats > 0:
+
+        effective_bpm = 60.0 * total_beats / target_duration_seconds
+
+        print(
+            f"\n[INFO] Durata richiesta: {target_duration_seconds:.2f}s "
+            f"-> tempo ricalcolato a {effective_bpm:.1f} BPM "
+            f"({total_beats:.2f} beat totali)."
+        )
+
+    else:
+        effective_bpm = bpm
+
     midi = pretty_midi.PrettyMIDI(
-        initial_tempo=BPM
+        initial_tempo=effective_bpm
     )
 
     # --------------------------------------------------------
@@ -1046,7 +1265,7 @@ def create_midi(
         name="Rhythmic Skeleton"
     )
 
-    seconds_per_beat = 60.0 / BPM
+    seconds_per_beat = 60.0 / effective_bpm
 
     # --------------------------------------------------------
     # Aggiungi note
@@ -1087,9 +1306,15 @@ def create_midi(
         str(output_path)
     )
 
+    total_seconds = total_beats * seconds_per_beat
+
     print()
     print(
         f"[OK] MIDI creato: {output_path}"
+    )
+    print(
+        f"     Tempo: {effective_bpm:.1f} BPM | "
+        f"Durata: {total_seconds:.2f}s"
     )
 
 
@@ -1150,7 +1375,134 @@ def test_words(
 # MAIN
 # ============================================================
 
+def parse_args():
+
+    parser = argparse.ArgumentParser(
+        description="Testo italiano -> scheletro ritmico MIDI"
+    )
+
+    parser.add_argument(
+        "--duration",
+        type=float,
+        default=None,
+        metavar="SECONDI",
+        help=(
+            "Durata totale desiderata del brano, in secondi. "
+            "Se omesso, viene usato il tempo fisso configurato "
+            f"(BPM={BPM})."
+        ),
+    )
+
+    parser.add_argument(
+        "--text",
+        type=str,
+        default=None,
+        help="Testo da mettere in musica (sovrascrive quello di default nello script).",
+    )
+
+    return parser.parse_args()
+
+
 def main():
+
+    global BPM, STRESSED_DURATION, UNSTRESSED_DURATION, STRESSED_VELOCITY, UNSTRESSED_VELOCITY, PLACEHOLDER_PITCH
+
+    args = parse_args()
+
+    # Interattivo: chiedi all'utente se vuole personalizzare opzioni
+    print()
+    print("Opzioni correnti:")
+    print(f" - Durata desiderata (s): {args.duration if args.duration is not None else 'nessuna'}")
+    print(f" - BPM: {BPM}")
+    print(f" - Durata sillaba accentata: {STRESSED_DURATION}")
+    print(f" - Durata sillaba non accentata: {UNSTRESSED_DURATION}")
+    print(f" - Velocity accentata: {STRESSED_VELOCITY}")
+    print(f" - Velocity non accentata: {UNSTRESSED_VELOCITY}")
+    print(f" - Pitch provvisorio: {PLACEHOLDER_PITCH}")
+
+    try:
+        choice = input("Vuoi personalizzare queste opzioni? [y/N]: ").strip().lower()
+    except Exception:
+        choice = "n"
+
+    if choice == "y":
+
+        # Durata totale desiderata
+        try:
+            dur_in = input("Durata totale (secondi, lascia vuoto per mantenere): ").strip()
+        except Exception:
+            dur_in = ""
+
+        if dur_in:
+            try:
+                args.duration = float(dur_in)
+            except ValueError:
+                print("[WARNING] Valore durata non valido, ignorato.")
+
+        # BPM
+        try:
+            bpm_in = input(f"BPM (attuale {BPM}, vuoto per mantenere): ").strip()
+        except Exception:
+            bpm_in = ""
+
+        if bpm_in:
+            try:
+                BPM = float(bpm_in)
+            except ValueError:
+                print("[WARNING] Valore BPM non valido, mantenuto il precedente.")
+
+        # Durate e velocity
+        try:
+            sd = input(f"Durata sillaba accentata (attuale {STRESSED_DURATION}): ").strip()
+        except Exception:
+            sd = ""
+        if sd:
+            try:
+                STRESSED_DURATION = float(sd)
+            except ValueError:
+                print("[WARNING] Valore non valido per durata accentata, ignorato.")
+
+        try:
+            ud = input(f"Durata sillaba non accentata (attuale {UNSTRESSED_DURATION}): ").strip()
+        except Exception:
+            ud = ""
+        if ud:
+            try:
+                UNSTRESSED_DURATION = float(ud)
+            except ValueError:
+                print("[WARNING] Valore non valido per durata non accentata, ignorato.")
+
+        try:
+            sv = input(f"Velocity accentata (attuale {STRESSED_VELOCITY}): ").strip()
+        except Exception:
+            sv = ""
+        if sv:
+            try:
+                STRESSED_VELOCITY = int(sv)
+            except ValueError:
+                print("[WARNING] Valore non valido per velocity accentata, ignorato.")
+
+        try:
+            uv = input(f"Velocity non accentata (attuale {UNSTRESSED_VELOCITY}): ").strip()
+        except Exception:
+            uv = ""
+        if uv:
+            try:
+                UNSTRESSED_VELOCITY = int(uv)
+            except ValueError:
+                print("[WARNING] Valore non valido per velocity non accentata, ignorato.")
+
+        try:
+            pp = input(f"Pitch provvisorio (attuale {PLACEHOLDER_PITCH}): ").strip()
+        except Exception:
+            pp = ""
+        if pp:
+            try:
+                PLACEHOLDER_PITCH = int(pp)
+            except ValueError:
+                print("[WARNING] Valore non valido per pitch, ignorato.")
+
+        print("[INFO] Opzioni aggiornate.")
 
     print()
     print("=" * 70)
@@ -1233,8 +1585,8 @@ def main():
     # 5. TESTO
     # --------------------------------------------------------
 
-    text = """
-    Siamo nel mezzo di una battaglia epica, è dura ma vinceremo sicuro!!
+    text = args.text or """
+    Corriamo insieme, la festa è appena iniziata!
     """
 
     print()
@@ -1270,12 +1622,32 @@ def main():
     )
 
     # --------------------------------------------------------
-    # 8. RITMO → MIDI
+    # 8. TESTO → PROFILO SEMANTICO
+    # --------------------------------------------------------
+
+    semantic_profile = build_semantic_profile(text, analyses)
+    save_semantic_profile(semantic_profile, SEMANTIC_PROFILE_JSON)
+
+    print()
+    print("PROFILO SEMANTICO")
+    print("=" * 70)
+    gp = semantic_profile["global"]
+    print(
+        f"valence={gp['valence']:+.2f} | energy={gp['energy']:.2f} | "
+        f"movement={gp['movement']:.2f} | tension={gp['tension']:.2f} | "
+        f"scale={gp['scale']}"
+    )
+    print(f"[OK] Profilo semantico salvato in: {SEMANTIC_PROFILE_JSON}")
+
+    # --------------------------------------------------------
+    # 9. RITMO → MIDI
     # --------------------------------------------------------
 
     create_midi(
         events,
-        OUTPUT_MIDI
+        OUTPUT_MIDI,
+        target_duration_seconds=args.duration,
+        bpm=BPM,
     )
 
 
