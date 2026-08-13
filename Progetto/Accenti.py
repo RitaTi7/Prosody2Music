@@ -287,19 +287,38 @@ def build_phonitalia_dict(df: pd.DataFrame) -> dict:
     if df is None: return phon_dict
     
     word_col = detect_column(df, ["word", "parola", "wordform", "orthography"])
-    stress_col = detect_column(df, ["stresspattern", "stress", "accento"])
+    stress_col = detect_column(df, ["stresspattern", "stress", "accento", "StressedSyllable"])      #modificato (R)
+    syll_col=detect_column(df, ["SumSylls"])
     
     if not word_col or not stress_col:
         return phon_dict
-        
+    
     for _, row in df.iterrows():
         w = norm_word(row.get(word_col, ""))
-        s = row.get(stress_col)
-        if w and pd.notna(s):
+        stress = row.get(stress_col)
+        syllables= row.get(syll_col)
+        '''
+        if w and pd.notna(stress):
             try:
-                phon_dict[w] = int(float(s))
+                phon_dict[w] = int(float(stress))
             except (TypeError, ValueError):
                 pass
+        '''
+        if not w or pd.isna(stress) or pd.isna(syllables):
+                continue
+        try:
+            stress = int(float(stress))
+            syllables = int(float(syllables))
+
+            # Conversione:
+            # phonItaliaR conta da sinistra
+            # il nostro modello conta dalla fine
+            stress_from_end = syllables - stress
+
+            phon_dict[w] = stress_from_end
+        except (TypeError, ValueError):
+            pass
+
     return phon_dict
 
 def enrich_with_phonitalia_dataset(frame: pd.DataFrame, df_phon: Optional[pd.DataFrame]) -> pd.DataFrame:
