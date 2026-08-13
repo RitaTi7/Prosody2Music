@@ -1,0 +1,14 @@
+﻿word,model_position,model_label,confidence,phon_position,phon_label,agreement
+ciao,0,ultima sillaba,0.5388816338487179,1.0,penultima sillaba,False
+sono,0,ultima sillaba,0.3933904535201055,1.0,penultima sillaba,False
+felice,1,penultima sillaba,0.4744965192324372,1.0,penultima sillaba,True
+cane,1,penultima sillaba,0.48701608360679877,1.0,penultima sillaba,True
+gatto,0,ultima sillaba,0.4938902184719261,1.0,penultima sillaba,False
+perchè,0,ultima sillaba,0.6043405618301155,,non disponibile,
+si,0,ultima sillaba,0.6939833241958998,0.0,ultima sillaba,True
+ok,0,ultima sillaba,0.9317644084392143,0.0,ultima sillaba,True
+va,0,ultima sillaba,0.757973053182916,0.0,ultima sillaba,True
+bene,1,penultima sillaba,0.5078719730672338,0.0,ultima sillaba,False
+bottiglia,1,penultima sillaba,0.6473741809418505,1.0,penultima sillaba,True
+musica,2,antepenultima sillaba,0.5353570765999551,2.0,antepenultima sillaba,True
+accento,0,ultima sillaba,0.5871902670664388,1.0,penultima sillaba,False
