@@ -44,6 +44,7 @@ Con questi due dataset potresti costruire un **dizionario di lookup** (parola �
 
 Vuoi che integri uno di questi (per esempio STRESYL, che è il più diretto da usare come dizionario di sostituzione) nello script che abbiamo già scritto?
 
+----------------
 
 ### MusicVAE — Variational Autoencoder
 
@@ -219,3 +220,26 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - **Silabeador**: libreria Python per la divisione sillabica e il rilevamento dello stress prosodico per lo spagnolo, con funzioni dirette tipo `silabeador.silabea()` per le sillabe e `silabeador.tonica()` per l'indice della sillaba accentata — API molto comoda, praticamente pronta all'uso per la tua Fase 1.
 - **libEscansion**: libreria Python che analizza versi spagnoli misti, trovando nuclei sillabici, pattern ritmico, assonanza e consonanza, con trascrizione fonologica delle sillabe, e con un'accuratezza dichiarata molto alta contro corpus annotati a mano. [pypi](https://pypi.org/project/silabeador/1.1.11.post3)
 - Esistono anche strumenti più orientati alla ricerca accademica come **Rantanplan** e **ADSO Scansion**, pensati specificamente per l'annotazione metrica di poesia spagnola.
+-------------------------
+
+
+### Sommario:
+
+1. import dataset
+2. calcolo delle feature (sillaba accentata dalla fine della parola e conteggio delle sillabe)
+3. considera il contesto della frase
+4. il modello si addestra
+5. produzione di una base ritmica **scarna** (o solo di percussioni o musicali)
+6. scelta degli strumenti
+7. produzione di musica con un transformer
+8. interfaccia grafica
+
+
+
+
+
+#### Da fare:
+- aggiungi il conteggio delle sillabe (da recuperare nei dataset)
+- analisi semantica
+- aggiungere un transformer(?)
+
