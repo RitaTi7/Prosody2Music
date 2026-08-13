@@ -1,0 +1,7 @@
+pandas
+pyphen
+pretty_midi
+numpy
+torch
+miditok
+symusic
