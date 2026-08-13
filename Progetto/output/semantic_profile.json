@@ -1,40 +1,40 @@
 {
   "version": 1,
-  "text": "Corriamo insieme, la festa è appena iniziata!",
+  "text": "Siamo nel mezzo di una battaglia epica, è dura ma vinceremo sicuro!!",
   "global": {
-    "valence": 0.65,
-    "energy": 1.0,
-    "movement": 0.35,
-    "tension": 0.612,
-    "intensity": 0.765,
+    "valence": 0.0,
+    "energy": 0.905,
+    "movement": 0.317,
+    "tension": 0.455,
+    "intensity": 0.47,
     "scale": "major",
-    "register_shift": 8,
+    "register_shift": 2,
     "source": "offline_italian_semantic_lexicon"
   },
   "phrases": [
     {
-      "text": "corriamo insieme",
+      "text": "siamo nel mezzo di una battaglia epica",
       "profile": {
-        "valence": 0.4,
-        "energy": 0.53,
-        "movement": 0.185,
-        "tension": 0.396,
-        "intensity": 0.4,
+        "valence": 0.0,
+        "energy": 0.665,
+        "movement": 0.233,
+        "tension": 0.27,
+        "intensity": 0.47,
         "scale": "major",
-        "register_shift": 4,
+        "register_shift": 1,
         "source": "offline_italian_semantic_lexicon"
       }
     },
     {
-      "text": "la festa è appena iniziata",
+      "text": "è dura ma vinceremo sicuro",
       "profile": {
-        "valence": 0.9,
-        "energy": 1.0,
-        "movement": 0.35,
-        "tension": 0.62,
-        "intensity": 0.89,
+        "valence": 0.0,
+        "energy": 0.35,
+        "movement": 0.122,
+        "tension": 0.237,
+        "intensity": 0.2,
         "scale": "major",
-        "register_shift": 10,
+        "register_shift": -1,
         "source": "offline_italian_semantic_lexicon"
       }
     }
