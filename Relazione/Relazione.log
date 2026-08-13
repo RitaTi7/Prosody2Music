@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  11 AUG 2026 17:54
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  13 AUG 2026 16:10
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -694,19 +694,19 @@ Capitolo 1.
 
 ]
 Capitolo 2.
-(chapters/02_metodi.tex) [3
+(chapters/02_metodi.tex [3
 
-]
+]) [4]
 Capitolo 3.
-(chapters/03_risultati.tex) [4
+(chapters/03_risultati.tex) [5
 
 ]
 Capitolo 4.
-(chapters/04_conclusioni.tex) [5
+(chapters/04_conclusioni.tex) [6
 
 ]
 Appendice A.
-(chapters/appendice_a.tex) [6
+(chapters/appendice_a.tex) [7
 
 ] (Relazione.aux)
  ***********
@@ -714,15 +714,15 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
 Package rerunfilecheck Info: File `Relazione.out' has not changed.
-(rerunfilecheck)             Checksum: CCDE81FFD3060F521B7536ABC4779A2F;1904.
+(rerunfilecheck)             Checksum: AA1AC40A5BDD68EAC94B1366C798DB04;2123.
  ) 
 Here is how much of TeX's memory you used:
- 22564 strings out of 409617
- 408983 string characters out of 5773810
- 1922191 words of memory out of 5000000
- 44392 multiletter control sequences out of 15000+600000
- 606727 words of font info for 90 fonts, out of 8000000 for 9000
+ 22571 strings out of 409617
+ 409141 string characters out of 5773810
+ 1923191 words of memory out of 5000000
+ 44399 multiletter control sequences out of 15000+600000
+ 609725 words of font info for 91 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  72i,8n,79p,1054b,957s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Relazione.xdv (8 pages, 18912 bytes).
+Output written on Relazione.xdv (9 pages, 22936 bytes).
