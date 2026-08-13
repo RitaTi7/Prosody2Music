@@ -230,7 +230,7 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 3. considera il contesto della frase
 4. il modello si addestra
 5. produzione di una base ritmica **scarna** (o solo di percussioni o musicali)
-6. scelta degli strumenti
+6. scelta degli strumenti (o forse dopo)
 7. produzione di musica con un transformer
 8. interfaccia grafica
 
@@ -239,7 +239,9 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 
 
 #### Da fare:
-- aggiungi il conteggio delle sillabe (da recuperare nei dataset)
+- aggiungi il conteggio delle sillabe (da recuperare nei dataset)-> da vedere se ha senso
 - analisi semantica
 - aggiungere un transformer(?)
+- importare un dataset musicale buono
+- SCRIVERE LA RELAZIONE
 
