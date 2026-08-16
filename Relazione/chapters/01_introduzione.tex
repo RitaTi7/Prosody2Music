@@ -8,9 +8,15 @@ Nello specifico il progetto mira a raggiungere i seguenti obbiettivi:
     \item Tradurre le parole facendo anche uso degli accenti trovati in "ritmo" musicale.
     \item Generare una melodia coerente con il ritmo precedentemente generato lasciando libertà di personalizzazione all'utente.
 \end{enumerate}
-\section{Metodologi in breve}
-
-
+\section{Metodologia in breve}
+Al fine di raggiungere gli obiettivi precedemente presentati sarà seguita la seguente pipeline:
+\begin{enumerate}
+    \item Analisi del testo che sarà svolta parallelamente dal punto di vista semantico e da quello prosodico (degli accenti). 
+     L'analisi semantica sarà effettuata per "assegnare" la musica corretta in base al significato e al contesto emotivo del testo.
+     L'analisi prosodica sarà usata con il fine di trovare gli accenti
+    \item Traduzione del testo in ritmo musicale.
+    \item Generazione di una melodia coerente con il ritmo generato.    
+\end{enumerate}
 \section{Prerequisiti}
 Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di nuymerose librerie che saranno presentate di volta in volta estremamte utili allo svolgimento del progetto.
 Inoltre l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
