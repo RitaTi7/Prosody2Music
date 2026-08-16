@@ -227,7 +227,7 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 
 1. import dataset
 2. calcolo delle feature (sillaba accentata dalla fine della parola e conteggio delle sillabe)
-3. considera il contesto della frase
+3. considera la semantica della frase
 4. il modello si addestra
 5. produzione di una base ritmica **scarna** (o solo di percussioni o musicali)
 6. scelta degli strumenti (o forse dopo)
@@ -239,9 +239,13 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 
 
 #### Da fare:
-- aggiungi il conteggio delle sillabe (da recuperare nei dataset)-> da vedere se ha senso
-- analisi semantica
-- aggiungere un transformer(?)
+- ~~aggiungi il conteggio delle sillabe~~ (da recuperare nei dataset)-> da vedere se ha senso
+- ~~analisi semantica~~     (implementata ma da utilizzare)
+- aggiungere un transformer
 - importare un dataset musicale buono
 - SCRIVERE LA RELAZIONE
 
+
+#### Idee per la presentazione:
+- sfruttare: la lunghezza e la profondità sintattica delle frasi (syntactic_depth, sentence_word_count) già calcolate da spaCy. Usabili per decidere il fraseggio musicale — frasi sintatticamente semplici e brevi diventano frasi musicali più dirette, frasi lunghe e subordinate introducono più respiro o un cambio di registro. È un modo elegante di far "sentire" la struttura grammaticale del testo, non solo l'accento delle singole parole.
+- se non riusciamo a produrre un interfaccia minimale (ad esempio in html) si potrebbe anche optare per un notebook

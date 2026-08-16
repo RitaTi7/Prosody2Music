@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Versione 5: aggiunta la possibilità di produrre il MIDI con la batteria!!!
+Versione 6: aggiunta la possibilità di produrre il MIDI con la batteria!!!
 
 Per lanciarlo: python3 Fase1.py frase.txt --midi-output ritmo5.mid --rhythm-output ritmo5.csv --drums
 
