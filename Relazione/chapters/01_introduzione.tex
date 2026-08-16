@@ -17,6 +17,39 @@ Al fine di raggiungere gli obiettivi precedemente presentati sarà seguita la se
     \item Dopo aver svolto l'analisi definita nel punto 1, si procederà alla traduzione del "brano" ritmico ottenuto in una scala ritmica musicale, in modo da ottenere un ritmo coerente con il testo.
     \item Generazione di una melodia coerente con il ritmo generato.    
 \end{enumerate}
-\section{Prerequisiti}
+
 Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di nuymerose librerie che saranno presentate di volta in volta estremamte utili allo svolgimento del progetto.
 Inoltre l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
+
+\section{Dataset Utilizzati}
+Nell'ambito del machine learning e del deep learning come è ben noto per l'apprendimento del modello creato è necessario dare uso di dataset di training e di test. Per questo progetto sono stati utilizzati i seguenti dataset:
+
+\subsection{PhonItaliaR}
+PhonItaliaR fornisce rappresentazioni fonologiche per 120.000 forme di parole italiane. Ognuno di questi include anche confini sillabici, marcature di accento e una gamma completa di statistiche lessicali.
+Utilizzando dati derivati da questo lessico, è anche possibile generare un insieme di database derivati e fornito stime dell'uso della frequenza posizionale per fonemi, sillabe, inizi e coda sillabiche italiane, nonché bigrammi di caratteri e fonemi.
+
+Fonte:https://link.springer.com/article/10.3758/s13428-013-0400-8
+
+In questo progetto il dataset PhonItaliaR è estremamante importante.
+
+Sarà usato per individuare su quale sillaba cade l'accento di una parola. È annotato da linguisti su 120.000 forme, non dedotto da regole, è quindi la fonte più affidabile.
+
+Inoltre verrà fatto uso di PhonItaliaR anche per il conteggio delle sillabe, l'integrazione più recente fornisce il numero "vero" di sillabe (SumSylls), usato per correggere la sillabazione quando l'euristica interna sbaglia (tipicamente sui casi di iato: "poesia", "farmacia").
+\subsection{Q2Stress}
+Q2Stress è un database per l'italiano che contiene informazioni su molteplici segnali che i lettori possono
+ utilizzare per assegnare l'accento. In particolare, il database offre misure di frequenza di tipo e token dei pattern di accento in funzione del numero di sillabe, della categoria grammaticale, dell'inizio delle parole, delle terminazioni delle parole e delle strutture consonanti-vocali. Sono disponibili dati sia per adulti, sia per i bambini.
+ 
+ Q2Stress può aiutare i ricercatori a rispondere a domande empiriche e teoriche sull'assegnazione dell'accento e sulla relazione tra ortografia e fonologia nella lettura. Q2Stress è progettato come una risorsa facile da usare, poiché include script che permettono ai ricercatori di esplorare e selezionare i propri stimoli secondo diversi criteri, oltre a tabelle riassuntive per l'analisi complessiva dei dati.
+ Fonte:https://www.istc.cnr.it/en/content/q2stress.
+
+In questo progetto il dataset Q2Strss sarà usato in sinergia con PhonItaliaR per l'analisi fonetica.
+In particolare Q2Stress in questo progetto sarà un "ripiego", per quando PhonItalia non ha la parola (neologismi, forme rare, parole poetiche/arcaiche).
+Invece di ricadere subito sull'euristica grezza ("parola piana di default"). 
+Q2Stress guarda la desinenza delle ultime 3 lettere e restituisce la posizione dell'accento più probabile secondo le statistiche reali sull'italiano (es. l'80\% delle parole che finiscono in "-ino" sono piane).
+\subsection{lakh-midi}
+Il dataset MIDI di Lakh è una raccolta di 176.581 file MIDI unici, di cui 45.129 sono stati abbinati e allineati alle voci del Million Song Dataset. Il suo obiettivo è facilitare il recupero su larga scala delle informazioni musicali, sia simbolico (usando solo i file MIDI) sia basato su contenuti audio (utilizzando informazioni estratte dai file MIDI come annotazioni per i file audio abbinati).
+
+Fonte: https://colinraffel.com/projects/lmd/
+
+Nel contesto di questo progetto il dataset lakh-midi si occupa della parte della generazione musicale.
+
