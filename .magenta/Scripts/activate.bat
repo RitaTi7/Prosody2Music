@@ -8,7 +8,7 @@ if defined _OLD_CODEPAGE (
     "%SystemRoot%\System32\chcp.com" 65001 > nul
 )
 
-set VIRTUAL_ENV=c:\Users\Utente\Desktop\Prosody2Music\.magenta
+set VIRTUAL_ENV=C:\Users\elisa\Documents\Appunti Elisa\Prosody2Music\.magenta
 
 if not defined PROMPT set PROMPT=$P$G
 

@@ -1,10 +1,10 @@
 # Fdb version 4
-["xdvipdfmx"] 1786662385.96989 "Relazione.xdv" "Relazione.pdf" "Relazione" 1786662386.61687 0
-  "Relazione.xdv" 1786662385 23776 f507b0d6ce12b7579fe882d50328b4b0 "xelatex"
+["xdvipdfmx"] 1786883114.21909 "Relazione.xdv" "Relazione.pdf" "Relazione" 1786883114.67097 0
+  "Relazione.xdv" 1786883113 24628 db46b893c629aabeb8cda67cc5875c89 "xelatex"
   (generated)
   "Relazione.pdf"
   (rewritten before read)
-["xelatex"] 1786662384.02431 "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" "Relazione.xdv" "Relazione" 1786662386.60547 0
+["xelatex"] 1786883112.20098 "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" "Relazione.xdv" "Relazione" 1786883114.66157 0
   "C:/Users/Utente/AppData/Local/MiKTeX/miktex/data/le/xetex/xelatex.fmt" 1744733071 37546454 660330f05f2f0a0e6074de445fe4148a ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768654 1528 7e12f4c0fcf5a072cebdcfbfc610f54c ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1233951848 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
@@ -145,12 +145,12 @@
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/was/upgreek.sty" 1665850770 5794 9054e31be15d93f1e6bd28cca2b6643f ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1700127522 55487 80a65caedd3722f4c20a14a69e785d8f ""
-  "Relazione.aux" 1786662385 2793 4743044e2ecfc82d6be1332690dbe077 "xelatex"
-  "Relazione.out" 1786662385 2279 ec489708232d114f629bdbf4f7c8b374 "xelatex"
-  "Relazione.tex" 1786464114 2816 6c459e725baf4e661407ef10d02e735d ""
-  "Relazione.toc" 1786662385 1352 5d4575580125185eed8dc317a0d5f743 "xelatex"
-  "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" 1786464114 2816 6c459e725baf4e661407ef10d02e735d ""
-  "chapters/01_introduzione.tex" 1786662327 1172 79321e4cd8b332fd208e1fd06532a18c ""
+  "Relazione.aux" 1786883113 2771 99af133f3e2c42a16fb61df38939130f "xelatex"
+  "Relazione.out" 1786883113 2284 24d7d19770fc56c631e338c31646717b "xelatex"
+  "Relazione.tex" 1786877148 2836 a6b61878e7241fcc63bd269501fa00d7 ""
+  "Relazione.toc" 1786883113 1353 d08940e134a78fd209155169cf65b954 "xelatex"
+  "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" 1786877148 2836 a6b61878e7241fcc63bd269501fa00d7 ""
+  "chapters/01_introduzione.tex" 1786883111 2023 a16089727bd11a35c89dfc5ed7cce2ab ""
   "chapters/02_metodi.tex" 1786662327 2004 88e110ea5cb0f79b175fd6f342aa4d12 ""
   "chapters/03_risultati.tex" 1786464114 898 154c0a572fbaf1a806ff2e29582dd8b0 ""
   "chapters/04_conclusioni.tex" 1786464114 546 5ce93175b19a0d953a61823791b8769f ""

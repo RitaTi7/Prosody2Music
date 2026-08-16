@@ -1,97 +1,19 @@
 {
   "version": 1,
-  "text": "Un testo di esempio, con alcune parole accentate e punteggiatura.\nPuò contenere frasi brevi, frasi lunghe, esclamazioni! E interrogazioni? Tutto ciò serve a testare la pipeline di conversione da testo a MIDI.",
+  "text": "la la lala tarata",
   "global": {
     "valence": 0.0,
-    "energy": 0.47,
-    "movement": 0.164,
-    "tension": 0.429,
+    "energy": 0.35,
+    "movement": 0.122,
+    "tension": 0.237,
     "intensity": 0.2,
     "scale": "major",
-    "register_shift": 0,
+    "register_shift": -1,
     "source": "offline_italian_semantic_lexicon"
   },
   "phrases": [
     {
-      "text": "un testo di esempio",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "con alcune parole accentate e punteggiatura",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "può contenere frasi brevi",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "frasi lunghe",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "esclamazioni",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "e interrogazioni",
-      "profile": {
-        "valence": 0.0,
-        "energy": 0.35,
-        "movement": 0.122,
-        "tension": 0.237,
-        "intensity": 0.2,
-        "scale": "major",
-        "register_shift": -1,
-        "source": "offline_italian_semantic_lexicon"
-      }
-    },
-    {
-      "text": "tutto ciò serve a testare la pipeline di conversione da testo a midi",
+      "text": "la la lala tarata",
       "profile": {
         "valence": 0.0,
         "energy": 0.35,

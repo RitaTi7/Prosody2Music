@@ -1403,8 +1403,52 @@ def parse_args():
     return parser.parse_args()
 
 
-def main():
+def interactive_menu(args):
+    """Raccoglie le impostazioni dall'utente durante l'esecuzione."""
+    print()
+    print("=" * 70)
+    print("IMPOSTAZIONI DI GENERAZIONE")
+    print("=" * 70)
 
+    default_text = "Siamo nel mezzo di una battaglia epica, è dura ma vinceremo sicuro!!"
+
+    print("\nInserisci il testo da trasformare in musica.")
+    print("Premi INVIO per usare il testo predefinito.")
+    text = input("Testo: ").strip()
+    if not text:
+        text = args.text or default_text
+
+    print("\nCome vuoi impostare la durata?")
+    print("  1) BPM fisso")
+    print("  2) Durata totale in secondi")
+    choice = input("Scelta [1]: ").strip() or "1"
+
+    if choice == "2":
+        while True:
+            try:
+                duration = float(input("Durata totale (secondi): ").strip())
+                if duration <= 0:
+                    raise ValueError
+                bpm = BPM
+                break
+            except ValueError:
+                print("Inserisci un numero maggiore di zero.")
+    else:
+        while True:
+            raw = input(f"BPM [{BPM}]: ").strip()
+            try:
+                bpm = float(raw) if raw else float(BPM)
+                if bpm <= 0:
+                    raise ValueError
+                duration = None
+                break
+            except ValueError:
+                print("Inserisci un BPM valido maggiore di zero.")
+
+    return text, bpm, duration
+
+
+def main():
     args = parse_args()
 
     print()
@@ -1413,64 +1457,41 @@ def main():
     print("=" * 70)
 
     # --------------------------------------------------------
+    # 0. INPUT INTERATTIVI: vengono richiesti PRIMA di caricare
+    #    i dataset, così l'utente può realmente scegliere tutto.
+    # --------------------------------------------------------
+    text, selected_bpm, selected_duration = interactive_menu(args)
+
+    # --------------------------------------------------------
     # 1. CARICA PHONITALIA
     # --------------------------------------------------------
-
     print()
     print("Caricamento phonitaliaR...")
 
-    phonitalia_dfs = load_data_files(
-        PHONITALIA_DIR
-    )
-
-    phonitalia_df = find_phonitalia_dataframe(
-        phonitalia_dfs
-    )
+    phonitalia_dfs = load_data_files(PHONITALIA_DIR)
+    phonitalia_df = find_phonitalia_dataframe(phonitalia_dfs)
 
     if phonitalia_df is None:
-
         print()
-        print(
-            "[ERRORE] Non ho trovato il dataframe "
-            "phonitalia."
-        )
-
-        print()
-        print(
-            "DataFrame trovati:"
-        )
-
+        print("[ERRORE] Non ho trovato il dataframe phonitalia.")
+        print("\nDataFrame trovati:")
         for df in phonitalia_dfs:
-
-            print(
-                list(df.columns)
-            )
-
+            print(list(df.columns))
         return
 
-    phonitalia = PhonItaliaLookup(
-        phonitalia_df
-    )
+    phonitalia = PhonItaliaLookup(phonitalia_df)
 
     # --------------------------------------------------------
     # 2. CARICA Q2STRESS
     # --------------------------------------------------------
-
     print()
     print("Caricamento Q2Stress...")
-
-    q2stress_dfs = load_data_files(
-        Q2STRESS_DIR
-    )
-
-    q2stress = Q2StressLookup(
-        q2stress_dfs
-    )
+    q2stress_dfs = load_data_files(Q2STRESS_DIR)
+    q2stress = Q2StressLookup(q2stress_dfs)
 
     # --------------------------------------------------------
     # 3. ANALYZER
     # --------------------------------------------------------
-
     analyzer = ItalianWordAnalyzer(
         phonitalia=phonitalia,
         q2stress=q2stress
@@ -1479,55 +1500,32 @@ def main():
     # --------------------------------------------------------
     # 4. TEST DATASET
     # --------------------------------------------------------
-
-    test_words(
-        analyzer
-    )
+    test_words(analyzer)
 
     # --------------------------------------------------------
     # 5. TESTO
     # --------------------------------------------------------
-
-    text = args.text or """
-Un testo di esempio, con alcune parole accentate e punteggiatura.
-Può contenere frasi brevi, frasi lunghe, esclamazioni! E interrogazioni? Tutto ciò serve a testare la pipeline di conversione da testo a MIDI."""
-
     print()
     print("=" * 70)
     print("TESTO")
     print("=" * 70)
-
     print(text)
 
     # --------------------------------------------------------
     # 6. TESTO → STRESS
     # --------------------------------------------------------
-
-    analyses = analyze_text(
-        text,
-        analyzer
-    )
-
-    print_analysis(
-        analyses
-    )
+    analyses = analyze_text(text, analyzer)
+    print_analysis(analyses)
 
     # --------------------------------------------------------
     # 7. STRESS → RITMO
     # --------------------------------------------------------
-
-    events = build_rhythm(
-        analyses
-    )
-
-    print_rhythm(
-        events
-    )
+    events = build_rhythm(analyses)
+    print_rhythm(events)
 
     # --------------------------------------------------------
     # 8. TESTO → PROFILO SEMANTICO
     # --------------------------------------------------------
-
     semantic_profile = build_semantic_profile(text, analyses)
     save_semantic_profile(semantic_profile, SEMANTIC_PROFILE_JSON)
 
@@ -1545,11 +1543,11 @@ Può contenere frasi brevi, frasi lunghe, esclamazioni! E interrogazioni? Tutto 
     # --------------------------------------------------------
     # 9. RITMO → MIDI
     # --------------------------------------------------------
-
     create_midi(
         events,
         OUTPUT_MIDI,
-        target_duration_seconds=args.duration,
+        target_duration_seconds=selected_duration,
+        bpm=selected_bpm,
     )
 
 

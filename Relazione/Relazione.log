@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  14 AUG 2026 01:06
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  16 AUG 2026 14:25
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -682,7 +682,7 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 File: mt-eur.cfg 2006/07/31 v1.1 microtype config. file: AMS Euler Roman (RS)
 ) [1
 
-] [1] (Relazione.toc)
+] (Relazione.toc)
 \tf@toc=\write4
 \openout4 = `Relazione.toc'.
 
@@ -692,21 +692,21 @@ File: mt-eur.cfg 2006/07/31 v1.1 microtype config. file: AMS Euler Roman (RS)
 Capitolo 1.
 (chapters/01_introduzione.tex) [2
 
-]
+] [3]
 Capitolo 2.
-(chapters/02_metodi.tex [3
+(chapters/02_metodi.tex [4
 
-]) [4]
+]) [5]
 Capitolo 3.
-(chapters/03_risultati.tex) [5
+(chapters/03_risultati.tex) [6
 
 ]
 Capitolo 4.
-(chapters/04_conclusioni.tex) [6
+(chapters/04_conclusioni.tex) [7
 
 ]
 Appendice A.
-(chapters/appendice_a.tex) [7
+(chapters/appendice_a.tex) [8
 
 ] (Relazione.aux)
  ***********
@@ -714,15 +714,15 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
 Package rerunfilecheck Info: File `Relazione.out' has not changed.
-(rerunfilecheck)             Checksum: EC489708232D114F629BDBF4F7C8B374;2279.
+(rerunfilecheck)             Checksum: 24D7D19770FC56C631E338C31646717B;2284.
  ) 
 Here is how much of TeX's memory you used:
- 22571 strings out of 409617
- 409141 string characters out of 5773810
+ 22569 strings out of 409617
+ 409081 string characters out of 5773810
  1923191 words of memory out of 5000000
- 44399 multiletter control sequences out of 15000+600000
+ 44397 multiletter control sequences out of 15000+600000
  609725 words of font info for 91 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  72i,8n,79p,1054b,957s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Relazione.xdv (9 pages, 23776 bytes).
+Output written on Relazione.xdv (9 pages, 24628 bytes).
