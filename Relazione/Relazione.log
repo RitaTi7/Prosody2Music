@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  16 AUG 2026 16:29
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  17 AUG 2026 16:18
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -714,15 +714,15 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
 Package rerunfilecheck Info: File `Relazione.out' has not changed.
-(rerunfilecheck)             Checksum: B4A25D9C25F2D91262FE0BDDE361A602;2643.
+(rerunfilecheck)             Checksum: EBD2F4059FE97E5F6F931D1A97462095;2775.
  ) 
 Here is how much of TeX's memory you used:
- 22570 strings out of 409617
- 409094 string characters out of 5773810
- 1924191 words of memory out of 5000000
- 44398 multiletter control sequences out of 15000+600000
+ 22568 strings out of 409617
+ 409030 string characters out of 5773810
+ 1925191 words of memory out of 5000000
+ 44396 multiletter control sequences out of 15000+600000
  609725 words of font info for 91 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
  72i,8n,79p,1054b,957s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Relazione.xdv (10 pages, 31312 bytes).
+Output written on Relazione.xdv (10 pages, 34132 bytes).
