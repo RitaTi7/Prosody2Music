@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="c:\Users\Utente\Desktop\Prosody2Music\.magenta"
+VIRTUAL_ENV="C:\Users\elisa\Documents\Appunti Elisa\Prosody2Music\.magenta"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

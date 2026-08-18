@@ -1,10 +1,10 @@
 # Fdb version 4
-["xdvipdfmx"] 1786662385.96989 "Relazione.xdv" "Relazione.pdf" "Relazione" 1786662386.61687 0
-  "Relazione.xdv" 1786662385 23776 f507b0d6ce12b7579fe882d50328b4b0 "xelatex"
+["xdvipdfmx"] 1787085998.41761 "Relazione.xdv" "Relazione.pdf" "Relazione" 1787085998.99506 0
+  "Relazione.xdv" 1787085998 53056 a94cbf5c054a8b6e85b646756498fe69 "xelatex"
   (generated)
   "Relazione.pdf"
   (rewritten before read)
-["xelatex"] 1786662384.02431 "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" "Relazione.xdv" "Relazione" 1786662386.60547 0
+["xelatex"] 1787085996.72194 "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" "Relazione.xdv" "Relazione" 1787085998.98724 0
   "C:/Users/Utente/AppData/Local/MiKTeX/miktex/data/le/xetex/xelatex.fmt" 1744733071 37546454 660330f05f2f0a0e6074de445fe4148a ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/adobe/zapfding/pzdr.tfm" 1136768654 1528 7e12f4c0fcf5a072cebdcfbfc610f54c ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/amsfonts/cmextra/cmbsy6.tfm" 1233951848 1124 14ccf5552bc7f77ca02a8a402bea8bfb ""
@@ -42,7 +42,7 @@
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/lm/ec-lmr10.tfm" 1256929440 12056 7e13df7fe4cbce21b072ba7c4f4deb6e ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/lm/ec-lmr12.tfm" 1256929440 12092 7b1546e2d096cfd5dcbd4049b0b1ec2e ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/lm/ec-lmr17.tfm" 1256929440 12156 ca1ae6a3c8564e89597f1f993fba1608 ""
-  "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/lm/ec-lmri10.tfm" 1256929440 17148 9556e1b5f936b77a796f68d2d559ba99 ""
+  "C:/Users/Utente/AppData/Local/Programs/MiKTeX/fonts/tfm/public/lm/ts1-lmr10.tfm" 1256929440 1556 b86d923e6b2f9aab2e313098a95cb0b8 ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/generic/atbegshi/atbegshi.sty" 1575571100 24708 5584a51a7101caf7e6bbf1fc27d8f7b1 ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/generic/babel/babel.sty" 1704647332 150008 7a05b0fdc0167c04e192003e780ab195 ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/generic/babel/locale/it/babel-it.ini" 1704647334 4255 d2c36ede3f04f7968d64917327cbb37a ""
@@ -145,15 +145,15 @@
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/url/url.sty" 1388490452 12796 8edb7d69a20b857904dd0ea757c14ec9 ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/was/upgreek.sty" 1665850770 5794 9054e31be15d93f1e6bd28cca2b6643f ""
   "C:/Users/Utente/AppData/Local/Programs/MiKTeX/tex/latex/xcolor/xcolor.sty" 1700127522 55487 80a65caedd3722f4c20a14a69e785d8f ""
-  "Relazione.aux" 1786662385 2793 4743044e2ecfc82d6be1332690dbe077 "xelatex"
-  "Relazione.out" 1786662385 2279 ec489708232d114f629bdbf4f7c8b374 "xelatex"
-  "Relazione.tex" 1786464114 2816 6c459e725baf4e661407ef10d02e735d ""
-  "Relazione.toc" 1786662385 1352 5d4575580125185eed8dc317a0d5f743 "xelatex"
-  "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" 1786464114 2816 6c459e725baf4e661407ef10d02e735d ""
-  "chapters/01_introduzione.tex" 1786662327 1172 79321e4cd8b332fd208e1fd06532a18c ""
-  "chapters/02_metodi.tex" 1786662327 2004 88e110ea5cb0f79b175fd6f342aa4d12 ""
-  "chapters/03_risultati.tex" 1786464114 898 154c0a572fbaf1a806ff2e29582dd8b0 ""
-  "chapters/04_conclusioni.tex" 1786464114 546 5ce93175b19a0d953a61823791b8769f ""
+  "Relazione.aux" 1787085998 4581 df2b0c56486ab4255f3adfe8bea3677b "xelatex"
+  "Relazione.out" 1787085998 4129 7f66118c7ca85080548164f9cd3db708 "xelatex"
+  "Relazione.tex" 1787044125 2836 a6b61878e7241fcc63bd269501fa00d7 ""
+  "Relazione.toc" 1787085998 2546 88f2d2ae72774b81ca4830dad3e866e3 "xelatex"
+  "c:/Users/Utente/Desktop/Prosody2Music/Relazione/Relazione.tex" 1787044125 2836 a6b61878e7241fcc63bd269501fa00d7 ""
+  "chapters/01_introduzione.tex" 1787085990 5466 7374d71845c98ec8c719762dbe8c2b54 ""
+  "chapters/02_metodi.tex" 1787056631 9223 eed0c8639c2b8682a860a101be955c42 ""
+  "chapters/03_risultati.tex" 1787052341 850 ca027f76748a4ff4ce9ab57627109b01 ""
+  "chapters/04_conclusioni.tex" 1787044125 620 f7d5d9cf1485f2361c5e8fda948c2deb ""
   "chapters/appendice_a.tex" 1786399592 388 edfad5728a4c8367ffec4dc8e6eefd66 ""
   (generated)
   "Relazione.aux"

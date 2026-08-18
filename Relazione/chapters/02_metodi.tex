@@ -1,23 +1,121 @@
 \section{Approccio generale}
-Come prima cosa si è deciso di affrontare il problema in maniera del rilevamento degli accenti a partire da un testo in lingua italiana.
-Per riuscire ad arrivare a un modello capace di riuscire nel compito dell'induviazione degli accenti è necessario importaqre dei dataset importati per il task. Fatto ciò tali dataset saranno usati per creare per appunto il modello che data una generica frase in italiano possa individuare tutti gli accenti con correttezza
-\subsection{Q2Stress}
-Q2Stress è un dataset di frasi in lingua italiana, ognuna delle quali è annotata con informazioni sugli accenti presenti. Questo dataset è stato utilizzato per addestrare il modello di riconoscimento degli accenti, fornendo esempi concreti di come gli accenti si manifestano nel linguaggio naturale.
-\subsection{phonItaliaR}
-phonItaliaR è un dataset di frasi in lingua italiana, ognuna delle quali è annotata con informazioni sulle pronunce e sugli accenti presenti. Questo dataset è stato utilizzato per addestrare il modello di riconoscimento degli accenti, fornendo esempi concreti di come gli accenti si manifestano nel linguaggio naturale.
-\section{Definizione del modello}
-\begin{definition}
-Un modello matematico \`e una rappresentazione semplificata di un fenomeno reale, costruita per descrivere relazioni quantificabili tra variabili.
-\end{definition}
+In questo capitolo ci si concentrerà sulla prima parte del progetto, ovvero la lettura del testo dato in input e la successiva analisi prosodica e semantica. Dopo si procedrà con l'individuazione delle sillabe e degli accenti.
+Successivamente sarà fatta anche un'analisi emotiva per attribuire una melodia consona con il significato del testo e infine sarà prodotto lo scheletro ritmico.
+\section{Analisi Prosodica}
+Con analisi prosodica si intende è la parte della linguistica che studia l'intonazione, il ritmo (isocronia), la durata (quantità) e l'accento del linguaggio parlato.
 
-Per esempio, una funzione di costo pu\`o essere definita come
-\begin{equation}
-\mathcal{L}(\theta) = \frac{1}{n} \sum_{i=1}^{n} \ell(y_i, f_\theta(x_i)) + \lambda \|\theta\|_2^2.
-\end{equation}
+In questo progetto ovviamente il linguaggio di rifermimento sarà l'Italiano e come spiegato nel precedente capitolo i dataset importati per tale analisi sono Q2Stress e PhonItaliaR.
 
-\section{Ottimizzazione}
-L'ottimizzazione di questa espressione richiede tecniche numeriche, come gradient descent o metodi quasi-Newton, a seconda della complessit\`a del problema e della dimensione dello spazio dei parametri.
+La pipeline di lavoro per questa parte sarà la seguente: Si prenderà il verso, dal verso saranno estratte le sillabe da cui poi si troveranno pattern accentuativo e alla fine sarà estratto il ritmo.
 
-\begin{remark}
-La scelta della funzione di perdita influenza in modo diretto la robustezza del modello rispetto a rumore, outlier e distribuzioni non gaussiane.
-\end{remark}
+\section{Librerie usate}
+\subsection{re}
+Questa libreria offre delle operazioni svolgibili sulle espressioni regolari.
+
+Un espressione regolare specifica un set di stringhe che combacia con essa. Le funzioni di questa libreria permettono di verificare se una particolare stringa combacia con una particolare espressione regolare.
+Le espressioni regolari possono essere concatenate per formare nuove espressioni regolari; se A e B sono entrambe espressioni regolari, allora AB è anch'essa un'espressione regolare. In generale, se una stringa p corrisponde ad A e un'altra stringa q corrisponde a B, la stringa pq corrisponderà ad AB. Questo vale a meno che A o B contengano operazioni a bassa priorità; condizioni ai confini tra A e B; o riferimenti a gruppi numerati. 
+Fonte:https://docs.python.org/3/library/re.html
+
+Nel codice implemetato la libreria re serve per usare la funzione re.sub che rimuove tutti i caratteri di punteggiatura da una parola mantenendo solo le lettere e i caratteri accentati.
+\subsection{UnicodeData}
+La libreria da accesso all'Unicode Character Database (UCD) che definisce le proprietà dei caratteri di tutti i caratteri Unicode. 
+
+Fonte: https://docs.python.org/3/library/unicodedata.html
+
+Viene importata per gestire correttamente la codifica dei caratteri speciali e accentati.
+In particolare viene usato il metodo lookup che cerca un carattere dal nome. Se un carattere con tale nome viene trovato ritorna il carattere corrispondente, altrimenti viene lanciato un Keyerror.
+\subsection{Pyphen}
+Libreria Python per la sillabazione basata sui dizionari e sugli algoritmi di sillabazione di TeX (come quelli usati da OpenOffice/LibreOffice). 
+
+Nel codice viene usata come meccanismo di ripiego (fallback) o di confronto per la sillabazione dell'italiano (it\_IT).
+
+\section{Algoritmo}
+L'algoritmo esegue l'analisi prosodica e ritmica di un testo poetico italiano trasformando ogni verso in una sequenza di impulsi temporali. Il processo si articola in quattro fasi consecutive.
+\subsection{Analisi prosodica}
+Per analizzare la prosodia di un testo, l'algoritmo dedicato procede al caricamento di due dataset: Q2Stress e phonItaliaR. Il primo viene utilizzato per addestrare il classificatore di accenti,
+il secondo per ampliare il training set. Inoltre, viene caricato anche il modello linguistico spaCy per l'analisi linguistica del testo (serve a tokenizzare il testo?).
+Le informazioni estratte dai dataset per la costruzione delle feature sono le parole annotate, la posizione dell'accento e il numero di sillabe della parola.
+Per ogni parola vengono estratte le seguenti feature:
+\begin{enumerate}
+    \item Lunghezza della parola
+    \item Numero di vocali
+    \item Numero di consonanti
+    \item Rapporto vocali/consonanti
+    \item Numero di sillabe
+    \item Finale vocalico
+    \item Finale consonantico
+    \item Presenza di sequenze vocaliche (...)
+    \item Presenza di sequenze con t (...)
+    \item Suffissi finali (...)
+\end{enumerate} 
+In tutto sono 24 e servono per il calcolo della posizione dell'accento tonico per ogni parola del testo di input. \newline
+Queste caratterisiche sono utilizzate per addestrare il classificatore \textbf{Random Forest}. È un modello di Machine Learning 
+supervisionato basato sugli alberi decisionali. Dopo l'addestramento sui dataset, impara a predire la posizione dell'accento tonico
+della parola categorizzandola in una delle seguenti categorie:
+\begin{enumerate}
+    \item ultima sillaba
+    \item penultima sillaba
+    \item antepenultima sillaba
+    \item preantepenultima sillaba
+\end{enumerate}
+In seguito, si passa all'acquisizione e alla normalizzazione del testo. Qui vengono eliminati eventuali problemi di codifica,
+uniformati gli spazi e rimossi gli elementi non necessari all'analisi (...).
+Il testo viene poi elaborato tramite spaCy, il quale per ogni parola ottiene:
+\begin{enumerate}
+    \item token
+    \item lemma
+    \item categoria grammaticale (POS)
+    \item relazioni sintattiche
+    \item posizione nella frase
+    \item punteggiatura circostante
+\end{enumerate}
+Prima di passare al Random Forest, avviene il conteggio delle sillabe grazie ai dati annotati nei dataset, Pyphen e un algoritmo euristico di fallback (...).\newline
+
+Infine, tutte queste informazioni vengono trasformate in una sequenza di impulsi ritmici. Ogni sillaba viene classificata come:
+\begin{enumerate}
+    \item strong: accentata, dove sarà posizionata la nota dominante (corrispondente a un hit di batteria?)
+    \item weak: non accentata, dove sarà posizionata la stessa nota più lieve (hat?)
+\end{enumerate}
+Inoltre, la punteggiatura generale aggiunge pause brevi e lunghe.\newline
+Infine, il sistema produce:
+\begin{enumerate}
+    \item CSV analitico, il quale per ogni parola contiene l'accento predetto, il numero di sillabe, informazionni grammaticali e sintattiche
+    \item CSV ritmico che contine la sequenza di impulsi forti, deboli e pause.
+    \item schema ritimico MIDI (opzionale?) utilizzabile nelle seguenti fasi di generazione musicale. 
+\end{enumerate}
+
+
+
+\subsection{Produzione dello schema ritmico}
+(forse si può approfondire... togliendo la parte finale della sezione di sopra)
+\subsection{Scelta degli strumenti}
+\subsection{Produzione della melodia}
+
+\section{Analisi emotiva}
+Come prima cosa viene importato un dataset che sarà utilizzato per definire lo spettro emotivo della parola.
+\section{Librerie}
+\subsection{re}
+Anche in questo algoritmo viene usata la libreria re già descritta precedentemente.
+In particolare viene usata in una funzione che si occupa di normalizza una parola, ovvero la trasforma minuscola, senza punteggiatura, ciò è necessario perchè prima di iniziare con l'algoritmo è necessario controllare che la parola sia formattata correttamente.
+
+Per implementare questa funzione vengono usate le funzioni .lower che come deducibile dal nome rende tutte le lettere minuscole e .sub già incontrata in precedenza.
+
+Inoltre viene usata la funzione .findall che permette di ottenere gruppi di stringhe con pattern simili per la tokenizzazione 
+\section{Algoritmo}
+Il cuore dell'algoritmo si trova nella funzione analyze\_emotions che non classifica le parole in semplici categorie (come "triste" o "felice"), ma le mappa su tre dimensioni psicologiche continue:
+\begin{itemize}
+\item Valence (Valenza): Indica se un'emozione è positiva o negativa. Va da -1.0 (estremamente negativo, es. abominio) a +1.0 (estremamente positivo, es. felicità).
+\item Arousal (Attivazione): Misura l'intensità o il livello di eccitazione dell'emozione. Va da 0.0 (calma/letargia, es. pace) a +1.0 (alta eccitazione/tensione, es. terrore o vivacissimo).
+\item Tenderness (Tenerezza): Misura il grado di dolcezza o affetto. I valori positivi indicano tenerezza (es. amore = 1.0), mentre i valori bassi o negativi indicano durezza o brutalità (es. brutale = -0.6).
+\end{itemize}
+
+La funzione procede nel seguente modo:
+\begin{enumerate}
+\item Viene eseguita la "Tokenizzazione", il testo in ingresso viene suddiviso in singole parole usando un'espressione regolare.
+\item Viene eseguita l'estrazione dei punteggi per ogni parola.
+La parola viene normalizzata, l'algoritmo controlla se la parola normalizzata esiste nel database di riferimento, se c'è un match (corrispondenza), estrae i tre valori (valenza, attivazione, tenerezza) e li salva in tre liste separate. 
+La parola stessa viene aggiunta a una lista se la parola non è nel dizionario (es. articoli, congiunzioni o parole non censite), viene semplicemente ignorata.
+\item Viene effettuato il calcolo della media dopo aver analizzato tutte le parole, l'algoritmo calcola la media aritmetica dei punteggi trovati. Questo rappresenta il "tono emotivo generale" della frase.
+Se nessuna parola del testo è presente nel dizionario, l'algoritmo restituisce valori neutri ovvero valence 0.0 (neutro), arousal 0.5 (attivazione media) e tenderness: 0.0 (neutro).
+\item Viene calcolato il risultato finale: Viene Restituito un dizionario contenente le medie calcolate e la lista delle parole riconosciute.
+\end{enumerate}
