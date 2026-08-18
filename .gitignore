@@ -1,3 +1,25 @@
 # Scraps local notes
 .scraps/
 .magenta/
+
+#LaTex
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+*.lof
+*.lot
+
+#Python virtual environment
+.magenta/
+.venv/
+venv/
+env/

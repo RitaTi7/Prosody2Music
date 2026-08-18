@@ -244,6 +244,7 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - aggiungere un transformer
 - importare un dataset musicale buono
 - SCRIVERE LA RELAZIONE
+- verifica se è deterministico (la produzione musicale non dovrebbe, lo schema ritmico si)
 
 
 #### Idee per la presentazione:

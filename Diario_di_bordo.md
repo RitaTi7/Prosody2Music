@@ -34,7 +34,7 @@ Test importante: pyphen non è affidabile come fonte primaria per l'italiano —
 
 Conferma sistematica: pyphen sbaglia quasi sempre proprio sui casi di iato (7 errori su 13, tutti sistematicamente sottostimati). Verifico che la mia euristica attuale (che gestisce esplicitamente iato vs dittongo) se la cavi meglio su questi stessi casi.
 
-Quindi non uso pyphen come fonte primaria, lo integro invece come seconda opzione più un meccanismo di riconciliazione che sfrutta il conteggio reale PhonItalia (SumSylls) già disponibile per correggere i casi sbagliati (es. "poesia", "farmacia").
+Quindi non uso **pyphen** come fonte primaria, lo integro invece come seconda opzione più un meccanismo di riconciliazione che sfrutta il conteggio reale PhonItalia (SumSylls) già disponibile per correggere i casi sbagliati (es. "poesia", "farmacia").
 
 Benefici concreti per la pipeline
 Melodia più fedele al testo: il numero di sillabe determina direttamente il numero di note per parola in music_transformer.py — un conteggio sbagliato produceva un ritmo musicale disallineato dalla prosodia reale.
