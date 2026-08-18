@@ -91,8 +91,31 @@ Infine, il sistema produce:
 \subsection{Scelta degli strumenti}
 \subsection{Produzione della melodia}
 
+\section{Analisi emotiva}
+Come prima cosa viene importato un dataset che sarà utilizzato per definire lo spettro emotivo della parola.
+\section{Librerie}
+\subsection{re}
+Anche in questo algoritmo viene usata la libreria re già descritta precedentemente.
+In particolare viene usata in una funzione che si occupa di normalizza una parola, ovvero la trasforma minuscola, senza punteggiatura, ciò è necessario perchè prima di iniziare con l'algoritmo è necessario controllare che la parola sia formattata correttamente.
 
+Per implementare questa funzione vengono usate le funzioni .lower che come deducibile dal nome rende tutte le lettere minuscole e .sub già incontrata in precedenza.
 
-\begin{remark}
-La scelta della funzione di perdita influenza in modo diretto la robustezza del modello rispetto a rumore, outlier e distribuzioni non gaussiane.
-\end{remark}
+Inoltre viene usata la funzione .findall che permette di ottenere gruppi di stringhe con pattern simili per la tokenizzazione 
+\section{Algoritmo}
+Il cuore dell'algoritmo si trova nella funzione analyze\_emotions che non classifica le parole in semplici categorie (come "triste" o "felice"), ma le mappa su tre dimensioni psicologiche continue:
+\begin{itemize}
+\item Valence (Valenza): Indica se un'emozione è positiva o negativa. Va da -1.0 (estremamente negativo, es. abominio) a +1.0 (estremamente positivo, es. felicità).
+\item Arousal (Attivazione): Misura l'intensità o il livello di eccitazione dell'emozione. Va da 0.0 (calma/letargia, es. pace) a +1.0 (alta eccitazione/tensione, es. terrore o vivacissimo).
+\item Tenderness (Tenerezza): Misura il grado di dolcezza o affetto. I valori positivi indicano tenerezza (es. amore = 1.0), mentre i valori bassi o negativi indicano durezza o brutalità (es. brutale = -0.6).
+\end{itemize}
+
+La funzione procede nel seguente modo:
+\begin{enumerate}
+\item Viene eseguita la "Tokenizzazione", il testo in ingresso viene suddiviso in singole parole usando un'espressione regolare.
+\item Viene eseguita l'estrazione dei punteggi per ogni parola.
+La parola viene normalizzata, l'algoritmo controlla se la parola normalizzata esiste nel database di riferimento, se c'è un match (corrispondenza), estrae i tre valori (valenza, attivazione, tenerezza) e li salva in tre liste separate. 
+La parola stessa viene aggiunta a una lista se la parola non è nel dizionario (es. articoli, congiunzioni o parole non censite), viene semplicemente ignorata.
+\item Viene effettuato il calcolo della media dopo aver analizzato tutte le parole, l'algoritmo calcola la media aritmetica dei punteggi trovati. Questo rappresenta il "tono emotivo generale" della frase.
+Se nessuna parola del testo è presente nel dizionario, l'algoritmo restituisce valori neutri ovvero valence 0.0 (neutro), arousal 0.5 (attivazione media) e tenderness: 0.0 (neutro).
+\item Viene calcolato il risultato finale: Viene Restituito un dizionario contenente le medie calcolate e la lista delle parole riconosciute.
+\end{enumerate}

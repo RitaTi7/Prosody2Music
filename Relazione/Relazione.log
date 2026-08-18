@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  17 AUG 2026 17:09
+This is XeTeX, Version 3.141592653-2.6-0.999995 (MiKTeX 24.1) (preloaded format=xelatex 2025.4.15)  18 AUG 2026 14:37
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -682,31 +682,36 @@ File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 File: mt-eur.cfg 2006/07/31 v1.1 microtype config. file: AMS Euler Roman (RS)
 ) [1
 
-] (Relazione.toc)
+] (Relazione.toc [1
+
+])
 \tf@toc=\write4
 \openout4 = `Relazione.toc'.
 
- [1
-
-]
+ [2]
 Capitolo 1.
-(chapters/01_introduzione.tex [2
+(chapters/01_introduzione.tex [3
 
-] [3]) [4]
+] [4]) [5]
 Capitolo 2.
-(chapters/02_metodi.tex [5
+(chapters/02_metodi.tex [6
 
-]) [6]
+] [7]
+Underfull \hbox (badness 10000) in paragraph at lines 72--73
+
+ []
+
+[8] [9]) [10]
 Capitolo 3.
-(chapters/03_risultati.tex) [7
+(chapters/03_risultati.tex) [11
 
 ]
 Capitolo 4.
-(chapters/04_conclusioni.tex) [8
+(chapters/04_conclusioni.tex) [12
 
 ]
 Appendice A.
-(chapters/appendice_a.tex) [9
+(chapters/appendice_a.tex) [13
 
 ] (Relazione.aux)
  ***********
@@ -714,15 +719,15 @@ LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
 Package rerunfilecheck Info: File `Relazione.out' has not changed.
-(rerunfilecheck)             Checksum: EBD2F4059FE97E5F6F931D1A97462095;2775.
+(rerunfilecheck)             Checksum: CC9AD633372EAF865765A095846F5DC4;4052.
  ) 
 Here is how much of TeX's memory you used:
- 22568 strings out of 409617
- 409030 string characters out of 5773810
- 1925191 words of memory out of 5000000
- 44396 multiletter control sequences out of 15000+600000
- 609725 words of font info for 91 fonts, out of 8000000 for 9000
+ 22562 strings out of 409617
+ 408732 string characters out of 5773810
+ 1926191 words of memory out of 5000000
+ 44390 multiletter control sequences out of 15000+600000
+ 605827 words of font info for 91 fonts, out of 8000000 for 9000
  1348 hyphenation exceptions out of 8191
- 72i,8n,79p,1054b,957s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 72i,8n,79p,1054b,1121s stack positions out of 10000i,1000n,20000p,200000b,200000s
 
-Output written on Relazione.xdv (10 pages, 34132 bytes).
+Output written on Relazione.xdv (14 pages, 52276 bytes).
