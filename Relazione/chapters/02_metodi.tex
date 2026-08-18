@@ -31,7 +31,65 @@ Nel codice viene usata come meccanismo di ripiego (fallback) o di confronto per 
 
 \section{Algoritmo}
 L'algoritmo esegue l'analisi prosodica e ritmica di un testo poetico italiano trasformando ogni verso in una sequenza di impulsi temporali. Il processo si articola in quattro fasi consecutive.
+\subsection{Analisi prosodica}
+Per analizzare la prosodia di un testo, l'algoritmo dedicato procede al caricamento di due dataset: Q2Stress e phonItaliaR. Il primo viene utilizzato per addestrare il classificatore di accenti,
+il secondo per ampliare il training set. Inoltre, viene caricato anche il modello linguistico spaCy per l'analisi linguistica del testo (serve a tokenizzare il testo?).
+Le informazioni estratte dai dataset per la costruzione delle feature sono le parole annotate, la posizione dell'accento e il numero di sillabe della parola.
+Per ogni parola vengono estratte le seguenti feature:
+\begin{enumerate}
+    \item Lunghezza della parola
+    \item Numero di vocali
+    \item Numero di consonanti
+    \item Rapporto vocali/consonanti
+    \item Numero di sillabe
+    \item Finale vocalico
+    \item Finale consonantico
+    \item Presenza di sequenze vocaliche (...)
+    \item Presenza di sequenze con t (...)
+    \item Suffissi finali (...)
+\end{enumerate} 
+In tutto sono 24 e servono per il calcolo della posizione dell'accento tonico per ogni parola del testo di input. \newline
+Queste caratterisiche sono utilizzate per addestrare il classificatore \textbf{Random Forest}. È un modello di Machine Learning 
+supervisionato basato sugli alberi decisionali. Dopo l'addestramento sui dataset, impara a predire la posizione dell'accento tonico
+della parola categorizzandola in una delle seguenti categorie:
+\begin{enumerate}
+    \item ultima sillaba
+    \item penultima sillaba
+    \item antepenultima sillaba
+    \item preantepenultima sillaba
+\end{enumerate}
+In seguito, si passa all'acquisizione e alla normalizzazione del testo. Qui vengono eliminati eventuali problemi di codifica,
+uniformati gli spazi e rimossi gli elementi non necessari all'analisi (...).
+Il testo viene poi elaborato tramite spaCy, il quale per ogni parola ottiene:
+\begin{enumerate}
+    \item token
+    \item lemma
+    \item categoria grammaticale (POS)
+    \item relazioni sintattiche
+    \item posizione nella frase
+    \item punteggiatura circostante
+\end{enumerate}
+Prima di passare al Random Forest, avviene il conteggio delle sillabe grazie ai dati annotati nei dataset, Pyphen e un algoritmo euristico di fallback (...).\newline
 
+Infine, tutte queste informazioni vengono trasformate in una sequenza di impulsi ritmici. Ogni sillaba viene classificata come:
+\begin{enumerate}
+    \item strong: accentata, dove sarà posizionata la nota dominante (corrispondente a un hit di batteria?)
+    \item weak: non accentata, dove sarà posizionata la stessa nota più lieve (hat?)
+\end{enumerate}
+Inoltre, la punteggiatura generale aggiunge pause brevi e lunghe.\newline
+Infine, il sistema produce:
+\begin{enumerate}
+    \item CSV analitico, il quale per ogni parola contiene l'accento predetto, il numero di sillabe, informazionni grammaticali e sintattiche
+    \item CSV ritmico che contine la sequenza di impulsi forti, deboli e pause.
+    \item schema ritimico MIDI (opzionale?) utilizzabile nelle seguenti fasi di generazione musicale. 
+\end{enumerate}
+
+
+
+\subsection{Produzione dello schema ritmico}
+(forse si può approfondire... togliendo la parte finale della sezione di sopra)
+\subsection{Scelta degli strumenti}
+\subsection{Produzione della melodia}
 
 
 
