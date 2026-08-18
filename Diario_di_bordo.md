@@ -32,7 +32,7 @@ RT
 
 Test importante: pyphen non è affidabile come fonte primaria per l'italiano — le sue regole sono pensate per l'a-capo tipografico (TeX), non per la fonetica, quindi sbaglia sistematicamente proprio i casi di iato che il commento del file promette di risolvere (poesia → poe-sia, dovrebbe essere po-e-si-a; verificato contro il conteggio reale PhonItalia).
 
-Conferma sistematica: pyphen sbaglia quasi sempre proprio sui casi di iato (7 errori su 13, tutti sistematicamente sottostimati). Verifico che la mia euristica attuale (che gestisce esplicitamente iato vs dittongo) se la cavi meglio su questi stessi casi.
+Conferma sistematica: **pyphen** sbaglia quasi sempre proprio sui casi di iato (7 errori su 13, tutti sistematicamente sottostimati). Verifico che la mia euristica attuale (che gestisce esplicitamente iato vs dittongo) se la cavi meglio su questi stessi casi.
 
 Quindi non uso pyphen come fonte primaria, lo integro invece come seconda opzione più un meccanismo di riconciliazione che sfrutta il conteggio reale PhonItalia (SumSylls) già disponibile per correggere i casi sbagliati (es. "poesia", "farmacia").
 
