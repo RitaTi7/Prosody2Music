@@ -29,8 +29,33 @@ import os
 import random
 from collections import Counter
 
-DEFAULT_MIDI_DIR = os.path.join(os.path.dirname(__file__), "repo_lakh-midi", "clean_midi")
-STATS_PATH = os.path.join(os.path.dirname(__file__), "data", "lakh_stats.json")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+_CANDIDATE_ROOTS = [
+    os.path.join(_HERE, "..", "lakh-midi"),  # struttura utente: lakh-midi sibling di Progetto
+    os.path.join(_HERE, "lakh-midi"),
+    os.path.join(_HERE, "repo_lakh-midi"),   # nome usato durante lo sviluppo
+]
+
+
+def _find_clean_midi_dir():
+    """Cerca la cartella clean_midi in uno dei path candidati."""
+    for root in _CANDIDATE_ROOTS:
+        if not os.path.isdir(root):
+            continue
+        direct = os.path.join(root, "clean_midi")
+        if os.path.isdir(direct):
+            return direct
+        # fallback: la cartella stessa contiene già i .mid, o è annidata diversamente
+        matches = glob.glob(os.path.join(root, "**", "clean_midi"), recursive=True)
+        if matches:
+            return matches[0]
+        if glob.glob(os.path.join(root, "*.mid")):
+            return root
+    return None
+
+
+DEFAULT_MIDI_DIR = _find_clean_midi_dir() or os.path.join(_HERE, "..", "lakh-midi", "clean_midi")
+STATS_PATH = os.path.join(_HERE, "data", "lakh_stats.json")
 
 MAX_STEP = 12  # ignoriamo salti melodici oltre un'ottava (outlier/errori di traccia)
 
@@ -59,7 +84,7 @@ def _extract_from_file(pm):
 
     inst = _main_melodic_instrument(pm)
     if inst is None:
-        return intervals, durations_beats
+        return intervals, durations_beats, 120.0
 
     notes = sorted(inst.notes, key=lambda n: n.start)
     tempo = pm.estimate_tempo() if pm.get_tempo_changes()[1].size else 120.0
@@ -77,7 +102,7 @@ def _extract_from_file(pm):
         if 0.125 <= dur_beats <= 4.0:
             durations_beats.append(dur_beats)
 
-    return intervals, durations_beats
+    return intervals, durations_beats, tempo
 
 
 def build_stats(midi_dir=DEFAULT_MIDI_DIR, max_files=300, seed=42, verbose=True):
@@ -103,7 +128,7 @@ def build_stats(midi_dir=DEFAULT_MIDI_DIR, max_files=300, seed=42, verbose=True)
             pm = pretty_midi.PrettyMIDI(path)
         except Exception:
             continue
-        intervals, durations = _extract_from_file(pm)
+        intervals, durations = _extract_from_file(pm)[:2]
         if not intervals:
             continue
         interval_counter.update(intervals)
@@ -190,6 +215,63 @@ class LakhIntervalModel:
         durs = list(self.duration_counts.keys())
         weights = [self.duration_counts[d] for d in durs]
         return rng.choices(durs, weights=weights, k=1)[0]
+
+
+def extract_interval_sequences(midi_dir=DEFAULT_MIDI_DIR, max_files=600, min_len=8, max_len=64,
+                                seed=42, verbose=True):
+    """
+    A differenza di build_stats() (che aggrega solo conteggi bigramma, utili
+    per il modello statistico LakhIntervalModel), questa funzione ritorna le
+    SEQUENZE ORDINATE complete di intervalli melodici per ogni file, così
+    come sono nella canzone originale. Serve per addestrare un modello
+    autoregressivo (transformer) che deve imparare dipendenze su più note
+    consecutive, non solo la probabilità del prossimo intervallo dato quello
+    corrente.
+
+    Ogni sequenza viene troncata a max_len intervalli (i brani reali sono
+    lunghi; spezzarli in finestre più corte rende il training più stabile
+    e più veloce su CPU) e scartata se più corta di min_len.
+
+    Ogni elemento ritornato è un dict {"intervals": [...], "tempo": float}:
+    il tempo serve a transformer_melody.py per calcolare un PROXY di
+    arousal/valenza dalle caratteristiche musicali reali del brano (tempo,
+    ampiezza dei salti, tendenza ad ascendere/discendere), da usare come
+    segnale di condizionamento durante il training — Lakh MIDI non ha
+    etichette di emozione, quindi un condizionamento assegnato a caso
+    sarebbe stato ignorato dal modello (nessuna correlazione da imparare).
+    """
+    import pretty_midi
+
+    all_files = glob.glob(os.path.join(midi_dir, "**", "*.mid"), recursive=True)
+    if not all_files:
+        if verbose:
+            print(f"[lakh_midi] nessun file .mid trovato in {midi_dir}")
+        return []
+
+    rng = random.Random(seed)
+    rng.shuffle(all_files)
+    sample = all_files[:max_files]
+
+    sequences = []
+    n_ok = 0
+    for path in sample:
+        try:
+            pm = pretty_midi.PrettyMIDI(path)
+        except Exception:
+            continue
+        intervals, _, tempo = _extract_from_file(pm)
+        if len(intervals) < min_len:
+            continue
+        n_ok += 1
+        for i in range(0, len(intervals), max_len):
+            chunk = intervals[i:i + max_len]
+            if len(chunk) >= min_len:
+                sequences.append({"intervals": chunk, "tempo": tempo})
+
+    if verbose:
+        print(f"[lakh_midi] estratte {len(sequences)} sequenze da {n_ok}/{len(sample)} file utilizzabili")
+
+    return sequences
 
 
 if __name__ == "__main__":

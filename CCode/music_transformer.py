@@ -1,15 +1,22 @@
 """
 music_transformer.py — Blocco generativo: (ritmo, emotion embedding) -> (melodia, armonia)
 
-Nota di design: un vero "Music Transformer" (Huang et al.) è un modello
-sequence-to-sequence attention-based addestrato su grandi corpora MIDI.
-Qui non abbiamo un modello addestrato né dati di training, quindi questo
-modulo implementa uno strato generativo *condizionato* — una policy
-stocastica pesata dall'emotion embedding — che gioca lo stesso ruolo
-architetturale nella pipeline (prende rhythm+embedding, produce note),
-e può essere sostituito 1:1 da un vero transformer addestrato in futuro
-senza toccare il resto della pipeline (l'interfaccia è la stessa:
-generate(rhythm, emotion) -> Melody, Harmony).
+Nota di design: la scelta del prossimo intervallo melodico segue una catena
+di fallback a tre livelli, in ordine di preferenza:
+
+  1. deep transformer autoregressivo (transformer_melody.py), addestrato da
+     zero su sequenze reali del corpus Lakh MIDI, condizionato dall'emotion
+     embedding — usato per l'INTERA sequenza di intervalli di una poesia in
+     un colpo solo (non nota per nota), per sfruttare davvero la self-attention
+     sulle note precedenti;
+  2. se torch non è installato o non c'è/non si riesce a costruire una cache
+     del modello: modello bigramma sulla distribuzione empirica Lakh
+     (LakhIntervalModel, lakh_midi.py) — nota per nota;
+  3. se neanche Lakh è disponibile: random-walk euristico pesato da
+     valenza/arousal.
+
+La pipeline non si rompe mai: ogni livello mancante fa degradare la qualità
+della melodia, non la esecuzione.
 """
 
 import random
@@ -20,6 +27,12 @@ try:
     _LAKH_AVAILABLE = True
 except ImportError:
     _LAKH_AVAILABLE = False
+
+try:
+    from transformer_melody import load_or_train_model, generate as _deep_generate
+    _DEEP_TRANSFORMER_AVAILABLE = True
+except ImportError:
+    _DEEP_TRANSFORMER_AVAILABLE = False
 
 # --- Scale musicali (intervalli in semitoni dalla tonica) ---
 SCALES = {
@@ -96,7 +109,7 @@ class MusicTransformer:
     poem_analysis: output di prosody.analyze_poem()
     """
 
-    def __init__(self, seed=None, use_lakh=True):
+    def __init__(self, seed=None, use_lakh=True, use_deep_transformer=True, verbose=True):
         self.rng = random.Random(seed)
         self.lakh_model = None
         if use_lakh and _LAKH_AVAILABLE:
@@ -104,6 +117,35 @@ class MusicTransformer:
             model = LakhIntervalModel(stats)
             if model.available:
                 self.lakh_model = model
+
+        # Livello 1 (preferito): deep transformer autoregressivo. Se manca
+        # una cache addestrata (data/melody_transformer.pt) load_or_train_model
+        # prova ad addestrarla al volo dal corpus Lakh (richiede repo_lakh-midi/
+        # accanto agli script, vedi lakh_midi.py); se anche quello non è
+        # disponibile (né torch, né dati) ritorna None e si scende al livello
+        # 2 (bigramma) senza errori. verbose=True di default per non
+        # nascondere un eventuale training al primo avvio, che può richiedere
+        # qualche minuto su CPU.
+        self.deep_model = None
+        if use_deep_transformer and _DEEP_TRANSFORMER_AVAILABLE:
+            self.deep_model = load_or_train_model(verbose=verbose)
+
+    def _deep_interval_sequence(self, n_intervals, valence, arousal):
+        """Pre-genera in un colpo solo l'intera sequenza di intervalli per
+        la poesia (o None se il deep transformer non è disponibile), così
+        ogni intervallo è condizionato dall'attenzione su TUTTI quelli
+        generati prima nella stessa sequenza — a differenza del bigramma,
+        che vede solo l'ultimo passo."""
+        if self.deep_model is None or n_intervals <= 0:
+            return None
+        seed = self.rng.randint(0, 2**31 - 1)
+        try:
+            return _deep_generate(self.deep_model, valence=valence, arousal=arousal,
+                                   length=n_intervals, seed=seed)
+        except Exception:
+            # qualunque problema a inferenza (es. cache corrotta) non deve
+            # far crollare la pipeline: si ricade sul bigramma/euristica
+            return None
 
     def _melodic_step_semitones(self, valence, arousal):
         """
@@ -154,6 +196,16 @@ class MusicTransformer:
         progressions = PROGRESSIONS[mode]
         prog = self.rng.choice(progressions)
 
+        # Livello 1: se il deep transformer è disponibile, genera QUI l'intera
+        # sequenza di intervalli per tutta la poesia in un solo colpo (una
+        # chiamata autoregressiva che vede l'attenzione su tutte le note
+        # precedenti), invece che nota per nota dentro il loop sottostante.
+        n_syllables_total = sum(len(verse["rhythm"]) for verse in poem_analysis)
+        deep_queue = self._deep_interval_sequence(
+            n_syllables_total, emotion["valence"], emotion["arousal"]
+        )
+        deep_idx = 0
+
         current_pitch = root  # partenza dalla tonica
         chord_idx = 0
 
@@ -163,7 +215,13 @@ class MusicTransformer:
 
             # --- MELODIA: una nota per sillaba ---
             for dur_units in rhythm:
-                step = self._melodic_step_semitones(emotion["valence"], emotion["arousal"])
+                if deep_queue is not None and deep_idx < len(deep_queue):
+                    step = deep_queue[deep_idx]
+                    deep_idx += 1
+                else:
+                    # coda del deep transformer esaurita o non disponibile:
+                    # livello 2 (bigramma Lakh) / livello 3 (euristica)
+                    step = self._melodic_step_semitones(emotion["valence"], emotion["arousal"])
                 candidate_pitch = current_pitch + step
                 # aggancia il pitch cromatico campionato alla scala della modalità scelta
                 degree = self._nearest_scale_degree(scale, root, candidate_pitch)
@@ -183,7 +241,13 @@ class MusicTransformer:
             harmony.chords.append(Chord(pitches=[chord_root, third, fifth], duration=verse_duration))
             chord_idx += 1
 
-        meta = {"mode": mode, "root": root, "tempo": tempo}
+        if deep_queue is not None:
+            melody_source = "deep_transformer" if deep_idx >= n_syllables_total else "deep_transformer+fallback"
+        elif self.lakh_model is not None:
+            melody_source = "lakh_bigram"
+        else:
+            melody_source = "heuristic"
+        meta = {"mode": mode, "root": root, "tempo": tempo, "melody_source": melody_source}
         return melody, harmony, meta
 
 
