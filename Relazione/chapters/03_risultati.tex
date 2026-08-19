@@ -1,26 +1,48 @@
 \section{Metodologie utilizzate}
 Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
 
-Per svolgere questo task si farà uso di un transformer
+Per svolgere questo task si farà uso di un transformer.
+\section{Transformer}
+Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
 
-\begin{table}[H]
-\centering
-\caption{Esempio di tabella sintetica.}
-\begin{tabular}{lcc}
-\toprule
-Metodo & Valore medio & Deviazione standard \\
-\midrule
-A & 2.34 & 0.41 \\
-B & 2.85 & 0.27 \\
-C & 3.12 & 0.33 \\
-\bottomrule
-\end{tabular}
-\end{table}
+Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per processare dati sequenziali come, ad esempio, testi in linguaggio naturale, con applicazioni alla loro generazione e traduzione automatica. Tuttavia, a differenza delle RNN, i trasformatori elaborano l'intero insieme di dati d'ingresso simultaneamente. Il cosiddetto meccanismo di attenzione fornisce il contesto per ogni posizione nella sequenza di ingresso. Per esempio, se i dati rappresentano una frase, il trasformatore non deve elaborare una parola alla volta: questo permette una maggiore parallelizzazione rispetto alle RNN e perciò porta a ridurre i tempi di addestramento.
 
-\section{Stima del modello}
-Un risultato di interesse \`e dato dalla seguente stima:
-\begin{equation}
-\hat{\beta} = \argmin_{\beta \in \R^p} \left\{ \|\vect{y} - \mat{X}\beta\|_2^2 + \lambda \|\beta\|_1 \right\}.
-\end{equation}
+Fonte: https://it.wikipedia.org/wiki/Trasformatore
 
-Questo tipo di formulazione evidenzia come la regolarizzazione possa stabilire un compromesso tra accuratezza del fit e generalizzazione del modello.
+Nell'ambito del progetto il transformer sarà usato per il fine della produzione musicale.
+\section{Librerie}
+\subsection{Pythorch}
+
+\section{Trainig del modello}
+L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintassi melodica generale (come le note si susseguono in modo musicale) e come piegare questa melodia in base al contesto emotivo (Valenza e Arousal).
+
+L'addestramento funziona nelle seguenti fasi:
+\begin{enumerate}
+    \item Invece di insegnare alla rete le note assolute (es. Do, Re, Mi), il modello impara gli intervalli melodici in semitoni tra una nota e la successiva (es. $+2$ per un salto di tono in avanti, $-3$ per una terza minore all'indietro).
+    Un salto di +2 semitoni ha la stessa "funzione melodica" sia in Do maggiore che in Fa\# maggiore. Questo riduce il vocabolario a soli 25 token.
+    La mappaatura dei token funziona attraverso la seguente formula:
+    \[
+    \text{Token ID} = \text{Intervallo (in semitoni)}+12
+    \]
+    \item Per evitare l'overfitting sul corpus MIDI (composto da poche migliaia di file) e rendere il modello capace di generalizzare su qualsiasi nuova poesia, durante l'addestramento vengono applicate due tecniche fondamentali:
+
+    Per ogni sequenza di intervalli $[s_1, s_2, s_3, \dots]$, lo script genera la sua versione speculare $[-s_1, -s_2, -s_3, \dots]$. Questo raddoppia la dimensione del dataset e insegna alla rete che i movimenti melodici speculari sono egualmente validi.
+
+    Nel 15\% dei casi di addestramento, i valori di Valenza e Arousal passati alla rete vengono impostati forzatamente a zero [0.0, 0.0].
+    Si fa per Costringe il Transformer a imparare prima la struttura della sintassi musicale in modo indipendente ("incondizionato") e solo successivamente a correlarla alle emozioni, evitando che si affidi unicamente all'emozione ignorando la coerenza melodica.
+    \item Il modello elabora il contesto attraverso due flussi che si uniscono:
+    \begin{itemize}
+        \item     Embedding Emotivo: La coppia di valori continui $(V, A) \in [-1, 1]$ passa attraverso uno strato denso (nn.Linear) che la proietta in un vettore a 128 dimensioni. Questo vettore viene concatenato all'inizio della sequenza come primo token (prefisso).
+        \item Causal Masking (Maschera Triangolare Superiore):Durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
+        \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
+    \end{itemize} 
+    \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
+    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{24} y_{c} \log(\hat{y}_{c})$$
+     Per l'ottimizzazione viene usato l'ottimizzatore AdamW con:Weight Decay ($10^{-2}$): Penalizza i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
+\end{enumerate}
+Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
+\begin{enumerate}
+    \item A ogni passo, la rete calcola i logits per la nota successiva. Applicando una Temperatura ($T = 0.85$) e un Cut-off Top-p ($p = 0.90$), seleziona solo il sottoinsieme di intervalli più plausibili e ne campiona uno probabilisticamente.
+    \item Gli intervalli generati dal Transformer vengono infine "agganciati" ai gradi della scala selezionata dall'analisi prosodico-emotiva, garantendo un risultato privo di dissonanze.
+\end{enumerate}
+

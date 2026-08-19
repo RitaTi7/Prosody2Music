@@ -16,7 +16,7 @@ Uso:
 import argparse
 import sys
 import os
-
+from visualizer import plot_melody_and_rhythm, plot_emotion_space
 from prosody import analyze_poem
 from emotion import analyze_emotion
 from music_transformer import MusicTransformer
@@ -148,7 +148,9 @@ def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
               f"  armonia={harmony_instrument} ({INSTRUMENT_PRESETS[harmony_instrument]['label']})")
         print(f"  note melodia: {len(melody.notes)}   accordi armonia: {len(harmony.chords)}")
         print()
-
+    # Generazione Grafici Esplicativi
+    plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(out_dir, "melody_rhythm.png"))
+    plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(out_dir, "emotion_space.png"))
     # 4) MIDI
     midi_path = os.path.join(out_dir, f"{basename}.mid")
     build_midi(melody, harmony, tempo=meta["tempo"],
