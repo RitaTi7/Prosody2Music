@@ -119,7 +119,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
         print()
 
     # 3) MUSIC TRANSFORMER: rhythm + emotion -> melodia + armonia
-    mt = MusicTransformer(seed=seed)
+    mt = MusicTransformer(seed=seed, verbose=verbose)
     melody, harmony, meta = mt.generate(poem_analysis, emotion, text_seed=text)
 
     # tempo: se l'utente ne specifica uno, sostituisce quello scelto
@@ -143,6 +143,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
         print("=== MUSIC TRANSFORMER (output) ===")
         print(f"  modalità: {meta['mode']}   tonica MIDI: {meta['root']}   tempo: {meta['tempo']} bpm"
               + (f"   duration_scale: {duration_scale}x" if duration_scale != 1.0 else ""))
+        print(f"  fonte melodia: {meta['melody_source']}")
         print(f"  strumenti: melodia={melody_instrument} ({INSTRUMENT_PRESETS[melody_instrument]['label']})"
               f"  armonia={harmony_instrument} ({INSTRUMENT_PRESETS[harmony_instrument]['label']})")
         print(f"  note melodia: {len(melody.notes)}   accordi armonia: {len(harmony.chords)}")
