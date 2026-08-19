@@ -19,7 +19,7 @@ L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintass
 L'addestramento funziona nelle seguenti fasi:
 \begin{enumerate}
     \item Invece di insegnare alla rete le note assolute (es. Do, Re, Mi), il modello impara gli intervalli melodici in semitoni tra una nota e la successiva (es. $+2$ per un salto di tono in avanti, $-3$ per una terza minore all'indietro).
-    Un salto di +2 semitoni ha la stessa "funzione melodica" sia in Do maggiore che in Fa\# maggiore. Questo riduce il vocabolario a soli 25 token.
+    Un salto di +2 semitoni ha la stessa "funzione melodica" sia in Do maggiore che in Fa\# maggiore. Questo riduce il vocabolario a soli 26 token (25 intervalli + 1 token di PAD dedicato).
     La mappaatura dei token funziona attraverso la seguente formula:
     \[
     \text{Token ID} = \text{Intervallo (in semitoni)}+12
@@ -37,7 +37,7 @@ L'addestramento funziona nelle seguenti fasi:
         \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
     \end{itemize} 
     \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
-    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{24} y_{c} \log(\hat{y}_{c})$$
+    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{25} y_{c} \log(\hat{y}_{c})$$
      Per l'ottimizzazione viene usato l'ottimizzatore AdamW con:Weight Decay ($10^{-2}$): Penalizza i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
 \end{enumerate}
 Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
@@ -58,7 +58,7 @@ Ciascuna nota viene rappresentata in memoria come un oggetto o tupla contenente:
 \item Velocity (Dinamica/Volume di attacco): Valore tra 1 e 127, derivato dall'Arousal emotivo (valori più alti per sezioni più intense/energetiche).
 \end{itemize}
 
-Utilizzando la libreria Python mido, viene creato il file MIDI Type 1 che supporta tracce multiple indipendenti che suonano in parallelo mantenendo un'unica sequenza temporale sincronizzata.
+Utilizzando la libreria Python pretty\_midi, viene creato il file MIDI Type 1 che supporta tracce multiple indipendenti che suonano in parallelo mantenendo un'unica sequenza temporale sincronizzata.
 Successivamente viene definita la risoluzione temporale, espressa in TPQN (Ticks Per Quarter Note), solitamente impostata su 480 o 960 tick per semiminima (quarto). Questo garantisce una griglia temporale precisa sia per le note in levare sia per gli arpeggi veloci.
 
 Viene poi creata una prima traccia (o inseriti nell'header) i messaggi di meta-informazione:
@@ -79,6 +79,5 @@ Per ogni traccia, tutti gli eventi di inizio nota (Note On) e fine nota (Note Of
 Per ogni evento $E_i$ al tempo $T_i$, il delta-time è dato da:$$\Delta t = T_i - T_{i-1}$$
 La coordinazione dei delta-time garantisce che le note sovrapposte negli accordi del Pad vengano aperte simultaneamente ($\Delta t = 0$ tra le note dello stesso accordo) e chiuse correttamente a fine battuta.
 Fatto questo la traccia viene salvata in un file .mid.
-Il file .mid generato non serve solo come output finale per l'utente (apribile in qualsiasi DAW o software musicale), ma costituisce l'input diretto per il modulo synth.py 
-che legge le 4 tracce MIDI, estrae i messaggi note\_on/note\_off, i canali e le velocità e poi converte ogni nota MIDI nella corrispondente frequenza in Hz ($f = 440 \times 2^{(pitch - 69)/12}$) per sintetizzare l'onda audio WAV finale.
 
+Syth riceve direttamente gli oggetti Melody/Harmony in memoria (vedi mix\_and\_export()), evitando un giro di parsing MIDI ridondante. Se nella versione finale è stato riscritto per leggere davvero dal file .mid, va bene, ma allora la frase andrebbe verificata contro il codice reale, non assunta.

@@ -8,7 +8,18 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-MODEL_PATH = os.path.join("data", "melody_transformer.pt")
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_PATH = os.path.join(PROJECT_ROOT, "data", "melody_transformer.pt")
+
+# Token di padding dedicato, DIVERSO dal token 12 (che rappresenta un vero
+# intervallo musicale di 0 semitoni, cioè una nota ripetuta). Prima questo
+# fix, il padding riusava il token 12 e la loss non li distingueva: il
+# modello veniva rinforzato a predire "nota ripetuta" anche solo per
+# riempire sequenze corte, gonfiando artificialmente quella probabilità
+# ben oltre la sua reale frequenza nei dati (~21-42% osservato, contro
+# 76-92% appreso dal modello prima del fix — verificato empiricamente).
+PAD_TOKEN = 25
+VOCAB_SIZE = 26  # 25 intervalli (0..24, cioè -12..+12 semitoni) + 1 PAD
 
 # --- SAMPLING: Top-p (Nucleus) + Temperature ---
 def sample_top_p(logits, temperature=0.85, top_p=0.9):
@@ -30,10 +41,11 @@ def sample_top_p(logits, temperature=0.85, top_p=0.9):
 
 # --- ARCHITETTURA NEURALE ---
 class MelodyTransformerModel(nn.Module):
-    def __init__(self, vocab_size=25, d_model=128, nhead=4, num_layers=3, dropout=0.2):
+    def __init__(self, vocab_size=VOCAB_SIZE, d_model=128, nhead=4, num_layers=3, dropout=0.2):
         super().__init__()
         self.vocab_size = vocab_size
-        self.embedding = nn.Embedding(vocab_size, d_model)
+        padding_idx = PAD_TOKEN if vocab_size > PAD_TOKEN else None
+        self.embedding = nn.Embedding(vocab_size, d_model, padding_idx=padding_idx)
         self.emotion_fc = nn.Linear(2, d_model)  # Proiezione di Valence e Arousal
         
         encoder_layer = nn.TransformerEncoderLayer(
@@ -62,15 +74,18 @@ class MelodyTransformerModel(nn.Module):
 class TrainedMelodyTransformer:
     def __init__(self, model_path=MODEL_PATH):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model = MelodyTransformerModel().to(self.device)
-        
+
         if os.path.exists(model_path):
             checkpoint = torch.load(model_path, map_location=self.device)
-            self.model.load_state_dict(checkpoint["state_dict"])
+            state_dict = checkpoint["state_dict"]
+            vocab_size = state_dict["embedding.weight"].shape[0]
+            self.model = MelodyTransformerModel(vocab_size=vocab_size).to(self.device)
+            self.model.load_state_dict(state_dict)
             self.stats = checkpoint.get("stats", {})
             self.model.eval()
             self.loaded = True
         else:
+            self.model = MelodyTransformerModel().to(self.device)
             self.loaded = False
 
     def generate(self, valence, arousal, length=32, temperature=0.85, top_p=0.9, seed=None):
@@ -89,7 +104,9 @@ class TrainedMelodyTransformer:
             
             for _ in range(length - 1):
                 x = torch.tensor([generated], dtype=torch.long).to(self.device)
-                logits = self.model(x, emotion)[0, -1, :]
+                logits = self.model(x, emotion)[0, -1, :].clone()
+                if self.model.vocab_size > PAD_TOKEN:
+                    logits[PAD_TOKEN] = float('-inf')  # non è un intervallo valido, mai generabile
                 next_token = sample_top_p(logits, temperature=temperature, top_p=top_p)
                 generated.append(next_token)
                 
