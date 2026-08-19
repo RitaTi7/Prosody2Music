@@ -18,8 +18,41 @@ except ImportError:
     _PRETTY_MIDI_AVAILABLE = False
 
 
+def _proxy_valence_arousal(intervals, tempo):
+    """Stima un proxy di (valenza, arousal) dalle caratteristiche musicali
+    REALI della sequenza (tendenza a salire/scendere, ampiezza dei salti,
+    tempo del brano) — non da un'etichetta emotiva umana, che Lakh MIDI non
+    ha.
+
+    È fondamentale che sia un proxy CORRELATO con la sequenza e non un
+    valore casuale: un condizionamento scollegato statisticamente dal
+    target non dà al modello nulla da imparare (la loss scende comunque,
+    ma il ramo emotion_fc converge a ignorare l'input, perché non c'è
+    nessuna dipendenza vera da catturare). Con un proxy derivato dai dati,
+    invece, il modello impara una relazione reale tra "condizionamento" e
+    "stile della melodia", che è quello che serve per rispondere in modo
+    sensato all'emotion embedding vero della poesia in inferenza.
+
+    Stessa mappatura euristica già usata altrove nella pipeline
+    (music_transformer.py: valenza alta -> preferenza a salire, arousal
+    alto -> salti più ampi/tempo più veloce), applicata qui alla rovescia.
+    """
+    if not intervals:
+        return 0.0, 0.0
+    mean_interval = sum(intervals) / len(intervals)
+    mean_abs = sum(abs(i) for i in intervals) / len(intervals)
+
+    valence_proxy = max(-1.0, min(1.0, mean_interval / 4.0))
+    tempo_norm = max(0.0, min(1.0, (tempo - 60) / 120))
+    jump_norm = max(0.0, min(1.0, mean_abs / 5.0))
+    arousal_proxy = max(-1.0, min(1.0, (tempo_norm + jump_norm) - 1.0))
+    return valence_proxy, arousal_proxy
+
+
 def extract_sequences_from_midi(corpus_dir=".", max_files=400):
-    """Estrae le sequenze di intervalli melodici direttamente dai file MIDI."""
+    """Estrae le sequenze di intervalli melodici direttamente dai file MIDI,
+    con un proxy di valenza/arousal calcolato dalle caratteristiche
+    musicali reali di ciascuna sequenza (vedi _proxy_valence_arousal)."""
     if not _PRETTY_MIDI_AVAILABLE:
         print("[train_offline] Errore: libreria 'pretty_midi' non installata.")
         return []
@@ -38,6 +71,9 @@ def extract_sequences_from_midi(corpus_dir=".", max_files=400):
     for path in midi_files[:max_files]:
         try:
             pm = pretty_midi.PrettyMIDI(path)
+            tempo = pm.estimate_tempo() if pm.get_tempo_changes()[1].size else 120.0
+            tempo = tempo if 30 < tempo < 300 else 120.0
+
             for inst in pm.instruments:
                 if inst.is_drum:
                     continue
@@ -49,11 +85,12 @@ def extract_sequences_from_midi(corpus_dir=".", max_files=400):
                 intervals = [pitches[i+1] - pitches[i] for i in range(len(pitches)-1)]
                 # Clamping degli intervalli nell'intervallo [-12, +12]
                 intervals = [max(-12, min(12, inv)) for inv in intervals]
-                
+
+                valence_proxy, arousal_proxy = _proxy_valence_arousal(intervals, tempo)
                 sequences.append({
                     "intervals": intervals,
-                    "valence": random.uniform(-0.5, 0.5),  # Simula variabilità emotiva nel corpus
-                    "arousal": random.uniform(-0.5, 0.5)
+                    "valence": valence_proxy,
+                    "arousal": arousal_proxy,
                 })
         except Exception:
             continue

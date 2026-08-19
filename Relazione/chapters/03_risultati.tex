@@ -45,4 +45,40 @@ Una volta completato il training sarà possibile effettuare la generazione della
     \item A ogni passo, la rete calcola i logits per la nota successiva. Applicando una Temperatura ($T = 0.85$) e un Cut-off Top-p ($p = 0.90$), seleziona solo il sottoinsieme di intervalli più plausibili e ne campiona uno probabilisticamente.
     \item Gli intervalli generati dal Transformer vengono infine "agganciati" ai gradi della scala selezionata dall'analisi prosodico-emotiva, garantendo un risultato privo di dissonanze.
 \end{enumerate}
+è inoltre importante dire che il modello si affida unicamente alla maschera causale per l'informazione d'ordine, senza un positional encoding esplicito, scelta accettabile data la lunghezza contenuta delle sequenze.
+
+\section{MIDI}
+
+Una volta terminata la parte legata al transformer si potrà iniziare a fare uso di MIDI per la creazione del vero e proprio file musicale.
+Ciascuna nota viene rappresentata in memoria come un oggetto o tupla contenente:
+\begin{itemize}
+\item Pitch (Altezza): Numero intero compreso tra 0 e 127 (secondo lo standard MIDI, dove es. 60 = Do centrale / C4).
+\item Start Time (Tempo d'inizio): Espresso in battute o secondi assoluti dall'inizio del brano.
+\item Duration (Durata): Durata della nota espressa in frazioni di battuta o secondi.
+\item Velocity (Dinamica/Volume di attacco): Valore tra 1 e 127, derivato dall'Arousal emotivo (valori più alti per sezioni più intense/energetiche).
+\end{itemize}
+
+Utilizzando la libreria Python mido, viene creato il file MIDI Type 1 che supporta tracce multiple indipendenti che suonano in parallelo mantenendo un'unica sequenza temporale sincronizzata.
+Successivamente viene definita la risoluzione temporale, espressa in TPQN (Ticks Per Quarter Note), solitamente impostata su 480 o 960 tick per semiminima (quarto). Questo garantisce una griglia temporale precisa sia per le note in levare sia per gli arpeggi veloci.
+
+Viene poi creata una prima traccia (o inseriti nell'header) i messaggi di meta-informazione:
+\begin{itemize}
+    \item BPM / Tempo: Convertito nel valore microsecondi-per-quarto tramite mido.bpm2tempo(bpm).
+    \item Time Signature: Impostata la misura del brano (es. 4/4).
+\end{itemize}
+Successivamente il file viene suddiviso in 4 tracce MIDI distinte (MidiTrack), ciascuna associata a un canale MIDI indipendente (da 0 a 3):
+\begin{itemize}
+    \item Track 0: la melodia principale prosodica.
+    \item Track 1: Il tappeto armonico (accordi).
+    \item Track 2: La linea di basso fondamentale.
+    \item Track 3: Arpeggio e movimento.
+\end{itemize}
+
+I file MIDI non memorizzano il tempo assoluto (es. "suona a 2.5 secondi"), ma utilizzano il Delta-Time: il tempo trascorso tra l'evento precedente e quello attuale sulla medesima traccia.
+Per ogni traccia, tutti gli eventi di inizio nota (Note On) e fine nota (Note Off) vengono convertiti in coppie di eventi temporali e ordinati cronologicamente, il tempo in battute/secondi viene convertito in numero di tick:$$\text{ticks} = \text{tempo\_in\_quarti} \times \text{TPQN}$$
+Per ogni evento $E_i$ al tempo $T_i$, il delta-time è dato da:$$\Delta t = T_i - T_{i-1}$$
+La coordinazione dei delta-time garantisce che le note sovrapposte negli accordi del Pad vengano aperte simultaneamente ($\Delta t = 0$ tra le note dello stesso accordo) e chiuse correttamente a fine battuta.
+Fatto questo la traccia viene salvata in un file .mid.
+Il file .mid generato non serve solo come output finale per l'utente (apribile in qualsiasi DAW o software musicale), ma costituisce l'input diretto per il modulo synth.py 
+che legge le 4 tracce MIDI, estrae i messaggi note\_on/note\_off, i canali e le velocità e poi converte ogni nota MIDI nella corrispondente frequenza in Hz ($f = 440 \times 2^{(pitch - 69)/12}$) per sintetizzare l'onda audio WAV finale.
 

@@ -57,6 +57,39 @@ class Harmony:
     chords: list = field(default_factory=list)
 
 
+def derive_bass_and_arpeggio(harmony: Harmony, step_beats: float = 0.5):
+    """Deriva le tracce di basso e arpeggio dall'armonia, in BEAT (le
+    stesse unità di Melody.notes/Chord.duration in tutta la pipeline).
+
+    Prima questa logica esisteva DUPLICATA in due punti (main.py, solo per
+    la stampa a schermo e in unità sbagliate — trattava chord.duration come
+    "beat relativo" senza convertirlo col tempo reale; synth.py, per il
+    rendering audio effettivo, in secondi): due copie indipendenti della
+    stessa formula sono un rischio concreto di andare fuori sync la prima
+    volta che una delle due viene modificata senza toccare l'altra.
+    Centralizzandola qui, sia midi_builder.py (file .mid) sia synth.py
+    (file .wav) partono dagli STESSI eventi — il .mid che esporti e il
+    .wav che ascolti rappresentano davvero la stessa composizione.
+
+    Basso: una nota per accordo, alla fondamentale abbassata di un'ottava.
+    Arpeggio: ogni accordo diviso in passi di `step_beats` (default: croma),
+    ciclando sulle note dell'accordo (pizzicato/arpa)."""
+    bass_notes = []
+    arpeggio_notes = []
+    for chord in harmony.chords:
+        dur = chord.duration
+        root_pitch = min(chord.pitches) if chord.pitches else 48
+        bass_pitch = max(28, root_pitch - 12)
+        bass_notes.append(Note(pitch=bass_pitch, duration=dur, velocity=65))
+
+        n_steps = max(1, int(round(dur / step_beats)))
+        actual_step = dur / n_steps
+        for i in range(n_steps):
+            p = chord.pitches[i % len(chord.pitches)] if chord.pitches else bass_pitch
+            arpeggio_notes.append(Note(pitch=p, duration=actual_step, velocity=50))
+    return bass_notes, arpeggio_notes
+
+
 def choose_mode(emotion: dict) -> str:
     v, a = emotion["valence"], emotion["arousal"]
     if v >= 0.35 and a <= 0.15:

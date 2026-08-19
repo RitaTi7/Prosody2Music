@@ -1,16 +1,17 @@
 """
-main.py — Orchestrazione della pipeline completa:
+main.py — Orchestrazione della pipeline multilivello:
 
   POESIA
-    -> analisi semantica (emotion embedding)
-    -> analisi prosodica (sillabe + accenti -> RHYTHM)
-    -> MUSIC TRANSFORMER -> MELODIA + ARMONIA
-    -> MIDI
-    -> Synth/Audio (WAV)
+    -> Analisi semantica (Emotion embedding)
+    -> Analisi prosodica (Sillabe + Accenti -> Rhythm)
+    -> MUSIC TRANSFORMER -> Melodia + Armonia
+    -> SELEZIONE NLP -> Generazione Orchestra a 4 Strumenti (Lead, Pad, Basso, Arpeggio)
+    -> MIDI Multitraccia
+    -> Synth Stereo (WAV)
 
 Uso:
-    python3 main.py                      # usa la poesia demo inclusa
-    python3 main.py mia_poesia.txt        # legge da file
+    python3 main.py                      # Usa la poesia demo inclusa
+    python3 main.py mia_poesia.txt        # Legge da file
 """
 
 import argparse
@@ -19,34 +20,26 @@ import os
 from visualizer import plot_melody_and_rhythm, plot_emotion_space
 from prosody import analyze_poem
 from emotion import analyze_emotion
-from music_transformer import MusicTransformer
+from music_transformer import MusicTransformer, derive_bass_and_arpeggio
 from midi_builder import build_midi
 from synth import mix_and_export
-from instruments import INSTRUMENT_PRESETS, validate_instrument, choose_by_emotion
+from instruments import INSTRUMENT_PRESETS
+from nlp_instruments import choose_by_nlp
 
 DEMO_POEM = """Nel mezzo del cammin di nostra vita
 mi ritrovai per una selva oscura
 ché la diritta via era smarrita"""
 
-# Limiti di sicurezza per i parametri esposti all'utente. Non esponiamo mai
-# la durata delle singole note: sono derivate dal ritmo prosodico e
-# sincronizzate 1:1 con l'armonia (la durata di ogni accordo è la somma
-# delle durate delle note del verso corrispondente). Un tempo o uno scale
-# fuori range possono causare divisioni per numeri assurdi in
-# midi_builder.py/synth.py (beat_sec = 60/tempo) o allocazioni enormi in
-# synth.py (l'array audio è lungo quanto la durata totale in campioni).
 TEMPO_MIN, TEMPO_MAX = 40, 180          # bpm
 DURATION_SCALE_MIN, DURATION_SCALE_MAX = 0.25, 4.0  # moltiplicatore globale
 
 
 def _validate_tempo(value):
-    """Converte e clampa un tempo fornito dall'utente. Solleva ValueError
-    con un messaggio chiaro se il valore non è un numero utilizzabile."""
     try:
         v = float(value)
     except (TypeError, ValueError):
         raise ValueError(f"tempo non valido: {value!r} (deve essere un numero, es. 90)")
-    if v <= 0 or v != v:  # v != v -> NaN
+    if v <= 0 or v != v:
         raise ValueError(f"tempo non valido: {v} (deve essere un numero positivo)")
     clamped = max(TEMPO_MIN, min(TEMPO_MAX, v))
     if clamped != v:
@@ -55,10 +48,6 @@ def _validate_tempo(value):
 
 
 def _validate_duration_scale(value):
-    """Converte e clampa il moltiplicatore globale di durata. Si applica
-    in modo identico a melodia e armonia, quindi non rompe mai la
-    sincronia tra le due (a differenza di modificare le durate nota per
-    nota, che invece la romperebbe)."""
     try:
         v = float(value)
     except (TypeError, ValueError):
@@ -72,10 +61,6 @@ def _validate_duration_scale(value):
 
 
 def apply_duration_scale(melody, harmony, scale):
-    """Applica lo stesso moltiplicatore a tutte le note e a tutti gli
-    accordi, cosicché melodia e armonia restino perfettamente sincronizzate
-    (l'armonia è calcolata come somma delle durate della melodia dello
-    stesso verso: scalare entrambe allo stesso modo preserva quella somma)."""
     for note in melody.notes:
         note.duration *= scale
     for chord in harmony.chords:
@@ -83,88 +68,74 @@ def apply_duration_scale(melody, harmony, scale):
 
 
 def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
-                  tempo_override=None, duration_scale=1.0,
-                  melody_instrument=None, harmony_instrument=None):
+                  tempo_override=None, duration_scale=1.0):
     os.makedirs(out_dir, exist_ok=True)
     duration_scale = _validate_duration_scale(duration_scale)
-    if melody_instrument is not None:
-        melody_instrument = validate_instrument(melody_instrument)
-    if harmony_instrument is not None:
-        harmony_instrument = validate_instrument(harmony_instrument)
 
-    # 1) Analisi prosodica: sillabe + accenti -> ritmo
+    # 1) Analisi prosodica
     poem_analysis = analyze_poem(text)
 
-    # 2) Analisi semantica: emotion embedding
+    # 2) Analisi semantica (Emotion)
     emotion = analyze_emotion(text)
 
     if verbose:
-        print("=== ANALISI PROSODICA (PhonItalia + Q2Stress + euristica) ===")
-        for v in poem_analysis:
-            syll_str = " | ".join(
-                (s["text"].upper() if s["stressed"] else s["text"])
-                for s in v["syllables"]
-            )
-            sources = [s["stress_source"] for s in v["syllables"] if s["stressed"]]
-            print(f"  {v['text']}")
-            print(f"    sillabe: {syll_str}")
-            print(f"    ritmo:   {v['rhythm']}")
-            print(f"    fonti accento: {sources}")
-        print()
-        print("=== EMOTION EMBEDDING ===")
-        print(f"  valenza: {emotion['valence']:+.2f}  "
-              f"arousal: {emotion['arousal']:+.2f}  "
-              f"tenerezza: {emotion['tenderness']:+.2f}")
-        print(f"  parole rilevate: {emotion['matched']}")
+        print("=== ANALISI PROSODICA E SEMANTICA ===")
+        print(f"  Valenza: {emotion['valence']:+.2f} | Arousal: {emotion['arousal']:+.2f} | Tenerezza: {emotion['tenderness']:+.2f}")
         print()
 
-    # 3) MUSIC TRANSFORMER: rhythm + emotion -> melodia + armonia
+    # 3) MUSIC TRANSFORMER
     mt = MusicTransformer(seed=seed, verbose=verbose)
     melody, harmony, meta = mt.generate(poem_analysis, emotion, text_seed=text)
 
-    # tempo: se l'utente ne specifica uno, sostituisce quello scelto
-    # automaticamente dall'arousal, ma resta clampato a un range sicuro
     if tempo_override is not None:
         meta["tempo"] = _validate_tempo(tempo_override)
 
-    # scale di durata: moltiplicatore globale, applicato a melodia e
-    # armonia insieme (mai alle singole note separatamente, vedi apply_duration_scale)
     if duration_scale != 1.0:
         apply_duration_scale(melody, harmony, duration_scale)
 
-    # strumenti: se l'utente non ne specifica, si scelgono automaticamente
-    # in base all'emotion embedding (coerenti col tono della poesia)
-    if melody_instrument is None or harmony_instrument is None:
-        auto_mel, auto_harm = choose_by_emotion(emotion)
-        melody_instrument = melody_instrument or auto_mel
-        harmony_instrument = harmony_instrument or auto_harm
+    # 4) Selezione Automatica degli Strumenti (NLP Zero-Shot)
+    lead_instrument, pad_instrument = choose_by_nlp(text, emotion)
+
+    # Generazione dell'Arrangiamento Orchestrale a 4 Parti
+    # Deriva basso e arpeggio dall'armonia UNA SOLA VOLTA: la stessa lista di
+    # Note viene passata sia a build_midi (traccia MIDI reale) sia a
+    # mix_and_export (rendering audio), così .mid e .wav rappresentano
+    # esattamente lo stesso arrangiamento a 4 parti invece di due copie
+    # calcolate indipendentemente (il bug che stiamo sistemando ora: prima
+    # basso/arpeggio finivano SOLO nel .wav, mai nel file .mid esportato).
+    bass_notes, arpeggio_notes = derive_bass_and_arpeggio(harmony)
+    bass_instrument, arpeggio_instrument = "bass", "guitar"
 
     if verbose:
-        print("=== MUSIC TRANSFORMER (output) ===")
-        print(f"  modalità: {meta['mode']}   tonica MIDI: {meta['root']}   tempo: {meta['tempo']} bpm"
-              + (f"   duration_scale: {duration_scale}x" if duration_scale != 1.0 else ""))
-        print(f"  fonte melodia: {meta['melody_source']}")
-        print(f"  strumenti: melodia={melody_instrument} ({INSTRUMENT_PRESETS[melody_instrument]['label']})"
-              f"  armonia={harmony_instrument} ({INSTRUMENT_PRESETS[harmony_instrument]['label']})")
-        print(f"  note melodia: {len(melody.notes)}   accordi armonia: {len(harmony.chords)}")
-        print()
-    # Generazione Grafici Esplicativi
+        print("=== ORGANICO ORCHESTRALE GENERATO (4 STRUMENTI) ===")
+        print(f"  • Lead ({lead_instrument})       | {len(melody.notes)} note")
+        print(f"  • Pad ({pad_instrument})        | {len(harmony.chords)} accordi")
+        print(f"  • Basso ({bass_instrument})       | {len(bass_notes)} note")
+        print(f"  • Arpeggio ({arpeggio_instrument})   | {len(arpeggio_notes)} note")
+        print(f"  Tempo: {meta['tempo']} BPM | Modalità: {meta['mode']}\n")
+
+    # Generazione Grafici
     plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(out_dir, "melody_rhythm.png"))
     plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(out_dir, "emotion_space.png"))
-    # 4) MIDI
+
+    # 5) MIDI Multitraccia (4 tracce: melodia, armonia, basso, arpeggio)
     midi_path = os.path.join(out_dir, f"{basename}.mid")
     build_midi(melody, harmony, tempo=meta["tempo"],
-               melody_instrument=melody_instrument, harmony_instrument=harmony_instrument,
+               melody_instrument=lead_instrument, harmony_instrument=pad_instrument,
+               bass_notes=bass_notes, arpeggio_notes=arpeggio_notes,
+               bass_instrument=bass_instrument, arpeggio_instrument=arpeggio_instrument,
                out_path=midi_path)
 
-    # 5) Synth / Audio
+    # 6) Synth / Audio Stereo (stesse 4 tracce di sopra)
     wav_path = os.path.join(out_dir, f"{basename}.wav")
     mix_and_export(melody, harmony, meta["tempo"],
-                    melody_instrument=melody_instrument, harmony_instrument=harmony_instrument,
+                    melody_instrument=lead_instrument, harmony_instrument=pad_instrument,
+                    bass_notes=bass_notes, arpeggio_notes=arpeggio_notes,
+                    bass_instrument=bass_instrument, arpeggio_instrument=arpeggio_instrument,
                     out_path=wav_path)
 
     if verbose:
-        print("=== OUTPUT ===")
+        print("=== OUTPUT GENERATI ===")
         print(f"  MIDI: {midi_path}")
         print(f"  WAV:  {wav_path}")
 
@@ -172,24 +143,14 @@ def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Poesia -> Musica")
-    parser.add_argument("poem_file", nargs="?", default=None,
-                         help="file di testo con la poesia (un verso per riga). Se omesso, usa la demo.")
-    parser.add_argument("--tempo", type=float, default=None,
-                         help=f"bpm, sovrascrive quello scelto dall'emotion embedding "
-                              f"(clampato a [{TEMPO_MIN},{TEMPO_MAX}])")
-    parser.add_argument("--duration-scale", type=float, default=1.0,
-                         help=f"moltiplicatore globale di durata "
-                              f"(clampato a [{DURATION_SCALE_MIN},{DURATION_SCALE_MAX}])")
-    parser.add_argument("--out-dir", default=".", help="cartella di output")
-    parser.add_argument("--basename", default="output", help="nome base dei file generati")
-    parser.add_argument("--seed", type=int, default=42, help="seed per la generazione")
-    parser.add_argument("--melody-instrument", default=None,
-                         choices=sorted(INSTRUMENT_PRESETS),
-                         help="strumento per la melodia; se omesso, scelto dall'emotion embedding")
-    parser.add_argument("--harmony-instrument", default=None,
-                         choices=sorted(INSTRUMENT_PRESETS),
-                         help="strumento per l'armonia; se omesso, scelto dall'emotion embedding")
+    parser = argparse.ArgumentParser(description="Poesia -> Orchestra Multi-Strumento")
+    parser.add_argument("poem_file", nargs="?", default=None, help="File di testo della poesia")
+    parser.add_argument("--tempo", type=float, default=None, help="BPM della composizione")
+    parser.add_argument("--duration-scale", type=float, default=1.0, help="Moltiplicatore durata")
+    parser.add_argument("--out-dir", default=".", help="Cartella di output")
+    parser.add_argument("--basename", default="output", help="Nome base dei file")
+    parser.add_argument("--seed", type=int, default=42, help="Seed casualità")
+
     args = parser.parse_args()
 
     if args.poem_file:
@@ -197,7 +158,6 @@ if __name__ == "__main__":
             poem_text = f.read()
     else:
         poem_text = DEMO_POEM
-        print("(nessun file fornito, uso la poesia demo inclusa)\n")
 
     try:
         run_pipeline(
@@ -207,9 +167,7 @@ if __name__ == "__main__":
             seed=args.seed,
             tempo_override=args.tempo,
             duration_scale=args.duration_scale,
-            melody_instrument=args.melody_instrument,
-            harmony_instrument=args.harmony_instrument,
         )
     except ValueError as e:
-        print(f"[main] parametro non valido: {e}")
+        print(f"[main] Errore: {e}")
         sys.exit(1)
