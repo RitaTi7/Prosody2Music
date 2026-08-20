@@ -19,6 +19,21 @@ farebbe un lettore umano davanti a una parola sconosciuta.
 
 Cartella sorgente attesa (dall'archivio scaricato):
     repo_q2stress/Q2Stress/summary tables/adults/endings/endings/types_{ccv,vcc,vcv,vvv}.txt
+
+NOVITÀ — dataset Q2Stress a livello di PAROLA
+-----------------------------------------------
+Oltre alle tabelle per desinenza sopra (usate per il fallback statistico,
+livello 4 della catena d'accento in rhythm.py), l'archivio Q2Stress
+contiene anche un file a livello di singola parola (lexElem.txt o
+"phonItalia 1.10.1 - word forms.txt", con colonne word/StressPattern/
+SumSylls), usato invece come dato di ARRICCHIMENTO per il training del
+Random Forest in rhythm.py (insieme al lessico di phon_italia.py). Le
+funzioni load_wordlevel_dataframe()/find_wordlevel_dataset() qui sotto
+sono indipendenti dalle tabelle per desinenza sopra: gestiscono un file
+diverso, con un ruolo diverso (training set, non fallback a runtime), ma
+vivono nello stesso modulo perché appartengono comunque al dataset
+Q2Stress nel suo complesso — evita di sparpagliare la risoluzione dei
+percorsi Q2Stress su più file del progetto.
 """
 
 import csv
@@ -27,7 +42,7 @@ import os
 
 DEFAULT_DIR = os.path.join(
     os.path.dirname(__file__),
-    "../Progetto/Q2Stress", "Q2Stress", "summary tables", "adults", "endings", "endings",
+    "..", "Progetto", "Q2Stress", "summary tables", "adults", "endings", "endings",
 )
 
 # mappa dalle etichette Q2Stress al nostro schema "distanza dalla fine"
@@ -126,9 +141,109 @@ def stress_index_for_syllables(word: str, syllables: list, cues=None):
     return idx, confidence, source
 
 
+# ============================================================
+# DATASET Q2STRESS A LIVELLO DI PAROLA (per il training del Random
+# Forest — vedi nota in testa al file)
+# ============================================================
+# Stesso pattern di risoluzione percorsi di DEFAULT_DIR sopra e di
+# phon_italia.DEFAULT_PATH: parte dalla cartella di questo file e sale
+# di un livello (..) per trovare Progetto/, che è dove vivono sia
+# phonItaliaR/ sia Q2Stress/ quando gli script stanno in una cartella
+# sorella (es. CCode/ e Progetto/ allo stesso livello). Se in futuro la
+# struttura cambia ancora, prova anche i percorsi senza risalita, così
+# non serve toccare il codice per un semplice spostamento di cartelle —
+# e in ultima istanza si può sempre passare un path esplicito.
+
+WORDLEVEL_CANDIDATES = [
+    os.path.join(os.path.dirname(__file__), "..", "Progetto", "Q2Stress",
+                 "scripts", "children", "lexElem.txt"),
+    os.path.join(os.path.dirname(__file__), "..", "Progetto", "Q2Stress",
+                 "scripts", "adults", "phonItalia 1.10.1 - word forms.txt"),
+    os.path.join(os.path.dirname(__file__), "Q2Stress",
+                 "scripts", "children", "lexElem.txt"),
+    os.path.join(os.path.dirname(__file__), "Q2Stress",
+                 "scripts", "adults", "phonItalia 1.10.1 - word forms.txt"),
+    os.path.join(os.path.dirname(__file__), "Progetto", "Q2Stress",
+                 "scripts", "children", "lexElem.txt"),
+    os.path.join(os.path.dirname(__file__), "Progetto", "Q2Stress",
+                 "scripts", "adults", "phonItalia 1.10.1 - word forms.txt"),
+]
+
+_WORDLEVEL_DF_CACHE = {"df": None, "loaded": False}
+
+
+def find_wordlevel_dataset(explicit_path=None):
+    """
+    Ritorna il path del dataset Q2Stress a livello di parola, o None se
+    non trovato in nessuno dei percorsi candidati. explicit_path (se
+    passato) ha sempre precedenza e salta la ricerca nei candidati.
+    """
+    if explicit_path:
+        return explicit_path if os.path.isfile(explicit_path) else None
+    for path in WORDLEVEL_CANDIDATES:
+        if os.path.isfile(path):
+            return path
+    return None
+
+
+def load_wordlevel_dataframe(explicit_path=None, force_reload=False, verbose=True):
+    """
+    Ritorna un pandas.DataFrame del dataset Q2Stress a livello di parola
+    (colonne attese: word, StressPattern, SumSylls), o None se il file
+    non è stato trovato. Cache a livello di modulo (come load_cues sopra
+    e phon_italia.load_lexicon), non ricarica da disco a ogni chiamata.
+
+    NB: richiede pandas, ma l'import è locale a questa funzione — chi usa
+    solo il fallback per desinenza (load_cues/predict_stress_from_end,
+    che usano solo csv/glob della standard library) non paga il costo di
+    un import extra.
+    """
+    global _WORDLEVEL_DF_CACHE
+    if not force_reload and _WORDLEVEL_DF_CACHE["loaded"]:
+        return _WORDLEVEL_DF_CACHE["df"]
+
+    try:
+        import pandas as pd
+    except ImportError:
+        if verbose:
+            print("[q2stress] pandas non installato: impossibile caricare il dataset word-level")
+        _WORDLEVEL_DF_CACHE = {"df": None, "loaded": True}
+        return None
+
+    path = find_wordlevel_dataset(explicit_path)
+    df = None
+
+    if path is None:
+        if verbose:
+            print("[q2stress] nessun dataset word-level trovato. Percorsi controllati:")
+            for candidate in WORDLEVEL_CANDIDATES:
+                print(f"  - {os.path.normpath(candidate)}")
+            print("[q2stress] il Random Forest verrà addestrato solo sul lessico phon_italia (se disponibile)")
+    else:
+        for encoding in ("utf-8", "utf-8-sig", "latin-1", "cp1252"):
+            try:
+                df = pd.read_csv(path, sep="\t", engine="python", encoding=encoding, on_bad_lines="skip")
+                break
+            except UnicodeDecodeError:
+                continue
+        if verbose:
+            if df is not None:
+                print(f"[q2stress] dataset word-level caricato: {os.path.normpath(path)} ({len(df)} righe)")
+            else:
+                print(f"[q2stress] trovato {path} ma non è stato possibile leggerlo (encoding sconosciuto)")
+
+    _WORDLEVEL_DF_CACHE = {"df": df, "loaded": True}
+    return df
+
+
 if __name__ == "__main__":
     cues = load_cues()
     tests = ["gattino", "sconosciuto", "xyzabc", "meraviglioso", "pensavano", "caffè"]
     for w in tests:
         idx_info = stress_index_for_syllables(w, list(range(3)), cues)  # placeholder sillabe
         print(w, "->", predict_stress_from_end(w, cues))
+
+    print()
+    df = load_wordlevel_dataframe()
+    if df is not None:
+        print(df.head())

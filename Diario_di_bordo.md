@@ -27,7 +27,7 @@ La similarità semantica richiede it_core_news_md (vettori pieni) — con it_cor
 Il lessico di polarità nello script è manuale e coprirà solo una piccola frazione delle parole reali dei vostri testi; usarlo ora per pesare il ritmo rischierebbe di introdurre bias arbitrari proprio nella fase in cui volete che il ritmo segua fedelmente la prosodia.
 ```
 
-RT
+RT (16-08-26)
 ---------------
 
 Test importante: pyphen non è affidabile come fonte primaria per l'italiano — le sue regole sono pensate per l'a-capo tipografico (TeX), non per la fonetica, quindi sbaglia sistematicamente proprio i casi di iato che il commento del file promette di risolvere (poesia → poe-sia, dovrebbe essere po-e-si-a; verificato contro il conteggio reale PhonItalia).
@@ -43,5 +43,21 @@ Robustezza a cascata: se manca PhonItalia o pyphen, il codice degrada comunque a
 
 Durante la verifica ho trovato un caso interessante: "ritrovai" nel primo verso di Dante. PhonItalia lo annota come ri-tro-va-i (4 sillabe, pronuncia di citazione della parola isolata), ma nell'endecasillabo dantese va scandito con "vai" come un'unica sillaba (sinalefe/sineresi) per tornare a 11 sillabe. È una divergenza reale tra fonetica lessicale e metrica poetica — un problema di scansione dei versi che va oltre questa integrazione (richiederebbe un modulo dedicato alle regole di sinalefe/dieresi).
 
-EC
+EC (18-08-26)
 --------------------
+
+in rhythm.py (sostituto di prosody.py) ho tolto pyphen.
+ho sostiuito anche q2stress.py per includere le tabelle dei dati... (quello vecchio è nella cartella CCode/old)
+inserita anche le pause di punteggiatura per determinare lo scham ritmico. Introdotti Random Forest addestrati in base ai dataset phonitaliar e q2stress.
+
+prodotta una nuova lista di "oggetti" che identifica le pause, attualmente non utilizzato da music_transformer.py ma può essere uno svilupppo da prendere in considerazione.
+
+c'è un'elaborazione di Claude lasciata in sospesa sul mio secondo account.
+ChatGPT consigliava di introdurre un concetto di "musical density" per pesare le pause nel transformer, inoltre di costruire sequenze temporali formate da NOTA e PAUSA, non solo da NOTA 
+consigliano entrambi di modificare generate() di music_transformer.py
+
+da capire come vengono i brani introducendo la base ritmica (o più semplicemente, lo strumento batteria)
+potrebbe essere un idea quella di attenuare la musica durante le pause (magari "togliendo" qualche linea melodica)
+
+RT (20-08-26)
+------------------
