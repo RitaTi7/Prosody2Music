@@ -105,6 +105,17 @@ class TrainedMelodyTransformer:
                 x = torch.tensor([generated], dtype=torch.long).to(self.device)
                 logits = self.model(x, emotion)[0, -1, :].clone()
                 logits[PAD_TOKEN] = float('-inf')  # non è un intervallo valido, mai generabile
+                probs = torch.softmax(logits, dim=-1)
+
+                top_probs, top_indices = torch.topk(probs, 10)
+
+                print("\n[DEBUG] Top token:")
+                for p, idx in zip(top_probs.tolist(), top_indices.tolist()):
+                    print(
+                        f"  token={idx:2d} "
+                        f"interval={idx - 12:+3d} "
+                        f"prob={p:.4f}"
+                    )
                 next_token = sample_top_p(logits, temperature=temperature, top_p=top_p)
                 generated.append(next_token)
 

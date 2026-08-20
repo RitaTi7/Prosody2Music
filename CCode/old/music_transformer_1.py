@@ -455,10 +455,6 @@ class MusicTransformer:
 
         )
 
-        print("\n[DEBUG] Intervalli Transformer:")          #ciao
-        print(deep_queue)
-
-
         deep_idx = 0
  
         # `walk_pitch` è la posizione GREZZA (non quantizzata), somma
@@ -522,12 +518,6 @@ class MusicTransformer:
                 degree = max(-3, min(len(scale) * 2, degree))
 
                 pitch = self._degree_to_midi(root, scale, degree)
-
-                print(
-                    f"[DEBUG] step={step:+3d} "
-                    f"-> pitch={pitch} "
-                    f"(current={current_pitch})"
-                )
 
                 current_pitch = pitch
  
