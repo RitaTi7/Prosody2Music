@@ -1,6 +1,4 @@
 """
-versione con le pause
-
 music_transformer.py — Blocco generativo in sola INFERENZA ONLINE (Fase 2)
 """
 
@@ -19,17 +17,6 @@ try:
 except ImportError:
     _DEEP_TRANSFORMER_AVAILABLE = False
 
-# PAUSE_WEIGHT vive in rhythm.py (unica fonte di verità sui pesi delle
-# pause, vedi nota lì). Import opzionale con try/except, nello stesso
-# spirito degli import di lakh_midi/transformer_melody sopra: se
-# rhythm.py non è disponibile (es. si sta ancora usando prosody.py, che
-# non ha questa tabella e nemmeno "pauses" nell'output), il transformer
-# degrada semplicemente a nessuna attenuazione da pausa, senza rompersi.
-try:
-    from rhythm import PAUSE_WEIGHT as _PAUSE_WEIGHT
-except ImportError:
-    _PAUSE_WEIGHT = {}
-
 SCALES = {
     "major": [0, 2, 4, 5, 7, 9, 11],
     "minor": [0, 2, 3, 5, 7, 8, 10],
@@ -45,12 +32,6 @@ PROGRESSIONS = {
     "phrygian": [[0, 1, 0, 6]],
     "lydian": [[0, 4, 0, 3]],
 }
-
-# Velocity minima di sicurezza dopo l'attenuazione da pausa: sotto questa
-# soglia una nota rischia di essere quasi inudibile o, in certi
-# sintetizzatori/soundfont, di comportarsi in modo imprevedibile (alcuni
-# trattano velocity troppo basse come note-off). Vedi _apply_pause_damping.
-MIN_VELOCITY_AFTER_PAUSE_DAMPING = 20
 
 
 @dataclass
@@ -132,57 +113,9 @@ def choose_root(text_seed: str) -> int:
     return roots[h % len(roots)]
 
 
-def _pause_weight_map(verse: dict) -> dict:
-    """
-    {syllable_index: weight 0-1} per il verso corrente, ricavato dalla
-    lista "pauses" di analyze_poem(). Se "pauses" manca (es. si sta
-    ancora usando prosody.py invece di rhythm.py) o _PAUSE_WEIGHT è
-    vuoto (rhythm.py non importabile), ritorna {} — nessuna attenuazione,
-    comportamento identico a prima di questa modifica.
-    """
-    weights = {}
-    for p in verse.get("pauses", []) or []:
-        w = _PAUSE_WEIGHT.get(p.get("kind"), 0.0)
-        idx = p.get("after_syllable_index")
-        if idx is None or w <= 0.0:
-            continue
-        if w > weights.get(idx, 0.0):
-            weights[idx] = w
-    return weights
-
-
-def _apply_pause_damping(velocity: int, weight: float, sensitivity: float) -> int:
-    """
-    Attenua la velocity in base al peso della pausa e alla sensibilità
-    scelta (0 = disattivato, valori più alti = respiro più marcato).
-    NON tocca mai la durata della nota — solo l'intensità — per non
-    disallineare la melodia da armonia/basso/arpeggio (che calcolano le
-    loro durate indipendentemente sommando l'intero "rhythm" del verso;
-    accorciare qui la durata di una nota senza "restituire" quel tempo
-    da qualche parte farebbe andare la melodia via via fuori sincrono).
-    """
-    if weight <= 0.0 or sensitivity <= 0.0:
-        return velocity
-    factor = 1.0 - (sensitivity * weight)
-    return max(MIN_VELOCITY_AFTER_PAUSE_DAMPING, int(round(velocity * factor)))
-
-
 class MusicTransformer:
-    def __init__(self, seed=None, use_lakh=True, use_deep_transformer=True, verbose=True,
-                 pause_sensitivity: float = 0.4):
-        """
-        pause_sensitivity: quanto le pause del testo (virgole, punti,
-        sospensioni, fine verso...) si fanno sentire nella melodia, come
-        leggera attenuazione della velocity della nota che le precede
-        (un respiro, non un silenzio imposto — il transformer resta
-        libero di costruire la linea melodica che preferisce). 0.0 la
-        disattiva del tutto; 1.0 è il massimo prima del limite di
-        sicurezza MIN_VELOCITY_AFTER_PAUSE_DAMPING. Default 0.4: le pause
-        più forti (sospensione, fine verso) si notano appena, quelle
-        deboli (virgola) quasi per niente.
-        """
+    def __init__(self, seed=None, use_lakh=True, use_deep_transformer=True, verbose=True):
         self.rng = random.Random(seed)
-        self.pause_sensitivity = max(0.0, min(1.0, pause_sensitivity))
         self.lakh_model = None
         if use_lakh and _LAKH_AVAILABLE:
             stats = load_lakh_stats(verbose=False)
@@ -258,9 +191,8 @@ class MusicTransformer:
 
         for verse in poem_analysis:
             rhythm = verse["rhythm"]
-            pause_weights = _pause_weight_map(verse)
 
-            for syll_idx, dur_units in enumerate(rhythm):
+            for dur_units in rhythm:
                 if deep_queue is not None and deep_idx < len(deep_queue):
                     step = deep_queue[deep_idx]
                     deep_idx += 1
@@ -277,13 +209,6 @@ class MusicTransformer:
                 
                 duration_beats = 0.5 * dur_units
                 velocity = 70 + (15 if dur_units == 2 else 0)
-
-                # Respiro sulle pause: solo velocity, mai la durata (vedi
-                # _apply_pause_damping) — nessun silenzio imposto, il
-                # transformer resta libero sul resto della linea melodica.
-                weight = pause_weights.get(syll_idx, 0.0)
-                velocity = _apply_pause_damping(velocity, weight, self.pause_sensitivity)
-
                 melody.notes.append(Note(pitch=pitch, duration=duration_beats, velocity=velocity))
 
             # Armonia
