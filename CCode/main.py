@@ -68,7 +68,7 @@ def apply_duration_scale(melody, harmony, scale):
         chord.duration *= scale
 
 
-def run_pipeline(text, out_dir=".", basename="output", seed=42, verbose=True,
+def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
                   tempo_override=None, duration_scale=1.0):
     os.makedirs(out_dir, exist_ok=True)
     duration_scale = _validate_duration_scale(duration_scale)
