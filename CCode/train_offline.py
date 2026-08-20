@@ -51,7 +51,7 @@ def _proxy_valence_arousal(intervals, tempo):
     return valence_proxy, arousal_proxy
 
 
-def extract_sequences_from_midi(corpus_dir=".", max_files=400):
+def extract_sequences_from_midi(corpus_dir=".", max_files=1000):
     """Estrae le sequenze di intervalli melodici direttamente dai file MIDI,
     con un proxy di valenza/arousal calcolato dalle caratteristiche
     musicali reali di ciascuna sequenza (vedi _proxy_valence_arousal)."""
@@ -136,7 +136,7 @@ def train_offline_model(epochs=12, batch_size=32, lr=1e-3):
     print("=== FASE 1: ADDESTRAMENTO OFFLINE DEL TRANSFORMER GENERALIZZABILE ===")
 
     # 1. Estrazione Sequenze
-    sequences = extract_sequences_from_midi(corpus_dir=".", max_files=400)
+    sequences = extract_sequences_from_midi(corpus_dir=".", max_files=1000)
     if not sequences:
         print("[train_offline] Impossibile procedere: nessuna sequenza estratta dai file MIDI.")
         return
