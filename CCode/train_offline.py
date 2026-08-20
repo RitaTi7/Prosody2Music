@@ -1,4 +1,7 @@
 """
+versione di gemini che corregge il bug della predizione continua del token 12
+
+
 train_offline.py — Script autonomo per l'addestramento offline del Transformer (Fase 1)
 """
 
@@ -10,7 +13,8 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from transformer_melody import MelodyTransformerModel, MODEL_PATH
+# IMPORTANTE: Importiamo anche PAD_TOKEN e VOCAB_SIZE
+from transformer_melody import MelodyTransformerModel, MODEL_PATH, PAD_TOKEN, VOCAB_SIZE
 from visualizer import plot_training_loss
 
 try:
@@ -21,24 +25,7 @@ except ImportError:
 
 
 def _proxy_valence_arousal(intervals, tempo):
-    """Stima un proxy di (valenza, arousal) dalle caratteristiche musicali
-    REALI della sequenza (tendenza a salire/scendere, ampiezza dei salti,
-    tempo del brano) — non da un'etichetta emotiva umana, che Lakh MIDI non
-    ha.
-
-    È fondamentale che sia un proxy CORRELATO con la sequenza e non un
-    valore casuale: un condizionamento scollegato statisticamente dal
-    target non dà al modello nulla da imparare (la loss scende comunque,
-    ma il ramo emotion_fc converge a ignorare l'input, perché non c'è
-    nessuna dipendenza vera da catturare). Con un proxy derivato dai dati,
-    invece, il modello impara una relazione reale tra "condizionamento" e
-    "stile della melodia", che è quello che serve per rispondere in modo
-    sensato all'emotion embedding vero della poesia in inferenza.
-
-    Stessa mappatura euristica già usata altrove nella pipeline
-    (music_transformer.py: valenza alta -> preferenza a salire, arousal
-    alto -> salti più ampi/tempo più veloce), applicata qui alla rovescia.
-    """
+    """Stima un proxy di (valenza, arousal) dalle caratteristiche musicali reali."""
     if not intervals:
         return 0.0, 0.0
     mean_interval = sum(intervals) / len(intervals)
@@ -52,9 +39,6 @@ def _proxy_valence_arousal(intervals, tempo):
 
 
 def extract_sequences_from_midi(corpus_dir=".", max_files=600):
-    """Estrae le sequenze di intervalli melodici direttamente dai file MIDI,
-    con un proxy di valenza/arousal calcolato dalle caratteristiche
-    musicali reali di ciascuna sequenza (vedi _proxy_valence_arousal)."""
     if not _PRETTY_MIDI_AVAILABLE:
         print("[train_offline] Errore: libreria 'pretty_midi' non installata.")
         return []
@@ -85,7 +69,6 @@ def extract_sequences_from_midi(corpus_dir=".", max_files=600):
 
                 pitches = [n.pitch for n in notes]
                 intervals = [pitches[i + 1] - pitches[i] for i in range(len(pitches) - 1)]
-                # Clamping degli intervalli nell'intervallo [-12, +12]
                 intervals = [max(-12, min(12, inv)) for inv in intervals]
 
                 valence_proxy, arousal_proxy = _proxy_valence_arousal(intervals, tempo)
@@ -102,7 +85,6 @@ def extract_sequences_from_midi(corpus_dir=".", max_files=600):
 
 
 def augment_and_prepare_data(sequences, max_len=32, conditioning_dropout=0.15):
-    """Applica Data Augmentation (Inversione intervalli + Conditioning Dropout)."""
     inputs, emotions = [], []
 
     for seq in sequences:
@@ -113,16 +95,15 @@ def augment_and_prepare_data(sequences, max_len=32, conditioning_dropout=0.15):
         v = seq.get("valence", 0.0)
         a = seq.get("arousal", 0.0)
 
-        # Augmentation: sequenza originale + versione invertita a specchio
         variants = [raw_intervals, [-i for i in raw_intervals]]
 
         for var in variants:
-            # Shift dell'intervallo [-12, +12] sul range di token [0, 24]
             tokens = [max(0, min(24, i + 12)) for i in var[:max_len]]
+            
             if len(tokens) < max_len:
-                tokens = tokens + [12] * (max_len - len(tokens))  # Padding con token neutro (12)
+                # --- FIX CRITICO: USIAMO PAD_TOKEN AL POSTO DI 12 ---
+                tokens = tokens + [PAD_TOKEN] * (max_len - len(tokens))
 
-            # Conditioning Dropout
             cur_v = 0.0 if random.random() < conditioning_dropout else v
             cur_a = 0.0 if random.random() < conditioning_dropout else a
 
@@ -132,16 +113,14 @@ def augment_and_prepare_data(sequences, max_len=32, conditioning_dropout=0.15):
     return torch.tensor(inputs, dtype=torch.long), torch.tensor(emotions, dtype=torch.float32)
 
 
-def train_offline_model(epochs=12, batch_size=32, lr=1e-3):
+def train_offline_model(epochs=15, batch_size=32, lr=1e-3):
     print("=== FASE 1: ADDESTRAMENTO OFFLINE DEL TRANSFORMER GENERALIZZABILE ===")
 
-    # 1. Estrazione Sequenze
     sequences = extract_sequences_from_midi(corpus_dir=".", max_files=600)
     if not sequences:
         print("[train_offline] Impossibile procedere: nessuna sequenza estratta dai file MIDI.")
         return
 
-    # 2. Data Augmentation
     print(f"[2/4] Applicazione Data Augmentation ed elaborazione token...")
     X, E = augment_and_prepare_data(sequences)
     if len(X) == 0:
@@ -155,9 +134,22 @@ def train_offline_model(epochs=12, batch_size=32, lr=1e-3):
     model = MelodyTransformerModel(dropout=0.2).to(device)
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-2)
-    criterion = torch.nn.CrossEntropyLoss()
+    
+    # --- LA MAGIA INIZIA QUI: PESI E LABEL SMOOTHING ---
+    
+    # Creiamo un tensore di pesi pari a 1 per tutti i token
+    class_weights = torch.ones(VOCAB_SIZE, device=device)
+    # Riduciamo drasticamente l'importanza del token 12 (nota ripetuta)
+    # L'IA capirà che indovinare uno 0 vale molto meno rispetto a indovinare un vero intervallo
+    class_weights[12] = 0.2  
+    
+    # Configuriamo la nuova Loss Function
+    criterion = torch.nn.CrossEntropyLoss(
+        weight=class_weights,       # Applica la penalità al token 12
+        ignore_index=PAD_TOKEN,     # Ignora al 100% i token di padding (non influiscono più sulla loss)
+        label_smoothing=0.1         # Incoraggia l'IA a distribuire le probabilità (più creatività)
+    )
 
-    # 3. Training Loop
     print(f"[3/4] Avvio training su {device} ({epochs} epoche, {len(X)} sequenze aumentate)...")
     model.train()
     epoch_losses = []
@@ -180,10 +172,13 @@ def train_offline_model(epochs=12, batch_size=32, lr=1e-3):
         epoch_losses.append(avg_loss)
         print(f"  Epoca {epoch:02d}/{epochs:02d} | Loss Media: {avg_loss:.4f}")
 
-    # Salva il grafico della Loss
-    plot_training_loss(epoch_losses, save_path=os.path.join("output", "training_loss.png"))
+    if epoch_losses:
+        try:
+            os.makedirs("output", exist_ok=True)
+            plot_training_loss(epoch_losses, save_path=os.path.join("output", "training_loss.png"))
+        except Exception as e:
+            print(f"[train_offline] Impossibile salvare il grafico della loss: {e}")
 
-    # 4. Salvataggio Checkpoint
     print("[4/4] Salvataggio del modello generalizzato...")
     os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
     checkpoint = {
@@ -192,7 +187,7 @@ def train_offline_model(epochs=12, batch_size=32, lr=1e-3):
             "type": "Deep Transformer Generalizzato (PyTorch)",
             "training_sequences": len(X),
             "epochs": epochs,
-            "final_loss": round(epoch_losses[-1], 4),
+            "final_loss": round(epoch_losses[-1], 4) if epoch_losses else 0.0,
             "device": str(device)
         }
     }

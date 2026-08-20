@@ -61,3 +61,15 @@ potrebbe essere un idea quella di attenuare la musica durante le pause (magari "
 
 RT (20-08-26)
 ------------------
+
+aggiunta la parte delle pause per la produzione della base musicale (modificato il file music_transformer.py)
+
+sistemati i dataset per addestrare il transformer.
+
+sistemata la generazione della stessa nota nella melodia principale (problema in train_offline.py)-> ma forse siamo cadute in un altro loop (LOL) perché alterna due note circa
+provato ad applicare una penalizzazione nella funzone di transformer_melody.py (è lì il problema) 
+
+da fare:
+- rimuovi le stampe di debug in transformer_melody e musci_transformer(?)
+
+
