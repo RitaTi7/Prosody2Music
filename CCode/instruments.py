@@ -28,6 +28,7 @@ INSTRUMENT_PRESETS = {
     "trumpet":  {"program": 56, "timbre": "brass",    "label": "Tromba"},
     "bass":     {"program": 32, "timbre": "bass",     "label": "Basso acustico"},
     "marimba":  {"program": 12, "timbre": "pluck",    "label": "Marimba"},
+    "cello":    {"program": 42, "timbre": "strings", "label": "Violoncello"},
 }
 
 DEFAULT_MELODY_INSTRUMENT = "piano"

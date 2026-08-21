@@ -13,7 +13,7 @@ TICKS_PER_BEAT = 480  # Risoluzione MIDI standard
 
 
 def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
-                          base_velocity_jitter=(-3, 3), articulation=0.92):
+                          base_velocity_jitter=(-3, 3), articulation=0.92):        #prima: articulation=0.92
     """Scrive una traccia monofonica (una nota alla volta) sul canale MIDI
     dato: usata sia per la melodia sia — dopo questa modifica — per basso
     e arpeggio, che hanno la stessa forma (lista di Note in sequenza)."""
