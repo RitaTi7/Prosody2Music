@@ -492,6 +492,24 @@ class MusicTransformer:
         current_pitch = root
 
         chord_idx = 0
+
+        # Limiti in semitoni corrispondenti al range di gradi ammessi più
+        # sotto (degree in [-3, len(scale)*2]). Usati per "riflettere"
+        # walk_pitch quando esce dal range (vedi sotto): senza questo,
+        # walk_pitch può allontanarsi indefinitamente dal range (non è mai
+        # clampato, di proposito, per evitare che la quantizzazione
+        # "assorba" gli step piccoli — vedi commento sopra), ma allora
+        # ogni volta che è fuori range il grado calcolato da
+        # _nearest_scale_degree finisce SEMPRE sullo stesso valore limite
+        # finché walk_pitch non rientra: risultato, la melodia resta
+        # incollata sulla stessa nota per molti step consecutivi anche se
+        # il Transformer sta generando intervalli diversi a ogni passo —
+        # lo stesso sintomo di "melodia bloccata" che walk_pitch doveva
+        # risolvere. Riflettendo walk_pitch sul bordo (come una pallina
+        # che rimbalza) invece di clampare il grado, lo spostamento
+        # continua a produrre effetto ad ogni step anche vicino ai bordi.
+        PITCH_WALK_MIN = self._degree_to_midi(root, scale, -3)
+        PITCH_WALK_MAX = self._degree_to_midi(root, scale, len(scale) * 2)
  
         for verse in poem_analysis:
 
@@ -512,6 +530,14 @@ class MusicTransformer:
                     step = self._melodic_step_semitones(emotion["valence"], emotion["arousal"])
  
                 walk_pitch += step
+
+                # Riflessione sul bordo (vedi commento su PITCH_WALK_MIN/MAX
+                # sopra): tiene walk_pitch dentro il range ammesso SENZA
+                # bloccarne il movimento, a differenza di un clamp secco.
+                if walk_pitch > PITCH_WALK_MAX:
+                    walk_pitch = PITCH_WALK_MAX - (walk_pitch - PITCH_WALK_MAX)
+                elif walk_pitch < PITCH_WALK_MIN:
+                    walk_pitch = PITCH_WALK_MIN + (PITCH_WALK_MIN - walk_pitch)
  
                 # Scale Snapping (sulla posizione grezza cumulativa, non
 
@@ -519,6 +545,12 @@ class MusicTransformer:
 
                 degree = self._nearest_scale_degree(scale, root, walk_pitch, prefer_up=(step >= 0))
 
+                # Safety net: la riflessione sopra tiene walk_pitch dentro
+                # [PITCH_WALK_MIN, PITCH_WALK_MAX], ma lo snapping alla
+                # scala può occasionalmente arrotondare al grado appena
+                # fuori bordo (es. walk_pitch riflesso finisce a metà tra
+                # due gradi di scala). Questo clamp resta quindi come rete
+                # di sicurezza, non come meccanismo primario di contenimento.
                 degree = max(-3, min(len(scale) * 2, degree))
 
                 pitch = self._degree_to_midi(root, scale, degree)
@@ -580,4 +612,3 @@ class MusicTransformer:
         }
 
         return melody, harmony, meta
- 
