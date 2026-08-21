@@ -78,4 +78,5 @@ EC e RT (20-08-26)
 ridotto il loop di note in cui cadeva modificando il metodo generate() del file music_transformer.py
 è rimasto ancora una specie di loop in cui ricade, ma secondo me va bene (è giusto che ci siano delle ricorrenze nei brani). però si può modificare alzando penality_value (es. da 2.0 a 2.5-3.0) o memory_length (es. da 8 a 10-12)
 
+sostituita la funzione _write_melodic_track nel file midi_builder.py per fare in modo che la traccia 0 (melodia principale) abbia note legate (con il parametro legato_overlap_ticks puoi modificarlo, abbassandolo le separi)
 

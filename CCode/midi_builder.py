@@ -11,7 +11,7 @@ from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_H
 
 TICKS_PER_BEAT = 480  # Risoluzione MIDI standard
 
-
+'''
 def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
                           base_velocity_jitter=(-3, 3), articulation=0.92):        #prima: articulation=0.92
     """Scrive una traccia monofonica (una nota alla volta) sul canale MIDI
@@ -39,7 +39,54 @@ def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
 
         last_rest_ticks = rest_ticks
     return track
+'''
 
+def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
+                          base_velocity_jitter=(-3, 3), articulation=0.92,
+                          legato_overlap_ticks=0):
+    """Scrive una traccia monofonica sul canale MIDI dato.
+
+    legato_overlap_ticks: se >0, il note_off di ogni nota viene ritardato
+    OLTRE l'inizio della nota successiva, così le due note si sovrappongono
+    per un istante invece di susseguirsi in modo staccato — è la vera
+    differenza rispetto ad `articulation`, che toglie solo il silenzio TRA
+    le note ma non le fa mai suonare insieme. 0 = comportamento originale.
+    """
+    track = MidiTrack()
+    mid.tracks.append(track)
+    track.append(MetaMessage('track_name', name=name, time=0))
+    track.append(Message('program_change', program=program, channel=channel, time=0))
+    if channel == 0:
+        track.append(Message('control_change', channel=channel, control=11, value=127, time=0))
+
+    # Eventi in tempo ASSOLUTO: con l'overlap il note_off di una nota può
+    # cadere dopo il note_on della successiva, quindi non possiamo più
+    # scriverli in sequenza stretta come prima — li accumuliamo e ordiniamo.
+    events = []
+    t = 0
+    for note in notes:
+        duration_ticks = int(note.duration * TICKS_PER_BEAT)
+        vel = note.velocity
+        if humanize:
+            vel = max(1, min(127, vel + random.randint(*base_velocity_jitter)))
+
+        play_ticks = int(duration_ticks * articulation)
+        note_off_time = t + play_ticks + legato_overlap_ticks
+
+        events.append((t, 1, Message('note_on', note=note.pitch, velocity=vel, channel=channel, time=0)))
+        events.append((note_off_time, 0, Message('note_off', note=note.pitch, velocity=0, channel=channel, time=0)))
+        t += duration_ticks
+
+    # A parità di tick, note_off prima di note_on (evita un silenzio
+    # spurio quando non c'è overlap, cioè comportamento originale)
+    events.sort(key=lambda e: (e[0], e[1]))
+
+    last_time = 0
+    for abs_time, _, msg in events:
+        msg.time = max(0, abs_time - last_time)
+        track.append(msg)
+        last_time = abs_time
+    return track
 
 def build_midi(melody, harmony, tempo=90,
                melody_instrument=DEFAULT_MELODY_INSTRUMENT,
@@ -72,9 +119,15 @@ def build_midi(melody, harmony, tempo=90,
     meta_track.append(MetaMessage('set_tempo', tempo=mido.bpm2tempo(tempo), time=0))
 
     # --- TRACCIA 1: Melodia (Canale MIDI 0) ---
+    '''
     _write_melodic_track(mid, melody.notes, channel=0, program=melody_program,
                           name=f"Melodia ({melody_instrument})", humanize=humanize)
-
+    '''
+    _write_melodic_track(mid, melody.notes, channel=0, program=melody_program,
+                      name=f"Melodia ({melody_instrument})", humanize=humanize,
+                      articulation=1.0, legato_overlap_ticks=100)               #overlap 40 è circa 1/12 di battito di sovrapposizione (legato leggero)
+                                                                                #con 80-100 è più marcato- Se non inserito è zero (comportamento di prima)
+    
     # --- TRACCIA 2: Armonia (Canale MIDI 1) ---
     harm_track = MidiTrack()
     mid.tracks.append(harm_track)
