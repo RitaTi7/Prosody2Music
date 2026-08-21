@@ -10,8 +10,10 @@ main.py — Orchestrazione della pipeline multilivello:
     -> Synth Stereo (WAV)
 
 Uso:
-    python3 main.py                      # Usa la poesia demo inclusa
+    python3 main.py                      # Usa la poesia demo inclusa (NLP sceglie gli strumenti)
     python3 main.py mia_poesia.txt        # Legge da file
+    python3 main.py mia_poesia.txt --melody-instrument clarinet        # forzi solo la melodia, l'armonia resta automatica
+    python3 main.py mia_poesia.txt --melody-instrument clarinet --harmony-instrument organ --basename mia_canzone
 """
 
 import argparse
@@ -69,7 +71,7 @@ def apply_duration_scale(melody, harmony, scale):
 
 
 def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
-                  tempo_override=None, duration_scale=1.0):
+                  tempo_override=None, duration_scale=1.0, melody_instrument_override=None, harmony_instrument_override=None):
     os.makedirs(out_dir, exist_ok=True)
     duration_scale = _validate_duration_scale(duration_scale)
 
@@ -95,7 +97,9 @@ def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
         apply_duration_scale(melody, harmony, duration_scale)
 
     # 4) Selezione Automatica degli Strumenti (NLP Zero-Shot)
-    lead_instrument, pad_instrument = choose_by_nlp(text, emotion)
+    auto_lead, auto_pad = choose_by_nlp(text, emotion)
+    lead_instrument = melody_instrument_override or auto_lead
+    pad_instrument = harmony_instrument_override or auto_pad
 
     # Generazione dell'Arrangiamento Orchestrale a 4 Parti
     # Deriva basso e arpeggio dall'armonia UNA SOLA VOLTA: la stessa lista di
@@ -151,6 +155,11 @@ if __name__ == "__main__":
     parser.add_argument("--out-dir", default=".", help="Cartella di output")
     parser.add_argument("--basename", default="output", help="Nome base dei file")
     parser.add_argument("--seed", type=int, default=42, help="Seed casualità")
+    #per la scelta degli strumenti
+    parser.add_argument("--melody-instrument", choices=sorted(INSTRUMENT_PRESETS), default=None, 
+                        help="strumento per la voce principale (default: scelto automaticamente dall'NLP)")
+    parser.add_argument("--harmony-instrument", choices=sorted(INSTRUMENT_PRESETS), default=None,
+                        help="strumento per l'accompagnamento (default: scelto automaticamente dall'NLP)")
 
     args = parser.parse_args()
 
@@ -168,6 +177,8 @@ if __name__ == "__main__":
             seed=args.seed,
             tempo_override=args.tempo,
             duration_scale=args.duration_scale,
+            melody_instrument_override=args.melody_instrument,
+            harmony_instrument_override=args.harmony_instrument,
         )
     except ValueError as e:
         print(f"[main] Errore: {e}")

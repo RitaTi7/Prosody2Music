@@ -241,10 +241,11 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 #### Da fare:
 - ~~aggiungi il conteggio delle sillabe~~ (da recuperare nei dataset)-> da vedere se ha senso
 - ~~analisi semantica~~     (implementata ma da utilizzare)
-- aggiungere un transformer
-- importare un dataset musicale buono
+- ~~aggiungere un transform~~
+- ~~importare un dataset musicale buono~~
 - SCRIVERE LA RELAZIONE
 - verifica se è deterministico (la produzione musicale non dovrebbe, lo schema ritmico si)
+- ampliare la lista degli strumenti(?) in instruments.py
 
 
 #### Idee per la presentazione:

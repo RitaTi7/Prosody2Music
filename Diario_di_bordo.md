@@ -80,3 +80,5 @@ ridotto il loop di note in cui cadeva modificando il metodo generate() del file 
 
 sostituita la funzione _write_melodic_track nel file midi_builder.py per fare in modo che la traccia 0 (melodia principale) abbia note legate (con il parametro legato_overlap_ticks puoi modificarlo, abbassandolo le separi)
 
+aggiunto del codice nella parte finale di midi_bulder.py per eseguire il file autonomamente e scegliere lo strumento
+aggiunto del codice al main poter scegliere gli strumenti da terminale (nel commento iniziale del file dice come)

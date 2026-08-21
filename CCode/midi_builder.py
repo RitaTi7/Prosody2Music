@@ -8,6 +8,7 @@ import random
 import mido
 from mido import MidiFile, MidiTrack, Message, MetaMessage
 from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_HARMONY_INSTRUMENT, validate_instrument
+import argparse
 
 TICKS_PER_BEAT = 480  # Risoluzione MIDI standard
 
@@ -220,6 +221,34 @@ def stream_live_midi(melody, harmony, tempo=90,
         print("[MIDI Real-Time] Trasmissione completata.")
 
 
+#per cambiare lo strumento da terminale (quando esegui questo fil eda solo)
+'''
+def parse_args():
+    parser = argparse.ArgumentParser(description="Genera musica da un testo poetico")
+    parser.add_argument("text_file", nargs="?", help="file di testo/poesia in input")
+    parser.add_argument("--melody-instrument", choices=sorted(INSTRUMENT_PRESETS),
+                         default=DEFAULT_MELODY_INSTRUMENT,
+                         help="strumento per la voce principale (melodia)")
+    parser.add_argument("--harmony-instrument", choices=sorted(INSTRUMENT_PRESETS),
+                         default=DEFAULT_HARMONY_INSTRUMENT,
+                         help="strumento per l'accompagnamento armonico")
+    parser.add_argument("--out", default="output.mid", help="percorso file MIDI di output")
+    return parser.parse_args()
+'''
+def parse_args():
+    parser = argparse.ArgumentParser(description="Genera musica da un testo poetico")
+    parser.add_argument("text_file", nargs="?", help="file di testo/poesia in input")
+    parser.add_argument("--melody-instrument", choices=sorted(INSTRUMENT_PRESETS),
+                         default="flute",
+                         help="strumento per la voce principale (melodia)")
+    parser.add_argument("--harmony-instrument", choices=sorted(INSTRUMENT_PRESETS),
+                         default="organ",
+                         help="strumento per l'accompagnamento armonico")
+    parser.add_argument("--out", default="output.mid", help="percorso file MIDI di output")
+    return parser.parse_args()
+
+'''
+
 if __name__ == "__main__":
     from prosody import analyze_poem
     from emotion import analyze_emotion
@@ -235,6 +264,36 @@ if __name__ == "__main__":
     path = build_midi(melody, harmony, tempo=meta["tempo"],
                       melody_instrument="flute", harmony_instrument="organ")
     print("File MIDI generato con protocollo Mido:", path)
+'''
+
+#!!! serve solo nel caso in cui si voglia eseguire questo script da solo
+# python midi_builder.py poesia.txt --melody-instrument clarinet --harmony-instrument organ --out mia_canzone.mid 
+if __name__ == "__main__":
+    from prosody import analyze_poem
+    from emotion import analyze_emotion
+    from music_transformer import MusicTransformer
+
+    args = parse_args()
+
+    if args.text_file:
+        with open(args.text_file, "r", encoding="utf-8") as f:
+            testo = f.read()
+    else:
+        testo = "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura"
+
+    pa = analyze_poem(testo)
+    em = analyze_emotion(testo)
+    mt = MusicTransformer(seed=42)
+    melody, harmony, meta = mt.generate(pa, em, text_seed=testo)
+
+    path = build_midi(melody, harmony, tempo=meta["tempo"],
+                      melody_instrument=args.melody_instrument,
+                      harmony_instrument=args.harmony_instrument,
+                      out_path=args.out)
+    print("File MIDI generato con protocollo Mido:", path)
+    
+
+
 
     # 2. (Opzionale) Decommenta per trasmettere il flusso MIDI dal vivo
     # stream_live_midi(melody, harmony, tempo=meta["tempo"],
