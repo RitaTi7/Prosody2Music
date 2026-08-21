@@ -82,3 +82,9 @@ sostituita la funzione _write_melodic_track nel file midi_builder.py per fare in
 
 aggiunto del codice nella parte finale di midi_bulder.py per eseguire il file autonomamente e scegliere lo strumento
 aggiunto del codice al main poter scegliere gli strumenti da terminale (nel commento iniziale del file dice come)
+
+da scaricare fluidsynth e scaricato un soundfont che produce un audio di qualità migliore!! La parte prodotta da synth.py è comunque interessante da far vedere. Ho modificato il main che produce il file output_fluid.wav (forse si possono scegliere anche altri strumenti oltre a quelli del preset...)
+la qualità del suono è migliore, ma l'audio è basso. bisogna provare ad aumentare il volume (senza denaturare troppo) e vedere se vengono comunque bene le note (c'è la possibilità che si sentano meglio anche i difetti :/)
+
+RT (22-08-26)
+-------------------

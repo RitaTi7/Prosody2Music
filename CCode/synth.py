@@ -2,6 +2,7 @@
 synth.py — Rendering audio stereo multitraccia a 4 strumenti.
 """
 
+import subprocess
 import numpy as np
 from scipy.io import wavfile
 from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_HARMONY_INSTRUMENT
@@ -237,4 +238,12 @@ def mix_and_export(melody, harmony, tempo,
 
     audio_i16 = (master * 32767).astype(np.int16)
     wavfile.write(out_path, SAMPLE_RATE, audio_i16)
+    return out_path
+
+#per la sintesi del file midi usando un sintetizzatore autonomo
+def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
+    subprocess.run([
+        "fluidsynth", "-ni", soundfont_path, midi_path,
+        "-F", out_path, "-r", str(sample_rate)
+    ], check=True)
     return out_path

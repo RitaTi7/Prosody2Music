@@ -25,7 +25,7 @@ from rhythm import analyze_poem
 from emotion import analyze_emotion
 from music_transformer import MusicTransformer, derive_bass_and_arpeggio
 from midi_builder import build_midi
-from synth import mix_and_export
+from synth import mix_and_export, render_with_fluidsynth
 from instruments import INSTRUMENT_PRESETS
 from nlp_instruments import choose_by_nlp
 
@@ -139,12 +139,19 @@ def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
                     bass_instrument=bass_instrument, arpeggio_instrument=arpeggio_instrument,
                     out_path=wav_path)
 
+    # 6.1) Synth con FluidSynth
+    wav_fluid_path = os.path.join(out_dir, f"{basename}_fluid.wav")
+    soundfont_path = os.path.join(out_dir, "soundfonts", "MuseScore_General.sf3")
+    render_with_fluidsynth(midi_path=midi_path, soundfont_path=soundfont_path, out_path=wav_fluid_path)
+
+
     if verbose:
         print("=== OUTPUT GENERATI ===")
         print(f"  MIDI: {midi_path}")
-        print(f"  WAV:  {wav_path}")
+        print(f"  WAV (synth):  {wav_path}")
+        print(f"  WAV (FluidSynth):  {wav_fluid_path}")
 
-    return midi_path, wav_path, meta, emotion
+    return midi_path, wav_path, meta, emotion       # si potrebbe aggiungere anche FluidSynth path
 
 
 if __name__ == "__main__":

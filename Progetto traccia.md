@@ -246,7 +246,7 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - SCRIVERE LA RELAZIONE
 - verifica se è deterministico (la produzione musicale non dovrebbe, lo schema ritmico si)
 - ampliare la lista degli strumenti(?) in instruments.py
-
+- alzare il volume della produzione con fluidsynth!!!
 
 #### Idee per la presentazione:
 - sfruttare: la lunghezza e la profondità sintattica delle frasi (syntactic_depth, sentence_word_count) già calcolate da spaCy. Usabili per decidere il fraseggio musicale — frasi sintatticamente semplici e brevi diventano frasi musicali più dirette, frasi lunghe e subordinate introducono più respiro o un cambio di registro. È un modo elegante di far "sentire" la struttura grammaticale del testo, non solo l'accento delle singole parole.
