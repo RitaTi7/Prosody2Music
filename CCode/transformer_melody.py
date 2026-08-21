@@ -138,7 +138,7 @@ class TrainedMelodyTransformer:
             generated = [12]
 
             # Parametri Anti-Ping-Pong
-            memory_length = 4     # Quante note passate ricordare
+            memory_length = 8     # Quante note passate ricordare (un po' più ampio di quando c'era 4)
             penalty_value = 2.0   # Quanto penalizzare le note ripetute
 
             for _ in range(length - 1):
@@ -151,14 +151,17 @@ class TrainedMelodyTransformer:
                 # 2. Penalità fissa per la nota ripetuta (0 semitoni)
                 logits[12] -= 2.0  
                 
-                # 3. NUOVO: Penalità Dinamica (Anti Ping-Pong)
-                # Guardiamo le ultime N note generate
+                # 3. Penalità Dinamica (Anti Ping-Pong) — con decadimento
+                # graduale invece di taglio netto, per non lasciare un
+                # bordo preciso dietro cui un ciclo periodico può nascondersi
                 recent_tokens = generated[-memory_length:]
-                for past_token in set(recent_tokens):
-                    # Abbassiamo il punteggio degli intervalli appena usati
-                    # Questo distrugge loop come (+12, -12, +12, -12)
-                    logits[past_token] -= penalty_value
-                
+                weights = {}
+                for i, tok in enumerate(recent_tokens):
+                    recency_weight = (i + 1) / len(recent_tokens)
+                    weights[tok] = max(weights.get(tok, 0.0), recency_weight)
+                for tok, w in weights.items():
+                    logits[tok] -= penalty_value * w
+
                 probs = torch.softmax(logits, dim=-1)
                 
                 next_token = sample_top_p(logits, temperature=temperature, top_p=top_p)

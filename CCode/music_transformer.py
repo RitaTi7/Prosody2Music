@@ -455,7 +455,7 @@ class MusicTransformer:
 
         )
 
-        print("\n[DEBUG] Intervalli Transformer:")          #ciao
+        print("\n[DEBUG] Intervalli Transformer:")          #modificato
         print(deep_queue)
 
 
@@ -556,7 +556,7 @@ class MusicTransformer:
                 pitch = self._degree_to_midi(root, scale, degree)
 
                 print(
-                    f"[DEBUG] step={step:+3d} "
+                    f"[DEBUG] step={step:+3d} "         #modificato
                     f"-> pitch={pitch} "
                     f"(current={current_pitch})"
                 )
