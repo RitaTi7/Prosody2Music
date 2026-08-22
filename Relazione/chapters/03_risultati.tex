@@ -1,6 +1,6 @@
 Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
 
-In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà prima della parte riguardante la parte di generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
+In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la parte di generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
 Così facendo saranno create la melodia e l'armonia.
 
 
@@ -109,7 +109,7 @@ Una volta generate le singole onde sonore, il modulo unisce le quattro voci in u
 \begin{itemize}
     \item Melodia (Lead): Posizionata esattamente al centro (pan 0.0)
  con un volume prominente (85\%).
-    \item   Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
+    \item  Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
     \item Basso: Fissato al centro a frequenze basse (volume 70\%).
-    \item     Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
+    \item  Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
 \end{itemize}
