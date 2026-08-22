@@ -14,7 +14,12 @@ Fonte: https://it.wikipedia.org/wiki/Trasformatore
 
 \section{Librerie}
 \subsection{Pythorch}
-\subsection{Dataclasses}
+PyTorch è una libreria tensoriale ottimizzata per il deep learning utilizzando GPU e CPU.
+Fonte: https://docs.pytorch.org/docs/main/generated/torch.sort.html
+PyTorch viene utilizzato per caricare il modello pre-addestrato, gestire la memoria e campionare le nuove note musicali in fase di inferenza.
+Nello specifico è possibile vedere come torch.nn sia usato per la costruzione dell'architettura neurale.
+Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della funzione di attivazione omonima che converte le uscite grezze dal modello in una distribuzione di probabilità valida compresa tra 0 e 1.
+
 
 \section{Trainig del modello}
 L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintassi melodica generale (come le note si susseguono in modo musicale) e come piegare questa melodia in base al contesto emotivo (Valenza e Arousal).
@@ -60,7 +65,7 @@ La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal,
 
 Usa un classificatore Zero-Shot multilingue per confrontare la poesia con 6 "atmosfere" candidate (natura/bosco, sacro/religioso, epico/eroico, triste/malinconico, gioioso/festoso, notturno/sognante), ciascuna già mappata a una coppia (melodia, armonia) di strumenti.
 
-Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola V/A/T viste prima.
+Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola V/A/T vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
 
 \section{MIDI}
 
