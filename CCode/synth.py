@@ -7,7 +7,32 @@ import numpy as np
 from scipy.io import wavfile
 from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_HARMONY_INSTRUMENT
 
+
+
 SAMPLE_RATE = 44100
+
+import os
+import subprocess
+
+def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
+    base_dir = os.path.dirname(__file__)
+    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
+
+    if not os.path.exists(fluidsynth_exe):
+        fluidsynth_exe = "fluidsynth"
+
+    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path
+    subprocess.run([
+        fluidsynth_exe,
+        "-ni",
+        "-F", out_path,
+        "-r", str(sample_rate),
+        soundfont_path,
+        midi_path
+    ], check=True)
+    
+    return out_path
+
 
 TIMBRE_PROFILES = {
     "piano": {"adsr": dict(a=0.005, d=0.3, s=0.2, r=0.2)},
@@ -241,9 +266,9 @@ def mix_and_export(melody, harmony, tempo,
     return out_path
 
 #per la sintesi del file midi usando un sintetizzatore autonomo
-def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
-    subprocess.run([
-        "fluidsynth", "-ni", soundfont_path, midi_path,
-        "-F", out_path, "-r", str(sample_rate)
-    ], check=True)
-    return out_path
+#def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
+#    subprocess.run([
+#        "fluidsynth", "-ni", soundfont_path, midi_path,
+#        "-F", out_path, "-r", str(sample_rate)
+#    ], check=True)
+#    return out_path
