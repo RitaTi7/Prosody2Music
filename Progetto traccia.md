@@ -253,6 +253,7 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - se non riusciamo a produrre un interfaccia minimale (ad esempio in html) si potrebbe anche optare per un notebook4
 - SCEGLIERE TESTI CHE VENGONO BENE, tra questi: qualcosa che abbia parole forti (per far uscire un suono cupo...), qualcosa che abbia emozioni carine e dolci... volendo anche canzoni vere (se fanno un bell effetto)
 - vedere se è possibile preparare un esempio che bypassi lo scheletro ritmico ma che lasci solo il transformer, per far vedere che (in teoria) il risultato è molto diverso
+- portare una specie di cassa (o cuffie?) per far sentire meglio il risultato XD 
 
 
 #### Rifiniture finali:
