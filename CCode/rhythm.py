@@ -171,11 +171,6 @@ def norm_word(word: str) -> str:
 def _is_vowel(ch: str) -> bool:
     return ch.lower() in VOWELS
 
-
-def _is_vowel_char(ch: str) -> bool:
-    return ch.lower() in VOWELS
-
-
 # ============================================================
 # SILLABAZIONE A REGOLE (invariata da prosody.py — fonte PRIMARIA,
 # non pyphen: vedi nota in testa al file sul problema dello iato)
@@ -263,7 +258,7 @@ def _syllabify_word_pyphen(word: str):
 
 def _split_at_internal_vowel(syllable: str):
     for i in range(1, len(syllable)):
-        if _is_vowel_char(syllable[i - 1]) and _is_vowel_char(syllable[i]):
+        if _is_vowel(syllable[i - 1]) and _is_vowel(syllable[i]):
             return [syllable[:i], syllable[i:]]
     return None
 
@@ -275,7 +270,7 @@ def reconcile_syllable_count(word: str, syllables: list, target_count: int):
         guard += 1
         candidates = sorted(
             range(len(syllables)),
-            key=lambda i: -sum(1 for c in syllables[i] if _is_vowel_char(c)),
+            key=lambda i: -sum(1 for c in syllables[i] if _is_vowel(c)),
         )
         split_done = False
         for i in candidates:
