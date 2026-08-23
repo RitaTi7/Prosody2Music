@@ -1,7 +1,10 @@
-\section{Metodologie utilizzate}
 Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
 
-Per svolgere questo task si farà uso di un transformer.
+In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la parte di generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
+Così facendo saranno create la melodia e l'armonia.
+
+
+
 \section{Transformer}
 Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
 
@@ -9,9 +12,14 @@ Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per proce
 
 Fonte: https://it.wikipedia.org/wiki/Trasformatore
 
-Nell'ambito del progetto il transformer sarà usato per il fine della produzione musicale.
 \section{Librerie}
 \subsection{Pythorch}
+PyTorch è una libreria tensoriale ottimizzata per il deep learning utilizzando GPU e CPU.
+Fonte: https://docs.pytorch.org/docs/main/generated/torch.sort.html
+PyTorch viene utilizzato per caricare il modello pre-addestrato, gestire la memoria e campionare le nuove note musicali in fase di inferenza.
+Nello specifico è possibile vedere come torch.nn sia usato per la costruzione dell'architettura neurale.
+Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della funzione di attivazione omonima che converte le uscite grezze dal modello in una distribuzione di probabilità valida compresa tra 0 e 1.
+
 
 \section{Trainig del modello}
 L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintassi melodica generale (come le note si susseguono in modo musicale) e come piegare questa melodia in base al contesto emotivo (Valenza e Arousal).
@@ -39,45 +47,69 @@ L'addestramento funziona nelle seguenti fasi:
     \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
     \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{25} y_{c} \log(\hat{y}_{c})$$
      Per l'ottimizzazione viene usato l'ottimizzatore AdamW con:Weight Decay ($10^{-2}$): Penalizza i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
-\end{enumerate}
+     Inoltre è necessario specificare che la Loss è "pesata", il token 12 conta 1/5 rispetto agli altri, ciò è stato fatto per correggere il bias del modello verso la "nota ripetuta", bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
+    \end{enumerate}
 Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
 \begin{enumerate}
     \item A ogni passo, la rete calcola i logits per la nota successiva. Applicando una Temperatura ($T = 0.85$) e un Cut-off Top-p ($p = 0.90$), seleziona solo il sottoinsieme di intervalli più plausibili e ne campiona uno probabilisticamente.
     \item Gli intervalli generati dal Transformer vengono infine "agganciati" ai gradi della scala selezionata dall'analisi prosodico-emotiva, garantendo un risultato privo di dissonanze.
 \end{enumerate}
-è inoltre importante dire che il modello si affida unicamente alla maschera causale per l'informazione d'ordine, senza un positional encoding esplicito, scelta accettabile data la lunghezza contenuta delle sequenze.
+
+\section{Selezione Automatica degli Strumenti}
+Per quanto riguarda gli strumenti coi sono 2 possibilità:
+\begin{itemize}
+    \item Li sceglie l'utente.
+    \item Il modello li seleziona in automatico.
+\end{itemize}
+La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal, guarda il contenuto semantico del testo.
+
+Usa un classificatore Zero-Shot multilingue per confrontare la poesia con 6 "atmosfere" candidate (natura/bosco, sacro/religioso, epico/eroico, triste/malinconico, gioioso/festoso, notturno/sognante), ciascuna già mappata a una coppia (melodia, armonia) di strumenti.
+
+Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola V/A/T vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
 
 \section{MIDI}
 
-Una volta terminata la parte legata al transformer si potrà iniziare a fare uso di MIDI per la creazione del vero e proprio file musicale.
-Ciascuna nota viene rappresentata in memoria come un oggetto o tupla contenente:
+I dati accumulati precedentemente vengono poi accumulati e passati a una funzione che si occuperà di costrire il file .mid, questi dati sono:
 \begin{itemize}
-\item Pitch (Altezza): Numero intero compreso tra 0 e 127 (secondo lo standard MIDI, dove es. 60 = Do centrale / C4).
-\item Start Time (Tempo d'inizio): Espresso in battute o secondi assoluti dall'inizio del brano.
-\item Duration (Durata): Durata della nota espressa in frazioni di battuta o secondi.
-\item Velocity (Dinamica/Volume di attacco): Valore tra 1 e 127, derivato dall'Arousal emotivo (valori più alti per sezioni più intense/energetiche).
+    \item I dati musicali: La melodia, l'armonia,le note del basso e le note dell'arpeggio.
+    \item I dati di esecuzione: la velocità del brano (tempo) e i nomi degli strumenti assegnati a ciascuna voce.
+    \item Il percorso di salvataggio del file finale.
 \end{itemize}
 
-Utilizzando la libreria Python pretty\_midi, viene creato il file MIDI Type 1 che supporta tracce multiple indipendenti che suonano in parallelo mantenendo un'unica sequenza temporale sincronizzata.
-Successivamente viene definita la risoluzione temporale, espressa in TPQN (Ticks Per Quarter Note), solitamente impostata su 480 o 960 tick per semiminima (quarto). Questo garantisce una griglia temporale precisa sia per le note in levare sia per gli arpeggi veloci.
+Dietro le quinte , il sistema convalida i nomi degli strumenti e li converte in numeri "Program Change" dello standard General MIDI (valori da 0 a 127). Questi valori vengono presi dal dizionario sintetico in modo che ogni player o soundfont sappia quale suono assegnare (ad esempio, il numero 0 per il pianoforte o il 40 per il violino).
 
-Viene poi creata una prima traccia (o inseriti nell'header) i messaggi di meta-informazione:
+Utilizzando la libreria mido, il file viene costruito inviando pacchetti di protocollo MIDI nativo. Il file generato è multitraccia ed è composto in questo modo:
+\begin{enumerate}
+    \item Traccia 0$\rightarrow$ Non contiene note, ma le informazioni del brano, come la traccia del Tempo (BPM) calcolata in precedenza.
+    \item Traccia 1: Melodia (Canale 0) $\rightarrow$ Scrive la voce principale. Per questa traccia viene applicato un leggero "overlap" (sovrapposizione dei tick temporali) tra il rilascio di una nota e l'attacco della successiva, creando un effetto musicale "legato".
+    \item Traccia 2 - Armonia (Canale 1) $\rightarrow$ Scrive gli accordi. Per rendere l'esecuzione più realistica, il codice inserisce messaggi MIDI di Control Change 64 (l'equivalente del pedale del Sustain del pianoforte) all'inizio di ogni accordo per tenerlo premuto, rilasciandolo appena prima del cambio accordo.
+    \item Tracce 3 e 4 $\rightarrow$  Basso e Arpeggio (Canali 2 e 3): Vengono generate due tracce monofoniche aggiuntive per la linea di basso e per l'arpeggio.
+\end{enumerate}
+
+\section{Synth}
+Mentre la parte MIDI si limita a compilare uno "spartito digitale", la parte Syth si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
+
+
+Sono supportati due approcci per generare la musica:
 \begin{itemize}
-    \item BPM / Tempo: Convertito nel valore microsecondi-per-quarto tramite mido.bpm2tempo(bpm).
-    \item Time Signature: Impostata la misura del brano (es. 4/4).
+    \item Sintetizzatore Esterno (FluidSynth): Delega la creazione dell'audio al programma di sistema FluidSynth. Questo metodo necessita del file MIDI e di un file SoundFont esterno (una libreria di suoni campionati reali) per esportare l'audio.
+    \item Sintetizzatore Matematico Interno: Genera l'audio da zero scrivendo byte per byte le forme d'onda attraverso algoritmi, senza dipendere da campionamenti audio esterni.
 \end{itemize}
-Successivamente il file viene suddiviso in 4 tracce MIDI distinte (MidiTrack), ciascuna associata a un canale MIDI indipendente (da 0 a 3):
+
+\subsection{Sintetizzatore matematico interno}
+Ogni nota musicale viene tradotta dalla sua notazione MIDI in una frequenza espressa in Hertz.
+Per farlo viene applicata la seguente formula:
+\[f = 440.0 \cdot 2^{(p-69)/12.0}\]
+dove $p$ è il valore numerico (pitch) della nota MIDI.
+
+Successivamente viene generato il suono in base allo strumento scelto miscelando onde sinusoidali e armoniche. Su ogni strumento viene applicato un "inviluppo ADSR" (Attacco, Decadimento, Sostegno, Rilascio). 
+L'ADSR modella il volume nel tempo (es. un basso decade dolcemente, un organo mantiene un sostegno costante finché il tasto non viene rilasciato).
+
+Una volta generate le singole onde sonore, il modulo unisce le quattro voci in un unico spazio stereo (panoramica), bilanciandone matematicamente i volumi:
 \begin{itemize}
-    \item Track 0: la melodia principale prosodica.
-    \item Track 1: Il tappeto armonico (accordi).
-    \item Track 2: La linea di basso fondamentale.
-    \item Track 3: Arpeggio e movimento.
+    \item Melodia (Lead): Posizionata esattamente al centro (pan 0.0)
+ con un volume prominente (85\%).
+    \item  Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
+    \item Basso: Fissato al centro a frequenze basse (volume 70\%).
+    \item  Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
 \end{itemize}
-
-I file MIDI non memorizzano il tempo assoluto (es. "suona a 2.5 secondi"), ma utilizzano il Delta-Time: il tempo trascorso tra l'evento precedente e quello attuale sulla medesima traccia.
-Per ogni traccia, tutti gli eventi di inizio nota (Note On) e fine nota (Note Off) vengono convertiti in coppie di eventi temporali e ordinati cronologicamente, il tempo in battute/secondi viene convertito in numero di tick:$$\text{ticks} = \text{tempo\_in\_quarti} \times \text{TPQN}$$
-Per ogni evento $E_i$ al tempo $T_i$, il delta-time è dato da:$$\Delta t = T_i - T_{i-1}$$
-La coordinazione dei delta-time garantisce che le note sovrapposte negli accordi del Pad vengano aperte simultaneamente ($\Delta t = 0$ tra le note dello stesso accordo) e chiuse correttamente a fine battuta.
-Fatto questo la traccia viene salvata in un file .mid.
-
-Syth riceve direttamente gli oggetti Melody/Harmony in memoria (vedi mix\_and\_export()), evitando un giro di parsing MIDI ridondante. Se nella versione finale è stato riscritto per leggere davvero dal file .mid, va bene, ma allora la frase andrebbe verificata contro il codice reale, non assunta.
