@@ -244,18 +244,34 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - ~~aggiungere un transform~~
 - ~~importare un dataset musicale buono~~
 - SCRIVERE LA RELAZIONE
-- verifica se è deterministico (la produzione musicale non dovrebbe, lo schema ritmico si)
+- ~~verifica se è deterministico~~ (la produzione musicale non dovrebbe, lo schema ritmico si)
 - ampliare la lista degli strumenti(?) in instruments.py
 - alzare il volume della produzione con fluidsynth!!!
+- sistemare fluidsynth
+- fare in modo che l'interfaccia grafica consenta di sentire anche la parte ritmica
+- sistemare la parte emotiva (deve andare anche nelle altre aree)
+
+#### Cose da fare nella relazione:
+- introduzione (da vedere cosa aggiungere)
+- panoramica su Adam
+- panoramica su MIDI
+- panoramica su FluidSynth
+- Conclusioni (e sviluppi futuri)
+- elimina capitolo Metodi (dopo aver visto bene gli argomenti)
+- cambia appendice-> è diventata la sitografia
+
 
 #### Idee per la presentazione:
 - sfruttare: la lunghezza e la profondità sintattica delle frasi (syntactic_depth, sentence_word_count) già calcolate da spaCy. Usabili per decidere il fraseggio musicale — frasi sintatticamente semplici e brevi diventano frasi musicali più dirette, frasi lunghe e subordinate introducono più respiro o un cambio di registro. È un modo elegante di far "sentire" la struttura grammaticale del testo, non solo l'accento delle singole parole.
 - se non riusciamo a produrre un interfaccia minimale (ad esempio in html) si potrebbe anche optare per un notebook4
 - SCEGLIERE TESTI CHE VENGONO BENE, tra questi: qualcosa che abbia parole forti (per far uscire un suono cupo...), qualcosa che abbia emozioni carine e dolci... volendo anche canzoni vere (se fanno un bell effetto)
 - vedere se è possibile preparare un esempio che bypassi lo scheletro ritmico ma che lasci solo il transformer, per far vedere che (in teoria) il risultato è molto diverso
+- portare una specie di **cassa** (o cuffie?) per far sentire meglio il risultato XD 
 
 
 #### Rifiniture finali:
 - controllare i commenti ai metodi/script
 - eliminare commenti "brutti" nel codice
 - rimuovere file che non servono nelle cartelle
+
+

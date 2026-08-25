@@ -32,7 +32,7 @@ import os
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 _CANDIDATE_ROOTS = [
-    os.path.join(_HERE, "NRC-Emotion-Lexicon"),
+    os.path.join(_HERE, "..", "NRC-Emotion-Lexicon"),
     os.path.join(_HERE, "Progetto", "NRC-Emotion-Lexicon"),
     os.path.join(_HERE, "repo_nrc"),  # nome usato durante lo sviluppo
 ]
@@ -133,7 +133,7 @@ def score_word(word: str, lexicon=None):
     nessun flag attivo.
     """
     if lexicon is None:
-        lexicon = load_lexicon(verbose=False)
+        lexicon = load_lexicon(verbose=True)        #modificato, era false
 
     active = lexicon.get(word.lower())
     if not active:
@@ -145,6 +145,8 @@ def score_word(word: str, lexicon=None):
         arousals = [CATEGORY_TO_VA[c][1] for c in specific]
         valence = sum(valences) / len(valences)
         arousal = sum(arousals) / len(arousals)
+#        if "anger" in specific or "fear" in specific:            #corregge le cose troppo rumorose...
+#            arousal = max(arousal, 0.6)     
         tenderness = sum(_TENDERNESS_WEIGHTS.get(c, 0.0) for c in specific)
         tenderness = max(-1.0, min(1.0, tenderness))
         return {

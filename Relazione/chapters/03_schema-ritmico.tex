@@ -1,0 +1,26 @@
+(...)
+\section{Analisi prosodica del testo}
+La prosodia è la parte della linguistica e della grammatica che studia gli elementi sonori del discorso, come l'intonazione, il ritmo, l'accento, 
+la durata e le pause. In questa fase iniziale della pipeline avviene l'analisi prosodica di un testo di input, con l'obiettivo di produrre 
+una rappresentazione ritmico-temporale che sarà la base di partenza per la fase successiva di generazione musicale. 
+Per questo progetto la lingua di riferimento è l'italiano, con le sue regole grammaticali, fonetiche e sugli accenti. 
+
+\subsection{Strumenti per l'analisi del testo}
+Prima di giungere all'analisi prosodica vera è propria, è indispensabile essere a conoscenza di alcuni pattern lessicali della lingua italiana.\newline
+Innanzitutto è necessario specificare al programma le \textit{vocali}, anche quelle accentate; esse si suddividono in vocali forti 
+(come "a", "e", "o" e le forme accentate di "i" e "u" ) e vocali deboli (comprendenti solo "i" e "u"). 
+La distinzione delle vocali forti è importante per il riconoscimento di iati.\newline
+Il programma identifica anche i \textit{digrammi}, ossia sequenze di due lettere che rappresentano un unico suono (come "ch", "gh", "gn" e "gl"). 
+L'identificazione di queste stringhe evita al programma di costruire sillabe che li separino. Il digramma "sc" presenta delle regole che devono
+essere analizzate singolarmente.\newline 
+È presente anche una mappa che lega ciascuna lettera accentata alla sua vocale non accentata di riferimento, per facilitare l'individuazione 
+dell'accento grafico nelle parole; quest'ultimo corrisponde sempre all'accento tonico della parola (approfondito nel paragrafo \textbf{X}).\newline
+Infine, il testo deve essere normalizzato: per ogni parola vengono eliminati gli spazi, ogni lettera diventa minuscola, sono eliminati 
+gli apostrofi e i caratteri non alfabetici.\newline
+Da questo punto in poi il testo è pronto per essere sottoposto alla suddivisione delle sillabe.
+\subsection{Sillabazione}
+\subsection{Accento tonico}
+\subsection{Pause di punteggiatura}
+\subsection{Export del MIDI ritmico}
+
+\section{Analisi emotiva del testo}

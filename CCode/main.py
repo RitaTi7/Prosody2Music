@@ -70,7 +70,7 @@ def apply_duration_scale(melody, harmony, scale):
         chord.duration *= scale
 
 
-def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
+def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
                   tempo_override=None, duration_scale=1.0, melody_instrument_override=None, harmony_instrument_override=None):
     os.makedirs(out_dir, exist_ok=True)
     duration_scale = _validate_duration_scale(duration_scale)
@@ -80,6 +80,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=0, verbose=True,
 
     # 2) Analisi semantica (Emotion)
     emotion = analyze_emotion(text)
+    print(emotion)
 
     if verbose:
         print("=== ANALISI PROSODICA E SEMANTICA ===")
@@ -161,7 +162,7 @@ if __name__ == "__main__":
     parser.add_argument("--duration-scale", type=float, default=1.0, help="Moltiplicatore durata")
     parser.add_argument("--out-dir", default=".", help="Cartella di output")
     parser.add_argument("--basename", default="output", help="Nome base dei file")
-    parser.add_argument("--seed", type=int, default=42, help="Seed casualità")
+    parser.add_argument("--seed", type=int, default=None, help="Seed casualità")        #casuale
     #per la scelta degli strumenti
     parser.add_argument("--melody-instrument", choices=sorted(INSTRUMENT_PRESETS), default=None, 
                         help="strumento per la voce principale (default: scelto automaticamente dall'NLP)")

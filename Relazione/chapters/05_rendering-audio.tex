@@ -1,0 +1,49 @@
+(...)
+\section{MIDI}
+
+I dati accumulati precedentemente vengono poi accumulati e passati a una funzione che si occuperà di costrire il file .mid, questi dati sono:
+\begin{itemize}
+    \item I dati musicali: La melodia, l'armonia,le note del basso e le note dell'arpeggio.
+    \item I dati di esecuzione: la velocità del brano (tempo) e i nomi degli strumenti assegnati a ciascuna voce.
+    \item Il percorso di salvataggio del file finale.
+\end{itemize}
+
+Dietro le quinte , il sistema convalida i nomi degli strumenti e li converte in numeri "Program Change" dello standard General MIDI (valori da 0 a 127). Questi valori vengono presi dal dizionario sintetico in modo che ogni player o soundfont sappia quale suono assegnare (ad esempio, il numero 0 per il pianoforte o il 40 per il violino).
+
+Utilizzando la libreria mido, il file viene costruito inviando pacchetti di protocollo MIDI nativo. Il file generato è multitraccia ed è composto in questo modo:
+\begin{enumerate}
+    \item Traccia 0$\rightarrow$ Non contiene note, ma le informazioni del brano, come la traccia del Tempo (BPM) calcolata in precedenza.
+    \item Traccia 1: Melodia (Canale 0) $\rightarrow$ Scrive la voce principale. Per questa traccia viene applicato un leggero "overlap" (sovrapposizione dei tick temporali) tra il rilascio di una nota e l'attacco della successiva, creando un effetto musicale "legato".
+    \item Traccia 2 - Armonia (Canale 1) $\rightarrow$ Scrive gli accordi. Per rendere l'esecuzione più realistica, il codice inserisce messaggi MIDI di Control Change 64 (l'equivalente del pedale del Sustain del pianoforte) all'inizio di ogni accordo per tenerlo premuto, rilasciandolo appena prima del cambio accordo.
+    \item Tracce 3 e 4 $\rightarrow$  Basso e Arpeggio (Canali 2 e 3): Vengono generate due tracce monofoniche aggiuntive per la linea di basso e per l'arpeggio.
+\end{enumerate}
+
+\section{Synth}
+Mentre la parte MIDI si limita a compilare uno "spartito digitale", la parte Syth si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
+
+
+Sono supportati due approcci per generare la musica:
+\begin{itemize}
+    \item Sintetizzatore Matematico Interno: Genera l'audio da zero scrivendo byte per byte le forme d'onda attraverso algoritmi, senza dipendere da campionamenti audio esterni.
+    \item Sintetizzatore Esterno (FluidSynth): Delega la creazione dell'audio al programma di sistema FluidSynth. Questo metodo necessita del file MIDI e di un file SoundFont esterno (una libreria di suoni campionati reali) per esportare l'audio.
+\end{itemize}
+
+\subsection{Sintetizzatore matematico interno}
+Ogni nota musicale viene tradotta dalla sua notazione MIDI in una frequenza espressa in Hertz.
+Per farlo viene applicata la seguente formula:
+\[f = 440.0 \cdot 2^{(p-69)/12.0}\]
+dove $p$ è il valore numerico (pitch) della nota MIDI.
+
+Successivamente viene generato il suono in base allo strumento scelto miscelando onde sinusoidali e armoniche. Su ogni strumento viene applicato un "inviluppo ADSR" (Attacco, Decadimento, Sostegno, Rilascio). 
+L'ADSR modella il volume nel tempo (es. un basso decade dolcemente, un organo mantiene un sostegno costante finché il tasto non viene rilasciato).
+
+Una volta generate le singole onde sonore, il modulo unisce le quattro voci in un unico spazio stereo (panoramica), bilanciandone matematicamente i volumi:
+\begin{itemize}
+    \item Melodia (Lead): Posizionata esattamente al centro (pan 0.0)
+ con un volume prominente (85\%).
+    \item  Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
+    \item Basso: Fissato al centro a frequenze basse (volume 70\%).
+    \item  Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
+\end{itemize}
+
+\subsection{FluidSynth}

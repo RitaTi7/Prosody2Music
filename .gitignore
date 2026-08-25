@@ -26,3 +26,6 @@ env/
 
 #dataset MIDI
 lakh-midi/
+
+*.waw
+*.mid

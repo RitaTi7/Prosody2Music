@@ -2,36 +2,13 @@
 synth.py — Rendering audio stereo multitraccia a 4 strumenti.
 """
 
+import os
 import subprocess
 import numpy as np
 from scipy.io import wavfile
 from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_HARMONY_INSTRUMENT
 
-
-
 SAMPLE_RATE = 44100
-
-import os
-import subprocess
-
-def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
-    base_dir = os.path.dirname(__file__)
-    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
-
-    if not os.path.exists(fluidsynth_exe):
-        fluidsynth_exe = "fluidsynth"
-
-    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path
-    subprocess.run([
-        fluidsynth_exe,
-        "-ni",
-        "-F", out_path,
-        "-r", str(sample_rate),
-        soundfont_path,
-        midi_path
-    ], check=True)
-    
-    return out_path
 
 
 TIMBRE_PROFILES = {
@@ -264,6 +241,67 @@ def mix_and_export(melody, harmony, tempo,
     audio_i16 = (master * 32767).astype(np.int16)
     wavfile.write(out_path, SAMPLE_RATE, audio_i16)
     return out_path
+
+def _resolve_fluidsynth_executable():
+    """
+    Determina quale eseguibile fluidsynth usare a seconda del sistema operativo.
+ 
+    - Su Windows: usa il binario vendorizzato nel repo (fluidsynth/bin/fluidsynth.exe),
+      perché FluidSynth non ha un installer che lo registra nel PATH di sistema.
+    - Su Linux/macOS: usa il comando "fluidsynth" di sistema (es. installato con
+      apt/brew), cercandolo esplicitamente nel PATH con shutil.which per dare un
+      errore chiaro se manca, invece di lasciare fallire subprocess.run in modo criptico.
+    """
+    base_dir = os.path.dirname(__file__)
+ 
+    if platform.system() == "Windows":
+        bundled = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
+        if os.path.exists(bundled):
+            return bundled
+        # fallback: magari è comunque nel PATH anche su Windows
+        found = shutil.which("fluidsynth")
+        if found:
+            return found
+        raise FileNotFoundError(
+            "fluidsynth.exe non trovato né in fluidsynth/bin/ né nel PATH. "
+            "Scarica FluidSynth per Windows e mettilo in fluidsynth/bin/ nella cartella del progetto."
+        )
+ 
+    found = shutil.which("fluidsynth")
+    if not found:
+        raise FileNotFoundError(
+            "Comando 'fluidsynth' non trovato nel PATH. Installalo con il package "
+            "manager di sistema (es. 'sudo apt install fluidsynth' su Linux, "
+            "'brew install fluid-synth' su macOS)."
+        )
+    return found
+
+#per la sintesi del file midi usando un sintetizzatore autonomo
+def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
+    base_dir = os.path.dirname(__file__)
+    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
+
+    if not os.path.exists(fluidsynth_exe):
+        fluidsynth_exe = "fluidsynth"
+
+    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path.
+    # Avvolto in try/except: FluidSynth è un extra (il synth additivo in
+    # mix_and_export produce comunque un WAV valido) — un binario mancante,
+    # incompatibile con la piattaforma (es. .exe su Linux/Mac) o un
+    # soundfont non trovato non deve far fallire l'intera generazione.
+    try:
+        subprocess.run([
+            fluidsynth_exe,
+            "-ni",
+            "-F", out_path,
+            "-r", str(sample_rate),
+            soundfont_path,
+            midi_path
+        ], check=True)
+        return out_path
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"[synth] FluidSynth non disponibile o fallito ({e}); uso solo il synth additivo interno.")
+        return None
 
 #per la sintesi del file midi usando un sintetizzatore autonomo
 #def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
