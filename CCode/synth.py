@@ -284,17 +284,24 @@ def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav
     if not os.path.exists(fluidsynth_exe):
         fluidsynth_exe = "fluidsynth"
 
-    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path
-    subprocess.run([
-        fluidsynth_exe,
-        "-ni",
-        "-F", out_path,
-        "-r", str(sample_rate),
-        soundfont_path,
-        midi_path
-    ], check=True)
-    
-    return out_path
+    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path.
+    # Avvolto in try/except: FluidSynth è un extra (il synth additivo in
+    # mix_and_export produce comunque un WAV valido) — un binario mancante,
+    # incompatibile con la piattaforma (es. .exe su Linux/Mac) o un
+    # soundfont non trovato non deve far fallire l'intera generazione.
+    try:
+        subprocess.run([
+            fluidsynth_exe,
+            "-ni",
+            "-F", out_path,
+            "-r", str(sample_rate),
+            soundfont_path,
+            midi_path
+        ], check=True)
+        return out_path
+    except (OSError, subprocess.CalledProcessError) as e:
+        print(f"[synth] FluidSynth non disponibile o fallito ({e}); uso solo il synth additivo interno.")
+        return None
 
 #per la sintesi del file midi usando un sintetizzatore autonomo
 #def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
