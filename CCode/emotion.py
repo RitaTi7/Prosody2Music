@@ -76,7 +76,7 @@ LEXICON = {
 
     "tempesta": (-0.3, 0.9, -0.1), "vento": (0.0, 0.5, 0.0), "fuoco": (0.3, 0.8, 0.0),
     "mare": (0.5, 0.4, 0.2), "cielo": (0.5, 0.2, 0.2), "onda": (0.2, 0.5, 0.0),
-    "grido": (-0.2, 0.8, -0.2), "battaglia": (-0.6, 0.8, -0.4),
+    "battaglia": (-0.6, 0.8, -0.4),
 
     "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1), "selva": (-0.2, 0.3, -0.1),
     "cammino": (0.1, 0.3, 0.0), "eterno": (0.3, 0.1, 0.1), "eterna": (0.3, 0.1, 0.1),
@@ -87,6 +87,14 @@ LEXICON = {
     "grido": (-0.3, 0.8, -0.2),  # già presente ma verifica coerenza
     "basta": (-0.3, 0.7, -0.2),
     "muro": (-0.1, 0.2, -0.1), "porta": (0.0, 0.2, 0.0),
+
+    "malinconia": (-0.5, -0.4, 0.1), "malinconico": (-0.5, -0.4, 0.1), "malinconica": (-0.5, -0.4, 0.1),
+    "nostalgia": (-0.3, -0.3, 0.2), "nostalgico": (-0.3, -0.3, 0.2),
+    "rimpianto": (-0.5, -0.2, 0.0), "rimorso": (-0.5, -0.1, -0.1),
+    "sconforto": (-0.6, -0.3, -0.1), "desolazione": (-0.7, -0.2, -0.2),
+    "rassegnazione": (-0.4, -0.5, 0.0), "abbandono": (-0.6, -0.2, -0.1),
+    "malato": (-0.5, -0.2, -0.1), "stanchezza": (-0.4, -0.4, 0.0), "stanco": (-0.4, -0.4, 0.0),
+    "sospiro": (-0.3, -0.3, 0.1), "languire": (-0.4, -0.4, 0.0),
 }
 
 INTENSIFIERS = {"molto", "tanto", "sempre", "profondamente", "immensamente"}
