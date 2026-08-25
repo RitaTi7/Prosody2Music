@@ -80,6 +80,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
 
     # 2) Analisi semantica (Emotion)
     emotion = analyze_emotion(text)
+    print(emotion)
 
     if verbose:
         print("=== ANALISI PROSODICA E SEMANTICA ===")

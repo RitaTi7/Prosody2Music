@@ -41,6 +41,19 @@ try:
 except ImportError:
     _NRC_AVAILABLE = False
 
+try:
+    import simplemma
+    _LEMMATIZER_AVAILABLE = True
+except ImportError:
+    _LEMMATIZER_AVAILABLE = False
+
+def _lemmatize(word: str) -> str:
+    if _LEMMATIZER_AVAILABLE:
+        return simplemma.lemmatize(word, lang="it")
+    return word
+
+print(f"[DEBUG emotion.py] lemmatizer={_LEMMATIZER_AVAILABLE}  nrc={_NRC_AVAILABLE}")
+
 # valenza: -1 (negativo) .. +1 (positivo)
 # arousal: -1 (calmo)    .. +1 (agitato/intenso)
 # tenerezza: -1 (distacco/durezza) .. +1 (affetto/dolcezza)
@@ -68,10 +81,16 @@ LEXICON = {
     "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1), "selva": (-0.2, 0.3, -0.1),
     "cammino": (0.1, 0.3, 0.0), "eterno": (0.3, 0.1, 0.1), "eterna": (0.3, 0.1, 0.1),
     "bellezza": (0.7, 0.3, 0.5), "bella": (0.6, 0.2, 0.5), "bello": (0.6, 0.2, 0.4),
+
+    "sbattere": (-0.4, 0.7, -0.3), "strappare": (-0.4, 0.6, -0.3),
+    "stringere": (-0.2, 0.6, -0.2), "denti": (-0.2, 0.5, -0.2),
+    "grido": (-0.3, 0.8, -0.2),  # già presente ma verifica coerenza
+    "basta": (-0.3, 0.7, -0.2),
+    "muro": (-0.1, 0.2, -0.1), "porta": (0.0, 0.2, 0.0),
 }
 
-INTENSIFIERS = {"molto", "tanto", "sempre", "mai", "profondamente", "immensamente"}
-NEGATORS = {"non", "senza", "né"}
+INTENSIFIERS = {"molto", "tanto", "sempre", "profondamente", "immensamente"}
+NEGATORS = {"non", "senza", "mai", "né"}
 
 # Parole funzionali da escludere sempre dal lookup emotivo (articoli,
 # preposizioni, congiunzioni, pronomi, forme comuni di essere/avere).
@@ -95,7 +114,7 @@ def tokenize(text: str):
     words = re.findall(r"[A-Za-zàèéìòùÀÈÉÌÒÙ']+", text.lower())
     return [strip_punct(w) for w in words if w]
 
-
+'''
 def _lookup_word(word: str):
     """
     Combina lessico curato a mano e NRC Emotion Lexicon per una parola.
@@ -115,8 +134,30 @@ def _lookup_word(word: str):
     if nrc is not None:
         return nrc["valence"], nrc["arousal"], nrc["tenderness"], "nrc"
     return None
+'''
+def _lookup_word(word: str):
+    """
+    Combina lessico curato a mano e NRC Emotion Lexicon per una parola.
+    Ritorna (valence, arousal, tenderness, source_label) oppure None se
+    la parola non è in nessuno dei due.
+    """
+    lemma = _lemmatize(word)
+    hand = LEXICON.get(lemma) or LEXICON.get(word)
+    nrc = nrc_emolex.score_word(lemma) if _NRC_AVAILABLE else None
+    if nrc is None and _NRC_AVAILABLE:
+        nrc = nrc_emolex.score_word(word)
 
-
+    if hand is not None and nrc is not None:
+        v = (hand[0] + nrc["valence"]) / 2
+        a = (hand[1] + nrc["arousal"]) / 2
+        t = (hand[2] + nrc["tenderness"]) / 2
+        return v, a, t, "hand+nrc"
+    if hand is not None:
+        return hand[0], hand[1], hand[2], "hand"
+    if nrc is not None:
+        return nrc["valence"], nrc["arousal"], nrc["tenderness"], "nrc"
+    return None
+'''
 def analyze_emotion(text: str):
     """
     Ritorna un embedding emotivo aggregato: dict con valence, arousal,
@@ -167,7 +208,56 @@ def analyze_emotion(text: str):
         "tenderness": round(tenderness, 3),
         "matched": [f"{c[3]} ({c[4]})" for c in contributions],
     }
+'''
 
+def analyze_emotion(text: str):
+    tokens = tokenize(text)
+    contributions = []
+    negate_next = False
+    intensify_next = False
+
+    for tok in tokens:
+        if tok in NEGATORS:
+            negate_next = True
+            continue
+        if tok in INTENSIFIERS:
+            intensify_next = True
+            continue
+        if tok in STOPWORDS:
+            continue
+
+        entry = _lookup_word(tok)
+        if entry is not None:
+            v, a, t, source = entry
+            if negate_next:
+                v = -v * 0.6
+                a = a * 0.5  # vedi punto 2
+            if intensify_next:
+                v, a, t = v * 1.3, a * 1.3, t * 1.3
+                v = max(-1, min(1, v))
+                a = max(-1, min(1, a))
+                t = max(-1, min(1, t))
+            contributions.append((v, a, t, tok, source))
+        negate_next = False
+        intensify_next = False
+
+    if not contributions:
+        return {"valence": 0.0, "arousal": 0.1, "tenderness": 0.0, "matched": []}
+
+    # peso = magnitudine del vettore (v, a) -> le parole "forti" contano di più
+    weights = [max(abs(c[0]), abs(c[1]), 0.15) for c in contributions]  # 0.15 = peso minimo
+    w_sum = sum(weights)
+
+    valence = sum(c[0] * w for c, w in zip(contributions, weights)) / w_sum
+    arousal = sum(c[1] * w for c, w in zip(contributions, weights)) / w_sum
+    tenderness = sum(c[2] * w for c, w in zip(contributions, weights)) / w_sum
+
+    return {
+        "valence": round(valence, 3),
+        "arousal": round(arousal, 3),
+        "tenderness": round(tenderness, 3),
+        "matched": [f"{c[3]} ({c[4]})" for c in contributions],
+    }
 
 if __name__ == "__main__":
     demo = "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura"
