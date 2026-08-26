@@ -12,13 +12,65 @@ Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per proce
 
 Fonte: https://it.wikipedia.org/wiki/Trasformatore
 
-\section{Librerie}
-\subsection{Pythorch}
-PyTorch è una libreria tensoriale ottimizzata per il deep learning utilizzando GPU e CPU.
-Fonte: https://docs.pytorch.org/docs/main/generated/torch.sort.html
-PyTorch viene utilizzato per caricare il modello pre-addestrato, gestire la memoria e campionare le nuove note musicali in fase di inferenza.
-Nello specifico è possibile vedere come torch.nn sia usato per la costruzione dell'architettura neurale.
-Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della funzione di attivazione omonima che converte le uscite grezze dal modello in una distribuzione di probabilità valida compresa tra 0 e 1.
+\subsection{Meccanismo dell'auto-attenzione}
+Nello specifico il meccanismo della auto-attenzione che consente a queste reti di analizzare e ponderare l’importanza di ogni parte di una sequenza di dati rispetto a tutte le altre parti della stessa sequenza.
+Questo è particolarmente utile per comprendere il contesto di una parola in una frase, poiché una parola può influenzare o essere influenzata da qualsiasi altra parola, indipendentemente dalla distanza nella sequenza. Ogni parola o simbolo nella sequenza viene convertito in un vettore numerico (embedding) che rappresenta il suo significato in uno spazio multidimensionale.
+
+Un blocco del Transformer è una combinazione di diversi strati, ciascuno dei quali ha specifiche funzioni. Un tipico blocco di Transformer include:
+\begin{itemize}
+    \item Strato di attenzione multi-head dove avviene la self-attention.
+    \item Strato di normalizzazione che applica una normalizzazione ai dati per mantenere la stabilità e l’efficienza del modello.
+    \item Feed-forward network: Una rete neurale semplice che elabora i dati ulteriormente, permettendo al modello di apprendere trasformazioni più complesse.
+    \item Un altro strato di normalizzazione che applica una normalizzazione ai dati per mantenere la stabilità e l’efficienza del modello.
+\end{itemize}
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{Figure/Pipeline Transformer.png}
+    \caption{pipeline di un Transformer}
+    \label{fig:transformer}
+\end{figure}
+
+La \textbf{Self-Attention} (auto-attenzione) è il nucleo matematico che permette di valutare la rilevanza contestuale di ogni token rispetto all'intera sequenza. Attraverso operazioni di vettorizzazione e trasformazione matriciale, essa converte le parole in rappresentazioni numeriche contestuali.
+
+\subsection{Query, Key e Value}
+
+Ogni elemento di un input $x_i$ viene proiettato, tramite tre matrici di peso apprese $W_Q, W_K, W_V$, in tre vettori fondamentali:
+\[
+    q_i = W_Q x_i, \qquad k_i = W_K x_i, \qquad v_i = W_V x_i .
+\]
+
+\begin{itemize}
+    \item \textbf{Query} ($Q$): rappresenta la domanda sulla rilevanza del token attualmente in esame rispetto al resto della sequenza. È essenzialmente il modo in cui il modello si chiede: Per ogni parola della sequenza viene generato un vettore di query, poi utilizzato per valutarne la relazione con le altre parole.
+
+    \item \textbf{Keys} ($K$): rappresentano i punti di riferimento della sequenza. Ogni parola, inclusa quella attualmente focalizzata, possiede un vettore chiave corrispondente. Le chiavi fungono da termine di confronto per il vettore di query, aiutano cioè il modello a determinare quanto ciascuna parola della sequenza sia correlata alla parola attualmente focalizzata.
+
+    \item \textbf{Values} ($V$): rappresentano il contenuto informativo pesato, ciò che il modello utilizza in definitiva per costruire la propria comprensione della sequenza. Ogni parola è associata a un vettore di valore, che ne contiene il significato contestuale. Una volta determinato — tramite il confronto tra query e chiavi — quanta attenzione dedicare a ciascuna parola, il modello utilizza i vettori di valore per costruire una rappresentazione ponderata del contesto.
+\end{itemize}
+
+
+La formulazione rigorosa dell'auto-attenzione, detta \textbf{Scaled Dot-Product Attention}, è data da:
+\[
+    \operatorname{Attention}(Q, K, V) = \operatorname{softmax}\!\left( \frac{Q K^{\top}}{\sqrt{d_k}} \right) V,
+\]
+dove $d_k$ è la dimensione dei vettori chiave (e query).
+
+La scalatura è una necessità tecnica imprescindibile: in spazi ad alta dimensionalità, il prodotto scalare $Q K^{\top}$ tende a crescere in modulo, portando gli argomenti della funzione Softmax in regioni in cui i gradienti sono estremamente piccoli (saturazione). Dividere per $\sqrt{d_k}$ stabilizza la varianza dei punteggi di attenzione e, di conseguenza, la backpropagation, prevenendo l'esplosione/evanescenza dei gradienti.
+
+I punteggi scalati $\dfrac{QK^{\top}}{\sqrt{d_k}}$ passano attraverso la funzione Softmax, che li trasforma in una distribuzione di probabilità la cui somma è pari a $1$:
+\[
+    \alpha_{ij} = \frac{\exp\!\left( q_i \cdot k_j / \sqrt{d_k} \right)}{\displaystyle\sum_{l} \exp\!\left( q_i \cdot k_l / \sqrt{d_k} \right)} .
+\]
+I coefficienti $\alpha_{ij}$ determinano matematicamente quanta attenzione debba essere dedicata al token $j$ rispetto al token $i$ attualmente in esame. In questo senso, la Softmax agisce come un selettore probabilistico, identificando quale ``slot'' della rappresentazione (ad esempio una codifica posizionale) debba essere attivato in relazione al contesto.
+
+I pesi ottenuti dalla Softmax vengono infine moltiplicati per i vettori dei valori $V$. Il risultato è una somma ponderata che genera un vettore di output arricchito:
+\[
+    z_i = \sum_j \alpha_{ij}\, v_j ,
+\]
+in cui ogni parola non è più un'entità isolata, ma incorpora informazioni provenienti dall'intera sequenza di input. L'uscita finale dell'attenzione si ottiene dunque dai pesi $\alpha_{ij}$ moltiplicati per $V$, ogni vettore di output $z_i$ corrisponde a una parola (token) della sequenza, arricchita del contesto globale.
+
+
+
 
 
 \section{Trainig del modello}
@@ -34,7 +86,7 @@ L'addestramento funziona nelle seguenti fasi:
     \]
     \item Per evitare l'overfitting sul corpus MIDI (composto da poche migliaia di file) e rendere il modello capace di generalizzare su qualsiasi nuova poesia, durante l'addestramento vengono applicate due tecniche fondamentali:
 
-    Per ogni sequenza di intervalli $[s_1, s_2, s_3, \dots]$, lo script genera la sua versione speculare $[-s_1, -s_2, -s_3, \dots]$. Questo raddoppia la dimensione del dataset e insegna alla rete che i movimenti melodici speculari sono egualmente validi.
+    Per ogni sequenza di intervalli $[s_1, s_2, s_3, \dots]$, lo script genera la sua versione speculare $[-s_1, -s_2, -s_3, \dots]$. Questo raddoppia la dimensione del dataset e insegna alla rete che i movimenti melodici speculari sono egualmente validi, questa tecnica è anche detta Data Augmentation.
 
     Nel 15\% dei casi di addestramento, i valori di Valenza e Arousal passati alla rete vengono impostati forzatamente a zero [0.0, 0.0].
     Si fa per Costringe il Transformer a imparare prima la struttura della sintassi musicale in modo indipendente ("incondizionato") e solo successivamente a correlarla alle emozioni, evitando che si affidi unicamente all'emozione ignorando la coerenza melodica.
@@ -45,15 +97,39 @@ L'addestramento funziona nelle seguenti fasi:
         \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
     \end{itemize} 
     \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
-    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{25} y_{c} \log(\hat{y}_{c})$$
-     Per l'ottimizzazione viene usato l'ottimizzatore AdamW con:Weight Decay ($10^{-2}$): Penalizza i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
-     Inoltre è necessario specificare che la Loss è "pesata", il token 12 conta 1/5 rispetto agli altri, ciò è stato fatto per correggere il bias del modello verso la "nota ripetuta", bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
+    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$.Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{25} y_{c} \log(\hat{y}_{c})$$
+     Per l'ottimizzazione viene usato l'ottimizzatore AdamW con Weight Decay ($10^{-2}$)::
+     
+     L'ottimizzatore Adam, acronimo di Adaptive Moment Estimation, è un sofisticato algoritmo di ottimizzazione ampiamente utilizzato per addestrare modelli di deep learning, calcolando learning rates adattivi individuali per diversi parametri dalle stime del primo e del secondo momento dei gradienti.
+
+     L'ottimizzatore AdamW è una variante dell'algoritmo Adam che corregge il modo in cui viene gestito il decadimento dei pesi (weight decay), migliorando la capacità di generalizzazione dei modelli di deep learning.
+
+      Penalizza quindi i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
+     Inoltre è necessario specificare che la Loss è "pesata", il token 12 conta 1/5 rispetto agli altri, ciò è stato fatto per correggere il bias del modello verso la "nota ripetuta".
+     
+     Bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
     \end{enumerate}
 Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
+
+Il campionamento probabilistico della melodia dal Music Transformer trasforma i valori grezzi calcolati dalla rete (logits) in una distribuzione di probabilità controllata. Il processo avviene in tre fasi sequenziali per selezionare l'intervallo musicale successivo.
+
+
 \begin{enumerate}
-    \item A ogni passo, la rete calcola i logits per la nota successiva. Applicando una Temperatura ($T = 0.85$) e un Cut-off Top-p ($p = 0.90$), seleziona solo il sottoinsieme di intervalli più plausibili e ne campiona uno probabilisticamente.
-    \item Gli intervalli generati dal Transformer vengono infine "agganciati" ai gradi della scala selezionata dall'analisi prosodico-emotiva, garantendo un risultato privo di dissonanze.
+    \item I logits grezzi $z_i$ prodotti dall'ultimo strato lineare rappresentano i punteggi non normalizzati associati a ciascun token/intervallo. Applicando il parametro di Temperatura $T$ ($T = 0.85$), i logits vengono riscalati tramite divisione:  $$z'_i = \frac{z_i}{T}$$
+Se $T<1.0$ allota $T$ comprime i logits rendendo i valori più alti nettamente dominanti. Dopo la normalizzazione Softmax, la distribuzione diventa più "appuntita", riducendo la casualità e favorendo intervalli musicali stabili e coerenti. 
+Se invece $T>1.0$ allora $T$ appiattisce la distribuzione rendendo le probabilità dei vari intervalli più omogenee, incrementando la varietà ma rischiando di generare linee melodiche caotiche.
+
+    \item Dopo aver scalato i logits con la temperatura, viene applicata la funzione Softmax per ricavare la probabilità di ciascun intervallo $p_i = \text{Softmax}(z'_i)$. Il campionamento Nucleus seleziona solo il sottoinsieme dinamico di token più plausibili fino a raggiungere una probabilità cumulata pari a $p = 0.90$, la selezione funziona in questo modo:
+     \begin{enumerate}
+        \item I token vengono ordinati in ordine decrescente di probabilità.
+        \item Si accumulano i valori di probabilità partendo dal più alto; non appena la somma raggiunge o supera la soglia $p = 0.90$, tutti i token rimanenti vengono azzerati impostando il loro logit a $-\infty$.
+        \item A differenza del Top-k (che mantiene un numero fisso di opzioni), il Top-p adatta la dimensione del sottoinsieme alla certezza del modello. Se la rete è molto sicura, il nucleo conterrà pochi intervalli; se è incerta, il nucleo si espanderà per includere più alternative ragionevoli.
+    \end{enumerate}
+    \item Sui token superstiti che rientrano nel nucleo del $90\%$, viene ri-calcolata la distribuzione di probabilità ed eseguito un campionamento stocastico mediante estrazione multinomiale
 \end{enumerate}
+Questo approccio combinato previene due problemi comuni della generazione autonoma: evita che la rete scelga sempre l'intervallo più probabile (evitando melodie monotone ed uguali ad ogni esecuzione) e impedisce che vengano estratti intervalli totalmente improbabili o stonati presenti nella "coda lunga" della distribuzione.
+
+
 
 \section{Selezione Automatica degli Strumenti}
 Per quanto riguarda gli strumenti coi sono 2 possibilità:

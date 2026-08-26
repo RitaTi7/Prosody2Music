@@ -1,7 +1,4 @@
-(...)
-\section{MIDI}
-
-I dati accumulati precedentemente vengono poi accumulati e passati a una funzione che si occuperà di costrire il file .mid, questi dati sono:
+I dati ottenuti precedentemente vengono poi accumulati e passati a una funzione che si occuperà di costrire il file .mid, questi dati sono:
 \begin{itemize}
     \item I dati musicali: La melodia, l'armonia,le note del basso e le note dell'arpeggio.
     \item I dati di esecuzione: la velocità del brano (tempo) e i nomi degli strumenti assegnati a ciascuna voce.
@@ -9,6 +6,38 @@ I dati accumulati precedentemente vengono poi accumulati e passati a una funzion
 \end{itemize}
 
 Dietro le quinte , il sistema convalida i nomi degli strumenti e li converte in numeri "Program Change" dello standard General MIDI (valori da 0 a 127). Questi valori vengono presi dal dizionario sintetico in modo che ogni player o soundfont sappia quale suono assegnare (ad esempio, il numero 0 per il pianoforte o il 40 per il violino).
+
+
+\section{Protocollo MIDI}
+Il MIDI, acronimo di Musical Instrument Digital Interface, è un protocollo standard che consente il collegamento e la comunicazione tra più strumenti musicali elettronici.
+
+Essenzialmente, è un linguaggio informatico basato sullo scambio di messaggi e informazioni tra hardware.
+
+All’interno del protocollo MIDI, gli strumenti possono essere di due tipi:
+\begin{itemize}
+    \item Dispositivi di controllo (Controller) che servono a generare i messaggi MIDI, ad esempio una Tastiera MIDI muta o un Controller.
+    \item Dispositivi sonori (Sound Module), che utilizzano i messaggi MIDI per produrre o modificare suoni. Questi possono essere Sintetizzatori, Drum Machine, Delay, Riverberi ed altri effetti.
+\end{itemize}
+Poiché il MIDI si esprime mediante i numeri, è necessario capire la convenzione adottata. Questa prevede che qualsiasi comando, come ad esempio il Volume, venga indicato con valori compresi tra 0 e 127.
+
+Ciò significa che se volessi abbassare totalmente il volume del mio strumento, o synth, il messaggio che manderò conterrà come valore 0. Se invece volessi alzare il volume al massimo, il messaggio conterrà come valore 127. 
+
+Inoltre, il protocollo MIDI prevede 16 canali indipendenti per connettore. É possibile così inviare 16 messaggi diversi contemporaneamente tramite un’unico cavo. In questo modo possiamo suonare, ad esempio, più parti sovrapposte di un brano come Basso, Batteria e Piano.
+
+Esistono due grandi famiglie di messaggi:
+
+\begin{itemize}
+    \item Channel Message (messaggi di canale): sono messaggi indirizzati a canali specifici (da 1 a 16).
+    \item System Common Message (messaggi di sistema): sono messaggi che nono sono indirizzati a un canale specifico, e quindi sono ricevuti da tutti.
+
+\end{itemize}
+Fanno parte dei Channel Message: Note On, Note Off, Program Change (per cambiare preset), Control Change (messaggi concepiti per trasmettere valori che variano nel tempo), e molti altri.
+
+Sono invece System Common Message: SPP (Song Pointer Position), Song Select Message, MTC (MIDI Time Code).
+
+
+\section{Costruzione del file}
+
 
 Utilizzando la libreria mido, il file viene costruito inviando pacchetti di protocollo MIDI nativo. Il file generato è multitraccia ed è composto in questo modo:
 \begin{enumerate}
@@ -19,7 +48,7 @@ Utilizzando la libreria mido, il file viene costruito inviando pacchetti di prot
 \end{enumerate}
 
 \section{Synth}
-Mentre la parte MIDI si limita a compilare uno "spartito digitale", la parte Syth si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
+Mentre la parte dell'algoritmo dedicata al protocollo MIDI si limita a compilare uno "spartito digitale", la parte di sintetizzazione si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
 
 
 Sono supportati due approcci per generare la musica:
@@ -47,3 +76,39 @@ Una volta generate le singole onde sonore, il modulo unisce le quattro voci in u
 \end{itemize}
 
 \subsection{FluidSynth}
+FluidSynth è un sintetizzatore software open source che trasforma i dati MIDI in segnale audio in tempo reale, basato sulla tecnologia SoundFont 2 (file .sf2/.sf3). In pratica non ha bisogno di una scheda audio compatibile con SoundFont: fa tutto via software.
+
+
+Il principio è semplice: FluidSynth riceve eventi MIDI (note on/off, pitch bend, controllo, ecc.) e li "suona" usando i campioni audio precaricati contenuti in un file SoundFont, che definisce i suoni di tutti gli strumenti. La sintesi avviene in tempo reale e l'audio viene inviato a un dispositivo di uscita (ALSA, PulseAudio, PipeWire, JACK) oppure salvato su file.
+
+FluidSynth implementa il modello di sintesi definito dalla specifica SoundFont 2. Non è un algoritmo "unico", ma una catena di elaborazione che parte dal campione audio registrato e lo modella in tempo reale. Ecco come funziona nel dettaglio.
+
+La specifica SF2 definisce un modello composto da quattro blocchi principali:
+\begin{itemize}
+\item Un oscillatore wavetable (riproduzione del campione audio).
+\item Un filtro passa-basso dinamico.
+\item Un amplificatore con inviluppo (envelope).
+\item Dei send programmabili verso pan, riverbero e chorus.
+
+\end{itemize}
+
+Quando arriva un evento MIDI "note on", FluidSynth alloca una voce (voice) e la fa passare attraverso questa pipeline:
+\begin{enumerate}
+    \item Wavetable oscillator: legge il campione PCM dal SoundFont e lo riproduce. La frequenza di riproduzione viene scalata per ottenere l'altezza desiderata (pitch shifting), partendo dal sample rate originale, dalla nota campionata e dalla correzione di intonazione memorizzati nel file.
+    \item Filtro passa-basso: un filtro risonante (con cutoff initialFilterFc e risonanza initialFilterQ) che modella il timbro, attenuando le armoniche.
+    \item Amplificatore con inviluppo: controlla il volume nel tempo tramite una curva ADSR (attack, decay, sustain, release), con parametri come attackVolEnv, decayVolEnv, sustainVolEnv, releaseVolEnv.
+    \item Modulazione: due LFO (uno per il vibrato vibLfoToPitch, uno per il filtro/volume modLfoToFilterFc) e due inviluppi di modulazione (modEnvToPitch, modEnvToFilterFc) che possono modificare pitch, cutoff del filtro e ampiezza in modo dinamico.
+    \item Routing finale: la voce viene posizionata nel campo stereo (pan) e inviata in quantità controllata ai bus di riverbero e chorus (reverbEffectsSend, chorusEffectsSend).
+\end{enumerate}
+
+A questo si aggiunge un motore di modulazione formato da due LFO (oscillatori a bassa frequenza) e due generatori di inviluppo, con i relativi amplificatori di instradamento.
+
+La chiave del modello SF2 è la distinzione tra due tipi di parametri:
+\begin{itemize}
+   
+
+ \item Generatori: valori diretti in ingresso al modello di sintesi (tuning, cutoff del filtro, attenuazione, tempi di inviluppo, quantità di LFO applicate a pitch/filtro/ampiezza).
+
+\item Modulatori: collegamenti da una sorgente dinamica (come un MIDI Continuous Controller) a un generatore, permettendo il controllo in tempo reale dei parametri di sintesi.
+\end{itemize}
+Questi parametri sono organizzati gerarchicamente: un preset contiene più preset zone, che puntano a uno strumento; lo strumento ha instrument zone, ognuna associata a un singolo campione. I valori del preset si sommano a quelli dello strumento (i primi sono relativi, i secondi assoluti).

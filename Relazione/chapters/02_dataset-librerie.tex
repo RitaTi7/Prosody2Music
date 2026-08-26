@@ -32,3 +32,12 @@ Il dataset MIDI di Lakh è una raccolta di 176.581 file MIDI unici, di cui 45.12
 Fonte: https://colinraffel.com/projects/lmd/
 
 Nel contesto di questo progetto il dataset lakh-midi si occupa della parte della generazione musicale.
+
+\section{Librerie Utilizzate}
+\subsection{Pythorch}
+PyTorch è una libreria tensoriale ottimizzata per il deep learning utilizzando GPU e CPU.
+Fonte: https://docs.pytorch.org/docs/main/generated/torch.sort.html
+PyTorch viene utilizzato per caricare il modello pre-addestrato, gestire la memoria e campionare le nuove note musicali in fase di inferenza.
+Nello specifico è possibile vedere come torch.nn sia usato per la costruzione dell'architettura neurale.
+Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della funzione di attivazione omonima che converte le uscite grezze dal modello in una distribuzione di probabilità valida compresa tra 0 e 1.
+

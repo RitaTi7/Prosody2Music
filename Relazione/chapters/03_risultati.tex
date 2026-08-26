@@ -1,0 +1,110 @@
+Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
+
+In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la parte di generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
+Così facendo saranno create la melodia e l'armonia.
+
+
+
+\section{Transformer}
+Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
+
+
+
+Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per processare dati sequenziali come, ad esempio, testi in linguaggio naturale, con applicazioni alla loro generazione e traduzione automatica. Tuttavia, a differenza delle RNN, i trasformatori elaborano l'intero insieme di dati d'ingresso simultaneamente. Il cosiddetto meccanismo di attenzione fornisce il contesto per ogni posizione nella sequenza di ingresso. Per esempio, se i dati rappresentano una frase, il trasformatore non deve elaborare una parola alla volta: questo permette una maggiore parallelizzazione rispetto alle RNN e perciò porta a ridurre i tempi di addestramento.
+
+Fonte: https://it.wikipedia.org/wiki/Trasformatore
+
+
+
+\section{Trainig del modello}
+L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintassi melodica generale (come le note si susseguono in modo musicale) e come piegare questa melodia in base al contesto emotivo (Valenza e Arousal).
+
+L'addestramento funziona nelle seguenti fasi:
+\begin{enumerate}
+    \item Invece di insegnare alla rete le note assolute (es. Do, Re, Mi), il modello impara gli intervalli melodici in semitoni tra una nota e la successiva (es. $+2$ per un salto di tono in avanti, $-3$ per una terza minore all'indietro).
+    Un salto di +2 semitoni ha la stessa "funzione melodica" sia in Do maggiore che in Fa\# maggiore. Questo riduce il vocabolario a soli 26 token (25 intervalli + 1 token di PAD dedicato).
+    La mappaatura dei token funziona attraverso la seguente formula:
+    \[
+    \text{Token ID} = \text{Intervallo (in semitoni)}+12
+    \]
+    \item Per evitare l'overfitting sul corpus MIDI (composto da poche migliaia di file) e rendere il modello capace di generalizzare su qualsiasi nuova poesia, durante l'addestramento vengono applicate due tecniche fondamentali:
+
+    Per ogni sequenza di intervalli $[s_1, s_2, s_3, \dots]$, lo script genera la sua versione speculare $[-s_1, -s_2, -s_3, \dots]$. Questo raddoppia la dimensione del dataset e insegna alla rete che i movimenti melodici speculari sono egualmente validi.
+
+    Nel 15\% dei casi di addestramento, i valori di Valenza e Arousal passati alla rete vengono impostati forzatamente a zero [0.0, 0.0].
+    Si fa per Costringe il Transformer a imparare prima la struttura della sintassi musicale in modo indipendente ("incondizionato") e solo successivamente a correlarla alle emozioni, evitando che si affidi unicamente all'emozione ignorando la coerenza melodica.
+    \item Il modello elabora il contesto attraverso due flussi che si uniscono:
+    \begin{itemize}
+        \item     Embedding Emotivo: La coppia di valori continui $(V, A) \in [-1, 1]$ passa attraverso uno strato denso (nn.Linear) che la proietta in un vettore a 128 dimensioni. Questo vettore viene concatenato all'inizio della sequenza come primo token (prefisso).
+        \item Causal Masking (Maschera Triangolare Superiore):Durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
+        \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
+    \end{itemize} 
+    \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
+    \item L'input è la sequenza dal token $0$ a $N-1$, mentre il target da confrontare è la sequenza traslata da $1$ a $N$. La Misura la distanza tra le probabilità calcolate dalla Softmax della rete e l'effettivo token di destinazione:$$\mathcal{L} = -\sum_{c=0}^{25} y_{c} \log(\hat{y}_{c})$$
+     Per l'ottimizzazione viene usato l'ottimizzatore AdamW con:Weight Decay ($10^{-2}$): Penalizza i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
+     Inoltre è necessario specificare che la Loss è "pesata", il token 12 conta 1/5 rispetto agli altri, ciò è stato fatto per correggere il bias del modello verso la "nota ripetuta", bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
+    \end{enumerate}
+Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
+\begin{enumerate}
+    \item A ogni passo, la rete calcola i logits per la nota successiva. Applicando una Temperatura ($T = 0.85$) e un Cut-off Top-p ($p = 0.90$), seleziona solo il sottoinsieme di intervalli più plausibili e ne campiona uno probabilisticamente.
+    \item Gli intervalli generati dal Transformer vengono infine "agganciati" ai gradi della scala selezionata dall'analisi prosodico-emotiva, garantendo un risultato privo di dissonanze.
+\end{enumerate}
+
+\section{Selezione Automatica degli Strumenti}
+Per quanto riguarda gli strumenti coi sono 2 possibilità:
+\begin{itemize}
+    \item Li sceglie l'utente.
+    \item Il modello li seleziona in automatico.
+\end{itemize}
+La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal, guarda il contenuto semantico del testo.
+
+Usa un classificatore Zero-Shot multilingue per confrontare la poesia con 6 "atmosfere" candidate (natura/bosco, sacro/religioso, epico/eroico, triste/malinconico, gioioso/festoso, notturno/sognante), ciascuna già mappata a una coppia (melodia, armonia) di strumenti.
+
+Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola V/A/T vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
+
+\section{MIDI}
+
+I dati accumulati precedentemente vengono poi accumulati e passati a una funzione che si occuperà di costrire il file .mid, questi dati sono:
+\begin{itemize}
+    \item I dati musicali: La melodia, l'armonia,le note del basso e le note dell'arpeggio.
+    \item I dati di esecuzione: la velocità del brano (tempo) e i nomi degli strumenti assegnati a ciascuna voce.
+    \item Il percorso di salvataggio del file finale.
+\end{itemize}
+
+Dietro le quinte , il sistema convalida i nomi degli strumenti e li converte in numeri "Program Change" dello standard General MIDI (valori da 0 a 127). Questi valori vengono presi dal dizionario sintetico in modo che ogni player o soundfont sappia quale suono assegnare (ad esempio, il numero 0 per il pianoforte o il 40 per il violino).
+
+Utilizzando la libreria mido, il file viene costruito inviando pacchetti di protocollo MIDI nativo. Il file generato è multitraccia ed è composto in questo modo:
+\begin{enumerate}
+    \item Traccia 0$\rightarrow$ Non contiene note, ma le informazioni del brano, come la traccia del Tempo (BPM) calcolata in precedenza.
+    \item Traccia 1: Melodia (Canale 0) $\rightarrow$ Scrive la voce principale. Per questa traccia viene applicato un leggero "overlap" (sovrapposizione dei tick temporali) tra il rilascio di una nota e l'attacco della successiva, creando un effetto musicale "legato".
+    \item Traccia 2 - Armonia (Canale 1) $\rightarrow$ Scrive gli accordi. Per rendere l'esecuzione più realistica, il codice inserisce messaggi MIDI di Control Change 64 (l'equivalente del pedale del Sustain del pianoforte) all'inizio di ogni accordo per tenerlo premuto, rilasciandolo appena prima del cambio accordo.
+    \item Tracce 3 e 4 $\rightarrow$  Basso e Arpeggio (Canali 2 e 3): Vengono generate due tracce monofoniche aggiuntive per la linea di basso e per l'arpeggio.
+\end{enumerate}
+
+\section{Synth}
+Mentre la parte MIDI si limita a compilare uno "spartito digitale", la parte Syth si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
+
+
+Sono supportati due approcci per generare la musica:
+\begin{itemize}
+    \item Sintetizzatore Esterno (FluidSynth): Delega la creazione dell'audio al programma di sistema FluidSynth. Questo metodo necessita del file MIDI e di un file SoundFont esterno (una libreria di suoni campionati reali) per esportare l'audio.
+    \item Sintetizzatore Matematico Interno: Genera l'audio da zero scrivendo byte per byte le forme d'onda attraverso algoritmi, senza dipendere da campionamenti audio esterni.
+\end{itemize}
+
+\subsection{Sintetizzatore matematico interno}
+Ogni nota musicale viene tradotta dalla sua notazione MIDI in una frequenza espressa in Hertz.
+Per farlo viene applicata la seguente formula:
+\[f = 440.0 \cdot 2^{(p-69)/12.0}\]
+dove $p$ è il valore numerico (pitch) della nota MIDI.
+
+Successivamente viene generato il suono in base allo strumento scelto miscelando onde sinusoidali e armoniche. Su ogni strumento viene applicato un "inviluppo ADSR" (Attacco, Decadimento, Sostegno, Rilascio). 
+L'ADSR modella il volume nel tempo (es. un basso decade dolcemente, un organo mantiene un sostegno costante finché il tasto non viene rilasciato).
+
+Una volta generate le singole onde sonore, il modulo unisce le quattro voci in un unico spazio stereo (panoramica), bilanciandone matematicamente i volumi:
+\begin{itemize}
+    \item Melodia (Lead): Posizionata esattamente al centro (pan 0.0)
+ con un volume prominente (85\%).
+    \item  Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
+    \item Basso: Fissato al centro a frequenze basse (volume 70\%).
+    \item  Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
+\end{itemize}
