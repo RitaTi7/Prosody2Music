@@ -4,7 +4,7 @@ emotion.py — Analisi semantica / emotion embedding per testo poetico italiano.
 Approccio: due lessici combinati, entrambi proiettati sugli stessi assi
 (valenza, arousal, tenerezza) ispirati al modello circumplex di Russell:
 
-  1. LEXICON — un piccolo lessico curato a mano (~60 parole), preciso ma
+  1. LEXICON — un lessico curato a mano (~70 parole), preciso ma
      con copertura limitata al vocabolario poetico più comune.
   2. nrc_emolex — NRC Emotion Lexicon (Mohammad & Turney, 2013), italiano:
      ~5.400 parole, categorie di emozione (Plutchik) proiettate su
@@ -26,6 +26,25 @@ mediati: copertura ampia da NRC, precisione mirata dal lessico curato
 dove serve (es. "luce" non ha alcun flag attivo in NRC ma è nel lessico
 curato). Quando è solo in uno dei due, si usa quello.
 
+--- FIX (vedi analisi bug arousal sempre positivo) ---------------------
+La causa principale dello sbilanciamento era in nrc_emolex.py (fallback
+di polarità e mappatura categorie, vedi note in quel file), ma anche qui
+c'erano due punti che amplificavano il problema invece di attutirlo:
+
+  1. Nel blending hand+nrc, i due contributi venivano mediati alla pari
+     (50/50). Ma il lessico a mano è per costruzione più preciso (curato
+     a mano parola per parola), mentre NRC è più rumoroso soprattutto
+     sull'arousal (vedi nrc_emolex.py). Una media semplice lasciava che
+     il rumore di NRC "tirasse" ogni parola verso il suo arousal anche
+     quando il lessico a mano aveva già un valore più affidabile. Ora il
+     blending pesa di più il lessico a mano (60/40) quando è disponibile.
+
+  2. Il valore di default restituito quando il testo non contiene
+     nessuna parola riconosciuta era arousal = 0.1, non 0.0: un piccolo
+     ma sistematico bias positivo applicato a qualunque testo "vuoto"
+     dal punto di vista lessicale. Ora il default è 0.0 (arousal
+     neutro), coerente con valence e tenderness che erano già a 0.0.
+
 In produzione questo modulo sarebbe sostituito da un vero embedding
 neurale (es. sentence-transformer multilingue) proiettato su assi
 valence/arousal tramite una testa di regressione; qui usiamo lessici
@@ -33,7 +52,11 @@ per avere un sistema interamente offline e deterministico.
 """
 
 import re
+import logging
+
 from prosody import strip_punct
+
+logger = logging.getLogger(__name__)
 
 try:
     import nrc_emolex
@@ -47,17 +70,37 @@ try:
 except ImportError:
     _LEMMATIZER_AVAILABLE = False
 
+logger.debug("lemmatizer=%s nrc=%s", _LEMMATIZER_AVAILABLE, _NRC_AVAILABLE)
+
+# --- FIX: peso del lessico a mano rispetto a NRC quando una parola è
+# presente in entrambi. Il lessico a mano è più preciso (curato parola
+# per parola sul dominio poetico); NRC ha copertura più ampia ma più
+# rumore (vedi nrc_emolex.py). 0.6/0.4 invece di 0.5/0.5 dà priorità alla
+# fonte più affidabile senza ignorare comunque il segnale di NRC.
+HAND_WEIGHT = 0.6
+NRC_WEIGHT = 1.0 - HAND_WEIGHT
+
+
 def _lemmatize(word: str) -> str:
     if _LEMMATIZER_AVAILABLE:
         return simplemma.lemmatize(word, lang="it")
     return word
 
-print(f"[DEBUG emotion.py] lemmatizer={_LEMMATIZER_AVAILABLE}  nrc={_NRC_AVAILABLE}")
 
-# valenza: -1 (negativo) .. +1 (positivo)
-# arousal: -1 (calmo)    .. +1 (agitato/intenso)
-# tenerezza: -1 (distacco/durezza) .. +1 (affetto/dolcezza)
+# valenza:   -1 (negativo)          .. +1 (positivo)
+# arousal:   -1 (calmo)             .. +1 (agitato/intenso)
+# tenerezza: -1 (distacco/durezza)  .. +1 (affetto/dolcezza)
+#
+# Nota di copertura: il lessico originale era sbilanciato verso il
+# quadrante (valenza-, arousal+) [rabbia/paura/guerra] e (valenza-,
+# arousal-) [tristezza/malinconia], ma quasi vuoto nel quadrante
+# (valenza+, arousal-) [calma/serenità] e debole in (valenza+, arousal+)
+# [gioia/eccitazione ad alta intensità]. Le voci marcate "# +copertura"
+# sono state aggiunte per riequilibrare i quattro quadranti del piano
+# valenza/arousal, così che testi con toni diversi possano davvero
+# raggiungere tutte le aree del grafico in visualizer.py.
 LEXICON = {
+    # --- quadrante gioia / affetto (v+, a medio-basso) ---
     "amore": (0.9, 0.5, 0.9), "amare": (0.8, 0.5, 0.8), "amata": (0.8, 0.4, 0.9),
     "cuore": (0.5, 0.5, 0.7), "gioia": (0.9, 0.7, 0.6), "felicità": (0.9, 0.6, 0.5),
     "sorriso": (0.7, 0.3, 0.7), "speranza": (0.7, 0.4, 0.4), "luce": (0.7, 0.4, 0.3),
@@ -66,33 +109,21 @@ LEXICON = {
     "stelle": (0.6, 0.2, 0.3), "stella": (0.6, 0.2, 0.3), "carezza": (0.7, 0.0, 0.9),
     "vita": (0.4, 0.3, 0.2),
 
-#    "morte": (-0.9, 0.5, -0.3), "pianto": (-0.7, 0.4, 0.1), "lacrime": (-0.7, 0.4, 0.1),
-#    "tristezza": (-0.8, 0.2, 0.0), "triste": (-0.7, 0.1, 0.0), "dolore": (-0.8, 0.5, 0.0),
-#    "angoscia": (-0.8, 0.7, -0.2), "solitudine": (-0.6, -0.1, -0.2),
+    # --- quadrante gioia / eccitazione, alta intensità (v+, a+) # +copertura ---
+    "entusiasmo": (0.8, 0.7, 0.2), "danza": (0.6, 0.6, 0.2), "trionfo": (0.7, 0.7, 0.1),
+    "meraviglia": (0.7, 0.5, 0.3),
+
+    # --- quadrante calma / serenità (v+, a-) # +copertura ---
+    "quiete": (0.6, -0.6, 0.4), "serenità": (0.7, -0.5, 0.4),
+    "tranquillità": (0.6, -0.5, 0.3), "riposo": (0.4, -0.5, 0.2),
+    "armonia": (0.6, -0.4, 0.3), "grazia": (0.6, -0.3, 0.5),
+
+    # --- quadrante tristezza / malinconia (v-, a-) ---
     "morte": (-0.9, 0.1, -0.3), "pianto": (-0.7, -0.1, 0.1), "lacrime": (-0.7, -0.1, 0.1),
     "tristezza": (-0.8, -0.3, 0.0), "triste": (-0.7, -0.3, 0.0), "dolore": (-0.8, 0.0, 0.0),
     "angoscia": (-0.8, 0.4, -0.2), "solitudine": (-0.6, -0.3, -0.2),
-    "silenzio": (0.0, -0.6, 0.0), "vuoto": (-0.6, -0.3, -0.3), "nulla": (-0.5, -0.3, -0.2),
-    "paura": (-0.6, 0.7, -0.2), 
-    "silenzio": (0.0, -0.5, 0.0), "ombra": (-0.3, 0.0, -0.1), "buio": (-0.5, 0.2, -0.2),
-    "notte": (-0.1, 0.1, 0.0), "nulla": (-0.5, -0.2, -0.2), "vuoto": (-0.6, -0.1, -0.3),
-    "guerra": (-0.9, 0.9, -0.6), "sangue": (-0.7, 0.7, -0.4), "odio": (-0.9, 0.7, -0.8),
-    "rabbia": (-0.7, 0.8, -0.5), "furia": (-0.7, 0.9, -0.5),
-
-    "tempesta": (-0.3, 0.9, -0.1), "vento": (0.0, 0.5, 0.0), "fuoco": (0.3, 0.8, 0.0),
-    "mare": (0.5, 0.4, 0.2), "cielo": (0.5, 0.2, 0.2), "onda": (0.2, 0.5, 0.0),
-    "battaglia": (-0.6, 0.8, -0.4),
-
-    "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1), "selva": (-0.2, 0.3, -0.1),
-    "cammino": (0.1, 0.3, 0.0), "eterno": (0.3, 0.1, 0.1), "eterna": (0.3, 0.1, 0.1),
-    "bellezza": (0.7, 0.3, 0.5), "bella": (0.6, 0.2, 0.5), "bello": (0.6, 0.2, 0.4),
-
-    "sbattere": (-0.4, 0.7, -0.3), "strappare": (-0.4, 0.6, -0.3),
-    "stringere": (-0.2, 0.6, -0.2), "denti": (-0.2, 0.5, -0.2),
-    "grido": (-0.3, 0.8, -0.2),  # già presente ma verifica coerenza
-    "basta": (-0.3, 0.7, -0.2),
-    "muro": (-0.1, 0.2, -0.1), "porta": (0.0, 0.2, 0.0),
-
+    "silenzio": (0.0, -0.5, 0.0), "vuoto": (-0.6, -0.1, -0.3), "nulla": (-0.5, -0.2, -0.2),
+    "ombra": (-0.3, 0.0, -0.1), "buio": (-0.5, 0.2, -0.2), "notte": (-0.1, 0.1, 0.0),
     "malinconia": (-0.5, -0.4, 0.1), "malinconico": (-0.5, -0.4, 0.1), "malinconica": (-0.5, -0.4, 0.1),
     "nostalgia": (-0.3, -0.3, 0.2), "nostalgico": (-0.3, -0.3, 0.2),
     "rimpianto": (-0.5, -0.2, 0.0), "rimorso": (-0.5, -0.1, -0.1),
@@ -100,10 +131,31 @@ LEXICON = {
     "rassegnazione": (-0.4, -0.5, 0.0), "abbandono": (-0.6, -0.2, -0.1),
     "malato": (-0.5, -0.2, -0.1), "stanchezza": (-0.4, -0.4, 0.0), "stanco": (-0.4, -0.4, 0.0),
     "sospiro": (-0.3, -0.3, 0.1), "languire": (-0.4, -0.4, 0.0),
+
+    # --- quadrante rabbia / paura / conflitto (v-, a+) ---
+    "paura": (-0.6, 0.7, -0.2), "guerra": (-0.9, 0.9, -0.6), "sangue": (-0.7, 0.7, -0.4),
+    "odio": (-0.9, 0.7, -0.8), "rabbia": (-0.7, 0.8, -0.5), "furia": (-0.7, 0.9, -0.5),
+    "tempesta": (-0.3, 0.9, -0.1), "battaglia": (-0.6, 0.8, -0.4),
+    "sbattere": (-0.4, 0.7, -0.3), "strappare": (-0.4, 0.6, -0.3),
+    "stringere": (-0.2, 0.6, -0.2), "denti": (-0.2, 0.5, -0.2),
+    "grido": (-0.3, 0.8, -0.2), "basta": (-0.3, 0.7, -0.2),
+
+    # --- parole "di natura" e narrative, arousal/valenza più neutri ---
+    "vento": (0.0, 0.5, 0.0), "fuoco": (0.3, 0.8, 0.0), "mare": (0.5, 0.4, 0.2),
+    "cielo": (0.5, 0.2, 0.2), "onda": (0.2, 0.5, 0.0), "muro": (-0.1, 0.2, -0.1),
+    "porta": (0.0, 0.2, 0.0), "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1),
+    "selva": (-0.2, 0.3, -0.1), "cammino": (0.1, 0.3, 0.0), "eterno": (0.3, 0.1, 0.1),
+    "eterna": (0.3, 0.1, 0.1), "bellezza": (0.7, 0.3, 0.5), "bella": (0.6, 0.2, 0.5),
+    "bello": (0.6, 0.2, 0.4),
 }
 
 INTENSIFIERS = {"molto", "tanto", "sempre", "profondamente", "immensamente"}
 NEGATORS = {"non", "senza", "mai", "né"}
+
+# Avverbi comuni che possono comparire tra un negatore/intensificatore e la
+# parola bersaglio senza interrompere lo scope (es. "non veramente triste").
+# Non hanno peso emotivo proprio, quindi vanno trattati come le stopword.
+SCOPE_NEUTRAL = {"veramente", "davvero", "proprio", "così", "ancora", "più", "già"}
 
 # Parole funzionali da escludere sempre dal lookup emotivo (articoli,
 # preposizioni, congiunzioni, pronomi, forme comuni di essere/avere).
@@ -120,65 +172,58 @@ STOPWORDS = {
     "dal", "dallo", "dalla", "dai", "dagli", "dalle",
     "nel", "nello", "nella", "nei", "negli", "nelle",
     "col", "coi", "sul", "sullo", "sulla", "sui", "sugli", "sulle",
-}
+} | SCOPE_NEUTRAL
 
 
 def tokenize(text: str):
     words = re.findall(r"[A-Za-zàèéìòùÀÈÉÌÒÙ']+", text.lower())
     return [strip_punct(w) for w in words if w]
 
-'''
-def _lookup_word(word: str):
-    """
-    Combina lessico curato a mano e NRC Emotion Lexicon per una parola.
-    Ritorna (valence, arousal, tenderness, source_label) oppure None se
-    la parola non è in nessuno dei due.
-    """
-    hand = LEXICON.get(word)
-    nrc = nrc_emolex.score_word(word) if _NRC_AVAILABLE else None
 
-    if hand is not None and nrc is not None:
-        v = (hand[0] + nrc["valence"]) / 2
-        a = (hand[1] + nrc["arousal"]) / 2
-        t = (hand[2] + nrc["tenderness"]) / 2
-        return v, a, t, "hand+nrc"
-    if hand is not None:
-        return hand[0], hand[1], hand[2], "hand"
-    if nrc is not None:
-        return nrc["valence"], nrc["arousal"], nrc["tenderness"], "nrc"
-    return None
-'''
 def _lookup_word(word: str):
     """
     Combina lessico curato a mano e NRC Emotion Lexicon per una parola.
-    Ritorna (valence, arousal, tenderness, source_label) oppure None se
-    la parola non è in nessuno dei due.
+    Prova prima il lemma (per catturare variazioni morfologiche), poi
+    la forma originale come fallback. Ritorna (valence, arousal,
+    tenderness, source_label) oppure None se la parola non è in nessuno
+    dei due lessici.
     """
     lemma = _lemmatize(word)
-    hand = LEXICON.get(lemma) or LEXICON.get(word)
-    nrc = nrc_emolex.score_word(lemma) if _NRC_AVAILABLE else None
-    if nrc is None and _NRC_AVAILABLE:
-        nrc = nrc_emolex.score_word(word)
+
+    hand = LEXICON.get(lemma)
+    if hand is None:
+        hand = LEXICON.get(word)
+
+    nrc = None
+    if _NRC_AVAILABLE:
+        nrc = nrc_emolex.score_word(lemma)
+        if nrc is None:
+            nrc = nrc_emolex.score_word(word)
 
     if hand is not None and nrc is not None:
-        v = (hand[0] + nrc["valence"]) / 2
-        a = (hand[1] + nrc["arousal"]) / 2
-        t = (hand[2] + nrc["tenderness"]) / 2
+        # --- FIX: blending pesato 60/40 (hand/nrc) invece di media
+        # semplice 50/50 — vedi nota in testa al file.
+        v = hand[0] * HAND_WEIGHT + nrc["valence"] * NRC_WEIGHT
+        a = hand[1] * HAND_WEIGHT + nrc["arousal"] * NRC_WEIGHT
+        t = hand[2] * HAND_WEIGHT + nrc["tenderness"] * NRC_WEIGHT
         return v, a, t, "hand+nrc"
     if hand is not None:
         return hand[0], hand[1], hand[2], "hand"
     if nrc is not None:
         return nrc["valence"], nrc["arousal"], nrc["tenderness"], "nrc"
     return None
-'''
+
+
 def analyze_emotion(text: str):
     """
     Ritorna un embedding emotivo aggregato: dict con valence, arousal,
-    tenderness, più i termini che hanno contribuito (con la fonte usata
-    per ciascuno: "hand", "nrc" o "hand+nrc").
+    tenderness, una stima di affidabilità (coverage) e i termini che
+    hanno contribuito (con la fonte usata per ciascuno: "hand", "nrc"
+    o "hand+nrc").
     """
     tokens = tokenize(text)
     contributions = []
+    n_content_tokens = 0
     negate_next = False
     intensify_next = False
 
@@ -192,86 +237,67 @@ def analyze_emotion(text: str):
         if tok in STOPWORDS:
             continue
 
+        n_content_tokens += 1
         entry = _lookup_word(tok)
         if entry is not None:
             v, a, t, source = entry
+
             if negate_next:
-                v = -v * 0.6  # la negazione attenua/inverte la valenza
-            if intensify_next:
-                v, a, t = v * 1.3, a * 1.3, t * 1.3  # amplifica leggermente
-                v = max(-1, min(1, v))
-                a = max(-1, min(1, a))
-                t = max(-1, min(1, t))
-            contributions.append((v, a, t, tok, source))
-        negate_next = False
-        intensify_next = False
-
-    if not contributions:
-        # fallback neutro-leggero: nessuna parola nota in nessuno dei due lessici
-        return {"valence": 0.0, "arousal": 0.1, "tenderness": 0.0, "matched": []}
-
-    n = len(contributions)
-    valence = sum(c[0] for c in contributions) / n
-    arousal = sum(c[1] for c in contributions) / n
-    tenderness = sum(c[2] for c in contributions) / n
-
-    return {
-        "valence": round(valence, 3),
-        "arousal": round(arousal, 3),
-        "tenderness": round(tenderness, 3),
-        "matched": [f"{c[3]} ({c[4]})" for c in contributions],
-    }
-'''
-
-def analyze_emotion(text: str):
-    tokens = tokenize(text)
-    contributions = []
-    negate_next = False
-    intensify_next = False
-
-    for tok in tokens:
-        if tok in NEGATORS:
-            negate_next = True
-            continue
-        if tok in INTENSIFIERS:
-            intensify_next = True
-            continue
-        if tok in STOPWORDS:
-            continue
-
-        entry = _lookup_word(tok)
-        if entry is not None:
-            v, a, t, source = entry
-            if negate_next:
+                # La negazione inverte/attenua valenza e arousal, e smorza
+                # la tenerezza verso lo zero (negare "amore" non la rende
+                # "odio", la rende semplicemente assente).
                 v = -v * 0.6
-                a = a * 0.5  # vedi punto 2
+                a = a * 0.5
+                t = t * 0.3
+
             if intensify_next:
                 v, a, t = v * 1.3, a * 1.3, t * 1.3
-                v = max(-1, min(1, v))
-                a = max(-1, min(1, a))
-                t = max(-1, min(1, t))
+                v = max(-1.0, min(1.0, v))
+                a = max(-1.0, min(1.0, a))
+                t = max(-1.0, min(1.0, t))
+
             contributions.append((v, a, t, tok, source))
-        negate_next = False
-        intensify_next = False
+            # Il reset avviene solo quando la parola è stata effettivamente
+            # usata: se una parola sconosciuta si frappone tra negatore/
+            # intensificatore e il bersaglio reale, lo scope non va perso.
+            negate_next = False
+            intensify_next = False
 
     if not contributions:
-        return {"valence": 0.0, "arousal": 0.1, "tenderness": 0.0, "matched": []}
+        # --- FIX: arousal di default portato da 0.1 a 0.0. Il vecchio
+        # valore introduceva un piccolo bias positivo sistematico ogni
+        # volta che il testo non conteneva nessuna parola riconosciuta,
+        # invece di restituire un punto davvero neutro.
+        return {
+            "valence": 0.0,
+            "arousal": 0.0,
+            "tenderness": 0.0,
+            "coverage": 0.0,
+            "matched": [],
+        }
 
-    # peso = magnitudine del vettore (v, a) -> le parole "forti" contano di più
-    weights = [max(abs(c[0]), abs(c[1]), 0.15) for c in contributions]  # 0.15 = peso minimo
+    # Peso = magnitudine del vettore (v, a, t): le parole emotivamente
+    # "forti" su uno qualsiasi dei tre assi contano di più nella media,
+    # con un peso minimo per non azzerare mai un contributo.
+    weights = [max(abs(c[0]), abs(c[1]), abs(c[2]), 0.15) for c in contributions]
     w_sum = sum(weights)
 
     valence = sum(c[0] * w for c, w in zip(contributions, weights)) / w_sum
     arousal = sum(c[1] * w for c, w in zip(contributions, weights)) / w_sum
     tenderness = sum(c[2] * w for c, w in zip(contributions, weights)) / w_sum
 
+    coverage = len(contributions) / n_content_tokens if n_content_tokens else 0.0
+
     return {
         "valence": round(valence, 3),
         "arousal": round(arousal, 3),
         "tenderness": round(tenderness, 3),
+        "coverage": round(coverage, 3),
         "matched": [f"{c[3]} ({c[4]})" for c in contributions],
     }
 
+
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG)
     demo = "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura"
     print(analyze_emotion(demo))
