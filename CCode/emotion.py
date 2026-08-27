@@ -70,7 +70,8 @@ try:
 except ImportError:
     _LEMMATIZER_AVAILABLE = False
 
-logger.debug("lemmatizer=%s nrc=%s", _LEMMATIZER_AVAILABLE, _NRC_AVAILABLE)
+#logger.debug("lemmatizer=%s nrc=%s", _LEMMATIZER_AVAILABLE, _NRC_AVAILABLE)
+print(f"[DEBUG emotion.py] lemmatizer={_LEMMATIZER_AVAILABLE}  nrc={_NRC_AVAILABLE}")
 
 # --- FIX: peso del lessico a mano rispetto a NRC quando una parola è
 # presente in entrambi. Il lessico a mano è più preciso (curato parola
@@ -114,9 +115,31 @@ LEXICON = {
     "meraviglia": (0.7, 0.5, 0.3),
 
     # --- quadrante calma / serenità (v+, a-) # +copertura ---
-    "quiete": (0.6, -0.6, 0.4), "serenità": (0.7, -0.5, 0.4),
-    "tranquillità": (0.6, -0.5, 0.3), "riposo": (0.4, -0.5, 0.2),
-    "armonia": (0.6, -0.4, 0.3), "grazia": (0.6, -0.3, 0.5),
+#    "quiete": (0.6, -0.6, 0.4), "serenità": (0.7, -0.5, 0.4),
+#    "tranquillità": (0.6, -0.5, 0.3), "riposo": (0.4, -0.5, 0.2),
+#    "armonia": (0.6, -0.4, 0.3), "grazia": (0.6, -0.3, 0.5),
+
+    "calma": (0.6, -0.6, 0.4),
+    "calmo": (0.6, -0.6, 0.4),
+    "calma": (0.6, -0.6, 0.4),
+    "pacifico": (0.6, -0.5, 0.4),
+    "pacifica": (0.6, -0.5, 0.4),
+    "placido": (0.6, -0.6, 0.4),
+    "placida": (0.6, -0.6, 0.4),
+    "sereno": (0.7, -0.5, 0.5),
+    "serena": (0.7, -0.5, 0.5),
+    "silenzioso": (0.2, -0.5, 0.2),
+    "silenziosa": (0.2, -0.5, 0.2),
+    "lieve": (0.5, -0.3, 0.4),
+    "lievezza": (0.5, -0.4, 0.5),
+    "morbido": (0.5, -0.2, 0.5),
+    "morbida": (0.5, -0.2, 0.5),
+    "adagio": (0.3, -0.5, 0.2),
+    "lentamente": (0.2, -0.4, 0.1),
+    "dormire": (0.3, -0.7, 0.3),
+    "dorme": (0.3, -0.7, 0.3),
+    "sonno": (0.3, -0.7, 0.3),
+    "riposa": (0.4, -0.6, 0.3),
 
     # --- quadrante tristezza / malinconia (v-, a-) ---
     "morte": (-0.9, 0.1, -0.3), "pianto": (-0.7, -0.1, 0.1), "lacrime": (-0.7, -0.1, 0.1),
@@ -141,10 +164,20 @@ LEXICON = {
     "grido": (-0.3, 0.8, -0.2), "basta": (-0.3, 0.7, -0.2),
 
     # --- parole "di natura" e narrative, arousal/valenza più neutri ---
-    "vento": (0.0, 0.5, 0.0), "fuoco": (0.3, 0.8, 0.0), "mare": (0.5, 0.4, 0.2),
-    "cielo": (0.5, 0.2, 0.2), "onda": (0.2, 0.5, 0.0), "muro": (-0.1, 0.2, -0.1),
-    "porta": (0.0, 0.2, 0.0), "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1),
-    "selva": (-0.2, 0.3, -0.1), "cammino": (0.1, 0.3, 0.0), "eterno": (0.3, 0.1, 0.1),
+#    "vento": (0.0, 0.5, 0.0), "fuoco": (0.3, 0.8, 0.0), "mare": (0.5, 0.4, 0.2),
+#    "cielo": (0.5, 0.2, 0.2), "onda": (0.2, 0.5, 0.0), "muro": (-0.1, 0.2, -0.1),
+#    "porta": (0.0, 0.2, 0.0),
+#   "cammino": (0.1, 0.3, 0.0),
+    "vento": (0.0, 0.0, 0.0),
+    "fuoco": (0.2, 0.3, 0.0),
+    "mare": (0.4, 0.0, 0.2),
+    "cielo": (0.3, 0.0, 0.2),
+    "onda": (0.1, 0.1, 0.0),
+    "muro": (-0.1, 0.0, -0.1),
+    "porta": (0.0, 0.0, 0.0),
+    "cammino": (0.1, 0.1, 0.0),
+    "oscura": (-0.4, 0.3, -0.1), "smarrita": (-0.5, 0.4, -0.1),
+    "selva": (-0.2, 0.3, -0.1), "eterno": (0.3, 0.1, 0.1),
     "eterna": (0.3, 0.1, 0.1), "bellezza": (0.7, 0.3, 0.5), "bella": (0.6, 0.2, 0.5),
     "bello": (0.6, 0.2, 0.4),
 }

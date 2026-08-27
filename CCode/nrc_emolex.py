@@ -48,6 +48,8 @@ visualizer.py), indipendentemente dal contenuto emotivo reale del testo:
 
 File sorgente atteso:
     repo_nrc/NRC-Emotion-Lexicon/OneFilePerLanguage/Italian-NRC-EmoLex.txt
+
+DA SISTEMARE: esiste un file NRC che contiene anche i valori dell'arousal!!! importante!!!!
 """
 
 import csv
@@ -181,7 +183,7 @@ def score_word(word: str, lexicon=None):
     nessun flag attivo.
     """
     if lexicon is None:
-        lexicon = load_lexicon(verbose=False)
+        lexicon = load_lexicon(verbose=True)
 
     active = lexicon.get(word.lower())
     if not active:
