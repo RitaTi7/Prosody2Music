@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plot_training_loss(losses, save_path="output/training_loss.png"):
+def plot_training_loss(losses, save_path="output/plots/training_loss.png"):
     """Genera e salva il grafico della curva di Loss del Transformer."""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.figure(figsize=(7, 4))
@@ -28,7 +28,7 @@ def plot_training_loss(losses, save_path="output/training_loss.png"):
     print(f"[visualizer] Grafico loss salvato in: {save_path}")
 
 
-def plot_melody_and_rhythm(melody, poem_analysis, save_path="output/melody_rhythm.png"):
+def plot_melody_and_rhythm(melody, poem_analysis, save_path="output/plots/melody_rhythm.png"):
     """Genera un doppio grafico: profilo melodico MIDI in alto e accenti prosodici in basso."""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     
@@ -68,7 +68,7 @@ def plot_melody_and_rhythm(melody, poem_analysis, save_path="output/melody_rhyth
 
 #visualizer.py (gli import si trovano sopra)
 
-def plot_emotion_space(emotion, mode, save_path="output/emotion_space.png"):
+def plot_emotion_space(emotion, mode, save_path="output/plots/emotion_space.png"):
     """Mappa i valori di Valenza e Arousal sul piano emotivo 2D."""
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     plt.figure(figsize=(6, 6))

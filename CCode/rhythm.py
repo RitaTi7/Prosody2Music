@@ -171,6 +171,10 @@ def norm_word(word: str) -> str:
 def _is_vowel(ch: str) -> bool:
     return ch.lower() in VOWELS
 
+
+def strip_punct(word: str) -> str:
+    return re.sub(r"[^\wàèéìòùáíóúâêîôû]", "", word, flags=re.UNICODE)
+
 # ============================================================
 # SILLABAZIONE A REGOLE (invariata da prosody.py — fonte PRIMARIA,
 # non pyphen: vedi nota in testa al file sul problema dello iato)

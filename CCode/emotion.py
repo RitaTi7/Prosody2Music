@@ -7,7 +7,7 @@ versione 1-> ha modificato aggiungendo anche NRC emolex VAD
 import re
 import logging
 
-from prosody import strip_punct
+from rhythm import strip_punct
 
 logger = logging.getLogger(__name__)
 
