@@ -20,8 +20,7 @@ import argparse
 import sys
 import os
 from visualizer import plot_melody_and_rhythm, plot_emotion_space
-#from prosody import analyze_poem
-from rhythm import analyze_poem
+from prosody import analyze_poem
 from emotion import analyze_emotion
 from music_transformer import MusicTransformer, derive_bass_and_arpeggio
 from midi_builder import build_midi

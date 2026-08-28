@@ -7,7 +7,7 @@ versione 1-> ha modificato aggiungendo anche NRC emolex VAD
 import re
 import logging
 
-from rhythm import strip_punct
+from prosody import strip_punct
 
 logger = logging.getLogger(__name__)
 
@@ -233,6 +233,17 @@ def _lookup_word(word: str):
 
     return None
 
+def _axis_weighted_avg(contributions, idx, floor=0.05, epsilon=0.05):
+    num = 0.0
+    den = 0.0
+    for c in contributions:
+        val = c[idx]
+        if abs(val) < epsilon:
+            continue  # non dice nulla su questo asse: non lo diluisce
+        w = max(abs(val), floor)
+        num += val * w
+        den += w
+    return num / den if den else 0.0
 
 def analyze_emotion(text: str):
     """
@@ -297,10 +308,17 @@ def analyze_emotion(text: str):
     # con un peso minimo per non azzerare mai un contributo.
     weights = [max(abs(c[0]), abs(c[1]), abs(c[2]), 0.15) for c in contributions]
     w_sum = sum(weights)
-
+    '''
     valence = sum(c[0] * w for c, w in zip(contributions, weights)) / w_sum
     arousal = sum(c[1] * w for c, w in zip(contributions, weights)) / w_sum
     tenderness = sum(c[2] * w for c, w in zip(contributions, weights)) / w_sum
+
+    coverage = len(contributions) / n_content_tokens if n_content_tokens else 0.0
+    '''
+
+    valence = _axis_weighted_avg(contributions, 0)
+    arousal = _axis_weighted_avg(contributions, 1)
+    tenderness = _axis_weighted_avg(contributions, 2)
 
     coverage = len(contributions) / n_content_tokens if n_content_tokens else 0.0
 
