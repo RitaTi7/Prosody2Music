@@ -66,6 +66,7 @@ def plot_melody_and_rhythm(melody, poem_analysis, save_path="output/melody_rhyth
     plt.close()
     print(f"[visualizer] Grafico melodia/ritmo salvato in: {save_path}")
 
+#visualizer.py (gli import si trovano sopra)
 
 def plot_emotion_space(emotion, mode, save_path="output/emotion_space.png"):
     """Mappa i valori di Valenza e Arousal sul piano emotivo 2D."""

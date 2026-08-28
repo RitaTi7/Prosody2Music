@@ -52,6 +52,8 @@ File sorgente atteso:
 DA SISTEMARE: esiste un file NRC che contiene anche i valori dell'arousal!!! importante!!!!
 """
 
+#nrc_emolex.py
+
 import csv
 import glob
 import os
@@ -110,9 +112,9 @@ CATEGORY_TO_VA = {
 CATEGORY_RELIABILITY = {
     "joy": 1.0,
     "trust": 1.0,
-    "sadness": 1.0,
+    "sadness": 1.0,         #consigliato 1.2
     "anger": 1.0,
-    "fear": 1.0,
+    "fear": 1.0,            #perplexity consiglia 1.1
     "disgust": 1.0,
     "anticipation": 0.5,
     "surprise": 0.4,

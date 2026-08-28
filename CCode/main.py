@@ -122,6 +122,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
 
     # Generazione Grafici
     plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(out_dir, "melody_rhythm.png"))
+    print("[DEBUG plot emotion in main]:", emotion)
     plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(out_dir, "emotion_space.png"))
 
     # 5) MIDI Multitraccia (4 tracce: melodia, armonia, basso, arpeggio)
