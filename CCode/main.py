@@ -20,8 +20,7 @@ import argparse
 import sys
 import os
 from visualizer import plot_melody_and_rhythm, plot_emotion_space
-#from prosody import analyze_poem
-from rhythm import analyze_poem
+from prosody import analyze_poem
 from emotion import analyze_emotion
 from music_transformer import MusicTransformer, derive_bass_and_arpeggio
 from midi_builder import build_midi
@@ -70,9 +69,14 @@ def apply_duration_scale(melody, harmony, scale):
         chord.duration *= scale
 
 
-def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
+def run_pipeline(text, out_dir="./output", basename="output", seed=None, verbose=True,
                   tempo_override=None, duration_scale=1.0, melody_instrument_override=None, harmony_instrument_override=None):
     os.makedirs(out_dir, exist_ok=True)
+
+    music_dir = os.path.join(out_dir, "music")
+    plots_dir = os.path.join(out_dir, "plots")
+    os.makedirs(music_dir, exist_ok=True)
+    os.makedirs(plots_dir, exist_ok=True)
     duration_scale = _validate_duration_scale(duration_scale)
 
     # 1) Analisi prosodica
@@ -121,11 +125,14 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
         print(f"  Tempo: {meta['tempo']} BPM | Modalità: {meta['mode']}\n")
 
     # Generazione Grafici
-    plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(out_dir, "melody_rhythm.png"))
-    plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(out_dir, "emotion_space.png"))
+#    plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(plots_dir, "melody_rhythm.png"))
+    plot_melody_and_rhythm(melody, poem_analysis, save_path=os.path.join(plots_dir, f"{basename}_melody_rhythm.png"))
+    print("[DEBUG plot emotion in main]:", emotion)
+ #   plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(plots_dir, "emotion_space.png"))
+    plot_emotion_space(emotion, meta["mode"], save_path=os.path.join(plots_dir, f"{basename}_emotion_space.png"))
 
     # 5) MIDI Multitraccia (4 tracce: melodia, armonia, basso, arpeggio)
-    midi_path = os.path.join(out_dir, f"{basename}.mid")
+    midi_path = os.path.join(music_dir, f"{basename}.mid")
     build_midi(melody, harmony, tempo=meta["tempo"],
                melody_instrument=lead_instrument, harmony_instrument=pad_instrument,
                bass_notes=bass_notes, arpeggio_notes=arpeggio_notes,
@@ -133,7 +140,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
                out_path=midi_path)
 
     # 6) Synth / Audio Stereo (stesse 4 tracce di sopra)
-    wav_path = os.path.join(out_dir, f"{basename}.wav")
+    wav_path = os.path.join(music_dir, f"{basename}.wav")
     mix_and_export(melody, harmony, meta["tempo"],
                     melody_instrument=lead_instrument, harmony_instrument=pad_instrument,
                     bass_notes=bass_notes, arpeggio_notes=arpeggio_notes,
@@ -141,8 +148,8 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
                     out_path=wav_path)
 
     # 6.1) Synth con FluidSynth
-    wav_fluid_path = os.path.join(out_dir, f"{basename}_fluid.wav")
-    soundfont_path = os.path.join(out_dir, "soundfonts", "MuseScore_General.sf3")
+    wav_fluid_path = os.path.join(music_dir, f"{basename}_fluid.wav")
+    soundfont_path = os.path.join("fluidsynth", "soundfonts", "MuseScore_General.sf3")
     render_with_fluidsynth(midi_path=midi_path, soundfont_path=soundfont_path, out_path=wav_fluid_path)
 
 
@@ -151,6 +158,7 @@ def run_pipeline(text, out_dir=".", basename="output", seed=None, verbose=True,
         print(f"  MIDI: {midi_path}")
         print(f"  WAV (synth):  {wav_path}")
         print(f"  WAV (FluidSynth):  {wav_fluid_path}")
+        print(f"  PLOTS: {plots_dir}")
 
     return midi_path, wav_path, meta, emotion       # si potrebbe aggiungere anche FluidSynth path
 
@@ -160,8 +168,8 @@ if __name__ == "__main__":
     parser.add_argument("poem_file", nargs="?", default=None, help="File di testo della poesia")
     parser.add_argument("--tempo", type=float, default=None, help="BPM della composizione")
     parser.add_argument("--duration-scale", type=float, default=1.0, help="Moltiplicatore durata")
-    parser.add_argument("--out-dir", default=".", help="Cartella di output")
-    parser.add_argument("--basename", default="output", help="Nome base dei file")
+    parser.add_argument("--out-dir", default="./output", help="Cartella di output")
+    parser.add_argument("--basename", default=None, help="Nome base dei file")
     parser.add_argument("--seed", type=int, default=None, help="Seed casualità")        #casuale
     #per la scelta degli strumenti
     parser.add_argument("--melody-instrument", choices=sorted(INSTRUMENT_PRESETS), default=None, 
@@ -174,14 +182,16 @@ if __name__ == "__main__":
     if args.poem_file:
         with open(args.poem_file, "r", encoding="utf-8") as f:
             poem_text = f.read()
+        basename=  args.basename or os.path.splitext(os.path.basename(args.poem_file))[0]
     else:
         poem_text = DEMO_POEM
+        basename=args.basename or "output"
 
     try:
         run_pipeline(
             poem_text,
             out_dir=args.out_dir,
-            basename=args.basename,
+            basename=basename,
             seed=args.seed,
             tempo_override=args.tempo,
             duration_scale=args.duration_scale,

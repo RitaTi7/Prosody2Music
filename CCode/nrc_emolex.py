@@ -22,9 +22,37 @@ attese) e alcune parole poetiche comuni non hanno alcun flag attivo
 combinato col lessico curato a mano invece di sostituirlo: copertura
 ampia da NRC, precisione mirata dal lessico curato dove serve.
 
+--- FIX (vedi analisi bug arousal sempre positivo) ---------------------
+Due problemi distinti causavano uno sbilanciamento sistemico verso
+arousal positivo (i punti finivano sempre sopra l'asse x in
+visualizer.py), indipendentemente dal contenuto emotivo reale del testo:
+
+  1. POLARITY_TO_VA aveva arousal +0.1 sia per "positive" che per
+     "negative": il fallback di polarità grezza (usato quando nessuna
+     delle 8 emozioni specifiche è attiva) non poteva MAI restituire
+     arousal negativo o nullo. Ora "negative" ha arousal negativo,
+     coerente col fatto che la negatività "pura" senza un'emozione
+     specifica associata è più spesso vicina a tristezza/disgusto
+     (bassa energia) che a rabbia/paura (alta energia).
+
+  2. CATEGORY_TO_VA è sbilanciato 6 a 2 verso l'arousal positivo (solo
+     trust e sadness sono arousal-negative). Poiché l'EmoLex tende a
+     flaggare più categorie insieme sulla stessa parola, e le più
+     rumorose (surprise, anticipation, secondo la nota sopra) sono
+     anche tra le più arousal-positive, la media indiscriminata di
+     tutte le categorie attive tirava l'arousal verso l'alto anche per
+     parole calme. Ora ogni categoria ha un peso di affidabilità
+     (CATEGORY_RELIABILITY): le categorie più rumorose contano meno
+     nella media invece di avere lo stesso peso di sadness/anger/joy.
+-------------------------------------------------------------------------
+
 File sorgente atteso:
     repo_nrc/NRC-Emotion-Lexicon/OneFilePerLanguage/Italian-NRC-EmoLex.txt
+
+DA SISTEMARE: esiste un file NRC che contiene anche i valori dell'arousal!!! importante!!!!
 """
+
+#nrc_emolex.py
 
 import csv
 import glob
@@ -73,6 +101,25 @@ CATEGORY_TO_VA = {
     "sadness":      (-0.70, -0.35),
 }
 
+# --- FIX: peso di affidabilità per categoria -----------------------------
+# "surprise" e "anticipation" sono le categorie più rumorose nella
+# traduzione italiana dell'EmoLex (vedi nota in testa al file): tendono a
+# comparire come flag "extra" su parole che semanticamente non sono
+# affatto sorprendenti o anticipatorie. Pesarle 1:1 con sadness/anger/joy
+# nella media distorceva sistematicamente l'arousal verso l'alto. Qui
+# contano ancora (il segnale non va buttato via), ma meno delle categorie
+# più affidabili.
+CATEGORY_RELIABILITY = {
+    "joy": 1.0,
+    "trust": 1.0,
+    "sadness": 1.0,         #consigliato 1.2
+    "anger": 1.0,
+    "fear": 1.0,            #perplexity consiglia 1.1
+    "disgust": 1.0,
+    "anticipation": 0.5,
+    "surprise": 0.4,
+}
+
 # peso di ciascuna emozione nel calcolo della "tenerezza" (asse non
 # presente in NRC, derivato come combinazione pesata delle categorie:
 # fiducia/gioia la alzano, rabbia/disgusto/paura la abbassano)
@@ -81,9 +128,14 @@ _TENDERNESS_WEIGHTS = {
     "anger": -0.4, "disgust": -0.3, "fear": -0.2,
 }
 
-# fallback quando non è attiva nessuna delle 8 emozioni specifiche ma è
-# attivo almeno uno dei flag grezzi positive/negative
-POLARITY_TO_VA = {"positive": (0.5, 0.1), "negative": (-0.5, 0.1)}
+# --- FIX: "negative" ora ha arousal negativo -----------------------------
+# Prima: {"positive": (0.5, 0.1), "negative": (-0.5, 0.1)} — stesso segno
+# di arousal per polarità opposte, quindi questo ramo di fallback non
+# poteva mai contribuire con arousal <= 0. La negatività "pura" (nessuna
+# delle 8 emozioni specifiche attiva, solo il flag grezzo) è più spesso
+# bassa energia (tristezza/disgusto) che alta energia (rabbia/paura), da
+# cui l'arousal negativo qui sotto.
+POLARITY_TO_VA = {"positive": (0.5, 0.1), "negative": (-0.5, -0.15)}
 
 _LEXICON_CACHE = {}
 
@@ -133,7 +185,7 @@ def score_word(word: str, lexicon=None):
     nessun flag attivo.
     """
     if lexicon is None:
-        lexicon = load_lexicon(verbose=True)        #modificato, era false
+        lexicon = load_lexicon(verbose=True)
 
     active = lexicon.get(word.lower())
     if not active:
@@ -141,12 +193,20 @@ def score_word(word: str, lexicon=None):
 
     specific = active & set(CATEGORY_TO_VA)
     if specific:
+        # --- FIX: media pesata per affidabilità invece di media semplice.
+        # Prima ogni categoria attiva contava 1:1; ora le categorie
+        # rumorose (surprise, anticipation) contribuiscono ma pesano meno,
+        # così non tirano l'arousal verso l'alto quando compaiono insieme
+        # a categorie più affidabili come sadness o trust.
+        weights = [CATEGORY_RELIABILITY.get(c, 1.0) for c in specific]
+        w_sum = sum(weights)
+
         valences = [CATEGORY_TO_VA[c][0] for c in specific]
         arousals = [CATEGORY_TO_VA[c][1] for c in specific]
-        valence = sum(valences) / len(valences)
-        arousal = sum(arousals) / len(arousals)
-#        if "anger" in specific or "fear" in specific:            #corregge le cose troppo rumorose...
-#            arousal = max(arousal, 0.6)     
+
+        valence = sum(v * w for v, w in zip(valences, weights)) / w_sum
+        arousal = sum(a * w for a, w in zip(arousals, weights)) / w_sum
+
         tenderness = sum(_TENDERNESS_WEIGHTS.get(c, 0.0) for c in specific)
         tenderness = max(-1.0, min(1.0, tenderness))
         return {
@@ -173,6 +233,7 @@ def score_word(word: str, lexicon=None):
 
 if __name__ == "__main__":
     lex = load_lexicon()
-    tests = ["amore", "morte", "gioia", "tristezza", "paura", "guerra", "pace", "luce", "odio"]
+    tests = ["amore", "morte", "gioia", "tristezza", "paura", "guerra", "pace", "luce", "odio",
+             "quiete", "silenzio", "riposo"]
     for w in tests:
         print(f"{w:12s} -> {score_word(w, lex)}")

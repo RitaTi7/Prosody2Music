@@ -4,6 +4,8 @@ synth.py — Rendering audio stereo multitraccia a 4 strumenti.
 
 import os
 import subprocess
+import platform
+import shutil
 import numpy as np
 from scipy.io import wavfile
 from instruments import INSTRUMENT_PRESETS, DEFAULT_MELODY_INSTRUMENT, DEFAULT_HARMONY_INSTRUMENT
@@ -278,11 +280,11 @@ def _resolve_fluidsynth_executable():
 
 #per la sintesi del file midi usando un sintetizzatore autonomo
 def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
-    base_dir = os.path.dirname(__file__)
-    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
+#    base_dir = os.path.dirname(__file__)
+#    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
 
-    if not os.path.exists(fluidsynth_exe):
-        fluidsynth_exe = "fluidsynth"
+#    if not os.path.exists(fluidsynth_exe):
+#        fluidsynth_exe = "fluidsynth"
 
     # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path.
     # Avvolto in try/except: FluidSynth è un extra (il synth additivo in
@@ -290,6 +292,7 @@ def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav
     # incompatibile con la piattaforma (es. .exe su Linux/Mac) o un
     # soundfont non trovato non deve far fallire l'intera generazione.
     try:
+        fluidsynth_exe= _resolve_fluidsynth_executable()
         subprocess.run([
             fluidsynth_exe,
             "-ni",
@@ -299,7 +302,7 @@ def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav
             midi_path
         ], check=True)
         return out_path
-    except (OSError, subprocess.CalledProcessError) as e:
+    except (OSError, subprocess.CalledProcessError, FileNotFoundError) as e:
         print(f"[synth] FluidSynth non disponibile o fallito ({e}); uso solo il synth additivo interno.")
         return None
 
