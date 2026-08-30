@@ -109,6 +109,15 @@ L'addestramento funziona nelle seguenti fasi:
      
      Bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
     \end{enumerate}
+\clearpage  
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{Figure/training_loss.png}
+    \caption{evoluzione della loss durante l'addestramento del modello}
+    \label{fig:transformer}
+\end{figure}
+  
+
 Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
 
 Il campionamento probabilistico della melodia dal Music Transformer trasforma i valori grezzi calcolati dalla rete (logits) in una distribuzione di probabilità controllata. Il processo avviene in tre fasi sequenziali per selezionare l'intervallo musicale successivo.
