@@ -88,3 +88,23 @@ la qualità del suono è migliore, ma l'audio è basso. bisogna provare ad aumen
 
 RT (22-08-26)
 -------------------
+
+Sistemata l'analisi emotiva: adesso è facile ottenere un Arousal negativo, anche con testi più calmi.
+
+Sistemato fluidsynth per quanto riguarda linux.
+
+Riorganizzati i file e le cartelle di CCode:
+- adesso i testi di input sono contenuti nella cartella: input_text
+- gli output vengono generati nella cartella: output
+    - output/music: contiene i file audio .wav .midi e _fluid.wav
+    - output/plots: contiene i grafici dell'analisi ritmica/melodica e emotivo/spaziale
+
+Modificato il main (e qualche altro codice) affiché salvi nel punto giusto gli output.
+Adesso tutti gli elementi prodotti riportano nel titolo il nome del testo di input.
+
+(in teoria) Resta comunque possibile cambiare da terminale sia la cartella di output che il basename degli output.
+
+cambiato il nome del file rhythm.py in prosody.py (e messo nella cartella old il vecchio_prosody.py)
+
+RT (29-08-26)
+---------------------

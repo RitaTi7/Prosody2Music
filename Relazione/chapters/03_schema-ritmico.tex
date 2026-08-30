@@ -6,19 +6,65 @@ una rappresentazione ritmico-temporale che sarà la base di partenza per la fase
 Per questo progetto la lingua di riferimento è l'italiano, con le sue regole grammaticali, fonetiche e sugli accenti. 
 
 \subsection{Strumenti per l'analisi del testo}
-Prima di giungere all'analisi prosodica vera è propria, è indispensabile essere a conoscenza di alcuni pattern lessicali della lingua italiana.\newline
-Innanzitutto è necessario specificare al programma le \textit{vocali}, anche quelle accentate; esse si suddividono in vocali forti 
-(come "a", "e", "o" e le forme accentate di "i" e "u" ) e vocali deboli (comprendenti solo "i" e "u"). 
-La distinzione delle vocali forti è importante per il riconoscimento di iati.\newline
-Il programma identifica anche i \textit{digrammi}, ossia sequenze di due lettere che rappresentano un unico suono (come "ch", "gh", "gn" e "gl"). 
-L'identificazione di queste stringhe evita al programma di costruire sillabe che li separino. Il digramma "sc" presenta delle regole che devono
-essere analizzate singolarmente.\newline 
-È presente anche una mappa che lega ciascuna lettera accentata alla sua vocale non accentata di riferimento, per facilitare l'individuazione 
-dell'accento grafico nelle parole; quest'ultimo corrisponde sempre all'accento tonico della parola (approfondito nel paragrafo \textbf{X}).\newline
-Infine, il testo deve essere normalizzato: per ogni parola vengono eliminati gli spazi, ogni lettera diventa minuscola, sono eliminati 
-gli apostrofi e i caratteri non alfabetici.\newline
-Da questo punto in poi il testo è pronto per essere sottoposto alla suddivisione delle sillabe.
+Prima di procedere con l'analisi prosodica vera e propria, è fondamentale definire formalmente le regole fonetiche e ortografiche della lingua italiana
+nell'ambiente computazionale. Affinché il sistema possa interpretare correttamente il ritmo di un verso, deve prima essere istruito a riconoscere 
+le unità cardine che compongono le parole.\\
+Una prima distinzione avviene nella classificazione dei grafemi vocalici e di tutte le possibili varianti accentate; il sistema distingue tra 
+\textit{vocali forti} (quali la "a", "e", "o", includendo le loro forme accentate e quelle di "i" e "u") e \textit{vocali deboli} (come "i" e "u"). 
+Questa suddivisione è importante per la fase successiva di sillabazione perché permette la discriminazione di possibili \textit{dittonghi} (vocali deboli 
+adiacenti che costituiscono un'unica sillaba) e \textit{iati} (vocali forti adiacenti appartenenti a due sillabe diverse).\\
+Un'altra classificazione è quella dei \textit{digrammi}, ossia sequenze di due lettere che rappresentano un unico suono (come "ch", "gh", "gn" e "gl"). 
+L'identificazione a priori di queste stringhe è essenziale per evitare che l'algoritmo di sillabazione separi le lettere che costituiscono un suono 
+indivisibile. Un'attenzione particolare è riservata al digramma "sc" che richiede regole contestuali: è trattato come tale solo quando è seguito dalle 
+vocali "e" o "i" (es. scena), mentre viene separato in altri contesti (es. scala).\\
+Per facilitare l'individuazione deterministica dell'accento tonico (\textbf{descritta nel sotto-paragrafo X}), è stata implementata una mappa di conversione che 
+associa ogni lettera con accento grafico alla sua corrispondente vocale non accentata. Quando una parola presenta un accento grafico, questo coincide 
+sempre con l'accento tonico principale di quella parola.\\
+Infine, il sistema si compone anche di uno strumento di normalizzazione del testo. Tramite l'uso di espressioni regolari (ragex, \textbf{riferimento alla libreria...}) 
+il testo in ingresso viene "ripulito" per facilitarne le successivi analisi: ogni parola è convertita in minuscolo, vengono rimossi gli spazi bianchi e 
+gli apostrofi, tutti i caratteri non alfabetici sono filtrati. Questo processo di standardizzazione dell'input riduce il rumore nei dati, preparando una 
+stringa uniforme, pronta per essere sottoposta alla successiva fase di suddivisione sillabica.
+
 \subsection{Sillabazione}
+La scomposizione di una parola in sillabe rappresenta il fondamento su cui si costruisce l'intera architettura ritmica del sistema(?). 
+Per la successiva generazione musicale, è fondamentale che la sillabazione rispecchi l'effettiva pronuncia e la scansione metrica del verso poetico. 
+Il sistema implementa un approccio ibrido a cascata, basato su un motore euristico principale supportato da meccanismi di riconciliazione su base 
+dizionariale e, solo in ultima istanza, da strumenti tipografici.
+
+\subsubsection{Motore euristico primario}
+Il primo livello di analisi è affidato alla funzione di classificazione basata su regole linguistiche. L'euristica responsabile della sillabazione riceve 
+in input una parola e restituisce una lista di sillabe. L'analisi avviene scorrendo sequenzialmente la stringa per individuare i "nuclei vocalici" 
+e  i successivi gruppi consonantici. Dall'analisi dei gruppi consonantici è possibile stabilire il punto esatto in cui termina la sillaba corrente:
+\begin{itemize}
+    \item Se tra un nucleo vocalico e il successivo non sono presenti consonanti, allora il nucleo è composto da due vocali forti, 
+          dunque il sistema rileva uno iato e separa le due vocali (es. "pa-e" di paese).
+    \item Se il gruppo consonantico è composto da un'unica consonante, allora la sillaba corrente termina subito prima di essa (es. "ca-sa").
+    \item Nel caso in cui il gruppo consonantico comprenda più elementi, si prendono in considerazione le seguenti regole relativi alle 
+          prime due consonanti del gruppo:
+	\begin{itemize} 
+        \item Se le due consonanti costituiscono un digramma, che sia riconosciuto per mapping con una lista interna del sistema che corrispondano 
+              a "sc" seguito da "i" o "e", allora la sillaba termina prima del digramma (es. "ba-gno" oppure "pe-sce").
+	    \item Se le due consonanti sono uguali (doppie), esse vengono separate in due sillabe diverse (es. "gat-to").
+	    \item Se sono presenti esattamente due consonanti e la seconda è una "l" oppure una "r", allora la sillaba termina prima del gruppo 
+              consonantico (es. "li-bro").
+	    \item In tutti gli altri casi, la divisione sillabica avviene in modo da isolare l'ultima consonante del gruppo, che andrà a costituire 
+              l'inizio della sillaba successiva.
+    \end{itemize}
+\end{itemize}
+L'algoritmo itera questo processo fino alla scomposizione in sillabe completa della parola.
+
+\subsubsection{Processo di riconciliazione}
+Poiché la lingua italiana presenta numerose eccezioni storiche e fonetiche difficilmente individuabili con l'utilizzo di sole euristiche, 
+viene introdotto un livello di validazione incrociata. Non sempre vocali miste (forti e deboli) adiacenti si comportano come dittonghi, bensì spesso 
+sono considerate iati a causa dell'etimologia della parola (fenomeni di dieresi o sineresi implicita). Questo può portare il precedentemente metodo 
+di suddivisione sillabica a sottostimare il numero effettivo di sillabe, compromettendo l'analisi prosodica del testo.\\  
+Il risultato calcolato dalla precedente euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
+(\textbf{descritto nel capitolo X}). Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura 
+di riconciliazione dinamica.
+
+\subsubsection{Fallback tipografico}
+
+
 \subsection{Accento tonico}
 \subsection{Pause di punteggiatura}
 \subsection{Export del MIDI ritmico}

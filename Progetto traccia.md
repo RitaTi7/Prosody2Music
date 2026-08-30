@@ -226,14 +226,16 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 ### Sommario:
 
 1. import dataset
-2. calcolo delle feature (sillaba accentata dalla fine della parola e conteggio delle sillabe)
-3. considera la semantica della frase
-4. il modello si addestra
-5. produzione di una base ritmica **scarna** (o solo di percussioni o musicali)
-6. scelta degli strumenti (o forse dopo)
-7. produzione di musica con un transformer
-8. interfaccia grafica
+2. calcolo delle feature (sillaba accentata dalla fine della parola e conteggio delle sillabe: prosody.py)
+3. considera la semantica della frase (emotion.py)
+4. il modello si addestra (trade-online.py)
+5. produzione di una base ritmica **scarna** (o solo di percussioni o musicali: prosody.py)
+6. scelta degli strumenti (o forse dopo: instruments.py)
+7. produzione di musica con un transformer (transformer.py)
+8. interfaccia grafica (app.py)
 
+
+Ricordare il significato di **prosodia**!!! C'è differenza con la metrica (non è propriamente quello che fa questo sistema)
 
 
 
@@ -247,9 +249,9 @@ Se vuoi maggiore affidabilità o controllo per l'inglese in particolare, il rife
 - ~~verifica se è deterministico~~ (la produzione musicale non dovrebbe, lo schema ritmico si)
 - ampliare la lista degli strumenti(?) in instruments.py
 - alzare il volume della produzione con fluidsynth!!!
-- sistemare fluidsynth
+- ~~sistemare fluidsynth~~
 - fare in modo che l'interfaccia grafica consenta di sentire anche la parte ritmica
-- sistemare la parte emotiva (deve andare anche nelle altre aree)
+- ~~sistemare la parte emotiva~~ (deve andare anche nelle altre aree)
 
 #### Cose da fare nella relazione:
 - introduzione (da vedere cosa aggiungere)

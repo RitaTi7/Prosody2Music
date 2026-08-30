@@ -196,7 +196,7 @@ def _syllabify_word_heuristic(word: str):
     syllables = []
     while idx < n:
         j = idx
-        while j < n and not is_v(j):
+        while j < n and not is_v(j):        # individuazione del nucleo vocalico
             j += 1
         if j >= n:
             break
@@ -204,32 +204,32 @@ def _syllabify_word_heuristic(word: str):
         while k + 1 < n and is_v(k + 1):
             v1, v2 = chars[k], chars[k + 1]
             if v1 in STRONG_VOWELS and v2 in STRONG_VOWELS:
-                break  # iato: due vocali forti restano in sillabe separate
+                break                       # iato: due vocali forti restano in sillabe separate
             k += 1
         nucleus_end = k
 
         c = nucleus_end + 1
         cons_start = c
-        while c < n and not is_v(c):
+        while c < n and not is_v(c):        # individuazione del gruppo consonantico
             c += 1
         cons = "".join(chars[cons_start:c])
 
-        if c >= n:
+        if c >= n:                          # ultima sillaba della parola
             syll = "".join(chars[syll_start:n])
             syllables.append(syll)
             syll_start = n
             idx = n
             break
 
-        if len(cons) == 0:
+        if len(cons) == 0:                  # la sillaba termina con una vocale: separa uno iato
             split_at = cons_start
-        elif len(cons) == 1:
+        elif len(cons) == 1:                # la sillaba termina con una vocale: è seguita da una consonante
             split_at = cons_start
         else:
             two = cons[:2]
-            if two in DIGRAPHS or (two == "sc" and c < n and chars[c].lower() in "ei"):
+            if two in DIGRAPHS or (two == "sc" and c < n and chars[c].lower() in "ei"):     # controllo digramma
                 split_at = cons_start
-            elif cons[0] == cons[1]:
+            elif cons[0] == cons[1]:                            # ripetizione di consonante
                 split_at = cons_start + 1
             elif cons[-1] in "lr" and len(cons) == 2:
                 split_at = cons_start
