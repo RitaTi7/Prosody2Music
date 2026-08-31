@@ -56,11 +56,17 @@ L'algoritmo itera questo processo fino alla scomposizione in sillabe completa de
 \subsubsection{Processo di riconciliazione}
 Poiché la lingua italiana presenta numerose eccezioni storiche e fonetiche difficilmente individuabili con l'utilizzo di sole euristiche, 
 viene introdotto un livello di validazione incrociata. Non sempre vocali miste (forti e deboli) adiacenti si comportano come dittonghi, bensì spesso 
-sono considerate iati a causa dell'etimologia della parola (fenomeni di dieresi o sineresi implicita). Questo può portare il precedentemente metodo 
+sono considerate iati a causa dell'etimologia della parola (fenomeni di dieresi o sineresi implicita). Questo può portare il precedente metodo 
 di suddivisione sillabica a sottostimare il numero effettivo di sillabe, compromettendo l'analisi prosodica del testo.\\  
-Il risultato calcolato dalla precedente euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
-(\textbf{descritto nel capitolo X}). Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura 
-di riconciliazione dinamica.
+Il risultato calcolato dall'euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
+(\textbf{descritto nel capitolo X}). 
+Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura di riconciliazione dinamica.
+Le sillabe della lista ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
+la sillaba con un maggior numero di vocali perché candidata principale a contenere uno iato non individuato. In seguito, avviene un tentativo di scissione 
+nel punto che separa le due vocali adiacenti. Se la separazione è attuabile, la vecchia struttura viene sostituita con le due nuove unità sillabiche. 
+A questo punto, il sistema verifica se il numero totale di sillabe ha raggiunto il valore target riportato nel dizionario: in caso affermativo, la procedura 
+termina con successo; altrimenti, il processo di ordinamento e scissione viene iterato. Le iterazioni sono limitate da un numero di guardia (in questo caso 5), 
+oltre il quale algoritmo si interrompe con la restituzione del risultato parziale calcolato.
 
 \subsubsection{Fallback tipografico}
 
