@@ -1,3 +1,4 @@
+
 (...)
 \section{Analisi prosodica del testo}
 La prosodia è la parte della linguistica e della grammatica che studia gli elementi sonori del discorso, come l'intonazione, il ritmo, l'accento, 
@@ -68,8 +69,28 @@ A questo punto, il sistema verifica se il numero totale di sillabe ha raggiunto 
 termina con successo; altrimenti, il processo di ordinamento e scissione viene iterato. Le iterazioni sono limitate da un numero di guardia (in questo caso 5), 
 oltre il quale algoritmo si interrompe con la restituzione del risultato parziale calcolato.
 
-\subsubsection{Fallback tipografico}
+\subsubsection{Meccanismo di fallback e architettura completa}
+Come meccanismo di sicurezza finale, o fallback, il sistema prevede l'utilizzo della libreria tipografica Pyphen nei casi in cui la sillabazione euristica 
+e il successivo meccanismo di riconciliazione non producano un risultato coerente con quello riportato nel dizionario. Questa libreria nasce come strumento 
+di \textit{hyphenation}, ossia per determinare possibili punti di divisione tipografica nelle parole, non come sistema di analisi prosodica. 
+Nel contesto del sistema, infatti, la sillabazione non rappresenta un fine autonomo, ma costituisce una fase intermedia dell'analisi prosodica, 
+dalla quale vengono ricavate informazioni utili nella costruzione dello schema ritmico. Basandosi su pattern predefiniti e regole deterministiche associate 
+ai dizionari linguistici, Pyphen può portare a suddivisioni non conformi alla reale scansione metrica, pertanto non è opportuno affidarsi ad essa come 
+motore primario di sillabazione. Tuttavia, la sua inclusione risulta essenziale per garantire la robustezza dell'intera pipeline di suddivisione sillabica:
+\begin{enumerate}
+      \item In prima istanza, la stringa viene sottoposta al motore euristico basato su regole fonetiche.
+      \item Successivamente l'output viene validato con il dizionario PhonItalia. Qualora emerga una discrepanza nel computo sillabico, viene innescato 
+            il meccanismo di riconciliazione dinamica.
+      \item In caso di fallimento del tentativo di riconciliazione, il sistema interroga Pyphen e adotta l'output ottenuto solo nell'eventualità in cui 
+            coincida con il conteggio atteso; altrimenti utilizza il risultato parziale computato con la riconciliazione.
+      \item In caso di fallimento totale dell'euristica e in assenza di riscontri nel dizionario, Pyphen interviene come ultimo tentativo. Se anche in tal 
+            caso non viene prodotto un risultato corretto, l'algoritmo restituisce l'intera parola come macro-sillaba, evitando così interruzioni o errori 
+            irreversibili.
+\end{enumerate}
 
+Conclusa questa architettura a cascata, il sistema ottiene per ogni parola una lista strutturata e metricamente coerente delle sillabe che la compongono. 
+Tuttavia, per poter tradurre queste unità testuali in un reale schema ritmico-musicale, la separazione sillabica non è sufficiente. Il passaggio 
+immediatamente successivo, fondamentale per l'analisi prosodica, consiste nell'individuazione della sillaba tonica, ossia contenente l'accento tonico primario.
 
 \subsection{Accento tonico}
 \subsection{Pause di punteggiatura}
