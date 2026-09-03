@@ -1,6 +1,6 @@
 Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
 
-In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la parte di generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
+In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
 Così facendo saranno create la melodia e l'armonia.
 
 
@@ -118,7 +118,7 @@ L'addestramento funziona nelle seguenti fasi:
 \end{figure}
   
 
-Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello precedentemente creato.
+Una volta completato il training sarà possibile effettuare la generazione della melodia usando il modello creato.
 
 Il campionamento probabilistico della melodia dal Music Transformer trasforma i valori grezzi calcolati dalla rete (logits) in una distribuzione di probabilità controllata. Il processo avviene in tre fasi sequenziali per selezionare l'intervallo musicale successivo.
 
