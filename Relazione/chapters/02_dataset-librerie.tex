@@ -1,5 +1,5 @@
-\section{Dataset Utilizzati}
-Nell'ambito del machine learning e del deep learning come è ben noto per l'apprendimento del modello creato è necessario dare uso di dataset di training e di test. Per questo progetto sono stati utilizzati i seguenti dataset:
+\section{Dataset}
+Nell'ambito del machine learning e del deep learning per l'apprendimento di un modello è necessario fare uso di dati di training e di test che saranno prelevati da vari dataset reperibili online. Per questo progetto sono stati utilizzati i seguenti dataset:
 
 \subsection{PhonItaliaR}
 PhonItaliaR fornisce rappresentazioni fonologiche per 120.000 forme di parole italiane. Ognuno di questi include anche confini sillabici, marcature di accento e una gamma completa di statistiche lessicali.
@@ -31,9 +31,8 @@ Il dataset MIDI di Lakh è una raccolta di 176.581 file MIDI unici, di cui 45.12
 
 Fonte: https://colinraffel.com/projects/lmd/
 
-Nel contesto di questo progetto il dataset lakh-midi si occupa della parte della generazione musicale.
-
-\section{Librerie Utilizzate}
+Nel contesto di questo progetto il dataset lakh-midi si occupa della parte della generazione del file MIDI.
+\section{Librerie}
 \subsection{Pythorch}
 PyTorch è una libreria tensoriale ottimizzata per il deep learning utilizzando GPU e CPU.
 Fonte: https://docs.pytorch.org/docs/main/generated/torch.sort.html
@@ -45,3 +44,20 @@ Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della fun
 Pyphen è una libreria Python dedicata alla sillabazione automatica e alla ricerca dei punti di divisione delle parole, basata su dizionari di 
 sillabazione compatibili con il formato utilizzato da Hunspell. La libreria mette inoltre a disposizione dizionari per numerose lingue, tra cui l'italiano.
 (da chatgpt)
+\subsection{re}
+Questa libreria offre delle operazioni svolgibili sulle espressioni regolari.
+
+Un espressione regolare specifica un set di stringhe che combacia con essa. Le funzioni di questa libreria permettono di verificare se una particolare stringa combacia con una particolare espressione regolare.
+Le espressioni regolari possono essere concatenate per formare nuove espressioni regolari; se A e B sono entrambe espressioni regolari, allora AB è anch'essa un'espressione regolare. In generale, se una stringa p corrisponde ad A e un'altra stringa q corrisponde a B, la stringa pq corrisponderà ad AB. Questo vale a meno che A o B contengano operazioni a bassa priorità; condizioni ai confini tra A e B; o riferimenti a gruppi numerati. 
+Fonte:https://docs.python.org/3/library/re.html
+
+Nel codice implemetato la libreria re serve per usare la funzione re.sub che rimuove tutti i caratteri di punteggiatura da una parola mantenendo solo le lettere e i caratteri accentati.
+\subsection{UnicodeData}
+La libreria da accesso all'Unicode Character Database (UCD) che definisce le proprietà dei caratteri di tutti i caratteri Unicode. 
+
+Fonte: https://docs.python.org/3/library/unicodedata.html
+
+Viene importata per gestire correttamente la codifica dei caratteri speciali e accentati.
+In particolare viene usato il metodo lookup che cerca un carattere dal nome. Se un carattere con tale nome viene trovato ritorna il carattere corrispondente, altrimenti viene lanciato un Keyerror.
+\subsection{Dataclasses}
+\subsection{mido}

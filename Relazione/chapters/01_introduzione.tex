@@ -1,22 +1,50 @@
+Il progetto nasce dall'idea di poter associare una melodia ad un testo poetico.
+Molto spesso quando si legge un testo poetico, la mente del lettore potrebbe associare inconsciamente una melodia al testo stesso.
+Difatti la lingua italiana è essa stessa ritmata e bella da ascoltare, non c'è quindi da stupirsi se la sola lettura di una poesia possa far suonare nella propria mente una determinata colonna sonora.
+
+Questo progetto mira a creare una pipeline che possa rendere tutto questo realtà trasformando un testo poetico italiano in una melodia coerente con il testo stesso.
+
 Questa introduzione mira a fornire a chi legge una panoramica degli obiettivi e delle metodologie utilizzate in questo progetto.
 
 \section{Obiettivi}
 Il progetto ha come obiettivo principale la definizione di una pipeline coerente per trasformare un input testuale in una rappresentazione musicale espressiva e controllabile.
 Nello specifico il progetto mira a raggiungere i seguenti obbiettivi:
+
+Il progetto mira al raggiungimento dei seguenti obiettivi:
 \begin{enumerate}
-    \item Prendere in input un testo o file testuale e trovare secondo le regole della linua italiana le varie tipologie di accenti.
-    \item Tradurre le parole facendo anche uso degli accenti trovati in "ritmo" musicale.
-    \item Generare una melodia coerente con il ritmo precedentemente generato lasciando libertà di personalizzazione all'utente.
+    \item Prendere in input un testo ed estrapolare secondo le regole della lingua italiana le varie tipologie di accenti.
+    \item Produrre uno schema ritmico musicale coerente con la distribuzione degli accenti ritmici del testo.
+    \item Generare una melodia coerente con il ritmo ottenuto precedentemente lasciando libertà di personalizzazione all'utente.
 \end{enumerate}
 \section{Metodologia in breve}
 Al fine di raggiungere gli obiettivi precedemente presentati sarà seguita la seguente pipeline:
 \begin{enumerate}
-    \item Analisi del testo che sarà svolta parallelamente dal punto di vista semantico e da quello prosodico (degli accenti). 
-     L'analisi semantica sarà effettuata per "assegnare" la musica corretta in base al significato e al contesto emotivo del testo.
-     L'analisi prosodica sarà usata con il fine di trovare gli accenti, inoltre per una migliore definizione del ritmo sarà importante definire il numero di sillabe per parola.
-    \item Dopo aver svolto l'analisi definita nel punto 1, si procederà alla traduzione del "brano" ritmico ottenuto in una scala ritmica musicale, in modo da ottenere un ritmo coerente con il testo.
-    \item Generazione di una melodia coerente con il ritmo generato.    
+    \item \textbf{Analisi del testo:} L'analisi del testo sarà svolta parallelamente dal punto di vista semantico e da quello prosodico (degli accenti). 
+     
+    L'analisi semantica sarà effettuata per "assegnare" la musica corretta in base al significato e al contesto emotivo del testo.
+    
+    L'analisi prosodica sarà usata con il fine di trovare gli accenti per la produzione dello schema ritmico.
+    \item \textbf{Produzione dello schema ritmico:} Traduzione dello studio prosodico in un ritmo musicale, in modo da ottenere una ritmica coerente con il testo.
+    \item \textbf{Addestramento del modello:} Per la generazione della melodia, in questa fase si addestrerà un modello Transformer su un dataset di brani musicali.
+    \item \textbf{Generazione musicale:} Sarà generato un file MIDI coerente con il ritmo e con la semantica del testo, per fare ciò si farà uso il modello Transformer precedentemente allenato.
+    \item \textbf{Sintesi del brano:} Il file precedentemente ottenuto darà sintetizzato (quindi trasformato in un file WAVE) utilizzando gli strumenti necessari.      
 \end{enumerate}
+\section{Requisiti}
+In questa sezione saranno presentati i requisiti del progetto che saranno divisi in requisiti
+funzionali e requisiti non funzionali.
+I requisiti funzionali sono un'insieme di requisiti necessari al fine del funzionamento del
+progetto, se anche uno di loro non viene rispettato allora il progetto è irrealizzabile.
 
-Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di nuymerose librerie che saranno presentate di volta in volta estremamte utili allo svolgimento del progetto.
-Inoltre l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
+I requisiti non funzionali sono invece dei cosiddetti "nice to have" ovvero delle aggiunte
+che seppur non necessarie possono migliorare di molto sia la qualità nel lavoro che i
+risultati del progetto.
+
+
+\subsection{Requisiti funzionali}
+\subsection{Requisiti non funzionali}
+\section{Criticità}
+
+
+\section{Specifiche del progetto}
+Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di numerose librerie che saranno presentate in un capitolo dedicato, estremamte utili allo svolgimento del progetto.
+Inoltre per l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
