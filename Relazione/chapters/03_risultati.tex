@@ -6,8 +6,7 @@ Così facendo saranno create la melodia e l'armonia.
 
 
 \section{Transformer}
-Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
-
+Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso.
 
 
 Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per processare dati sequenziali come, ad esempio, testi in linguaggio naturale, con applicazioni alla loro generazione e traduzione automatica. Tuttavia, a differenza delle RNN, i trasformatori elaborano l'intero insieme di dati d'ingresso simultaneamente. Il cosiddetto meccanismo di attenzione fornisce il contesto per ogni posizione nella sequenza di ingresso. Per esempio, se i dati rappresentano una frase, il trasformatore non deve elaborare una parola alla volta: questo permette una maggiore parallelizzazione rispetto alle RNN e perciò porta a ridurre i tempi di addestramento.
@@ -100,11 +99,14 @@ dove $p$ è il valore numerico (pitch) della nota MIDI.
 Successivamente viene generato il suono in base allo strumento scelto miscelando onde sinusoidali e armoniche. Su ogni strumento viene applicato un "inviluppo ADSR" (Attacco, Decadimento, Sostegno, Rilascio). 
 L'ADSR modella il volume nel tempo (es. un basso decade dolcemente, un organo mantiene un sostegno costante finché il tasto non viene rilasciato).
 
+
+
 Una volta generate le singole onde sonore, il modulo unisce le quattro voci in un unico spazio stereo (panoramica), bilanciandone matematicamente i volumi:
 \begin{itemize}
     \item Melodia (Lead): Posizionata esattamente al centro (pan 0.0)
  con un volume prominente (85\%).
     \item  Armonia (Pad): Spostata sul canale sinistro (pan -0.45) con un volume più morbido (45\%).
     \item Basso: Fissato al centro a frequenze basse (volume 70\%).
+
     \item  Arpeggio: Spostato sul canale destro (pan 0.50, volume 50\%) per controbilanciare l'armonia.
 \end{itemize}

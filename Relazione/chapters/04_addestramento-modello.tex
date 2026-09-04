@@ -89,7 +89,7 @@ L'addestramento funziona nelle seguenti fasi:
     Per ogni sequenza di intervalli $[s_1, s_2, s_3, \dots]$, lo script genera la sua versione speculare $[-s_1, -s_2, -s_3, \dots]$. Questo raddoppia la dimensione del dataset e insegna alla rete che i movimenti melodici speculari sono egualmente validi, questa tecnica è anche detta Data Augmentation.
 
     Nel 15\% dei casi di addestramento, i valori di Valenza e Arousal passati alla rete vengono impostati forzatamente a zero [0.0, 0.0].
-    Si fa per Costringe il Transformer a imparare prima la struttura della sintassi musicale in modo indipendente ("incondizionato") e solo successivamente a correlarla alle emozioni, evitando che si affidi unicamente all'emozione ignorando la coerenza melodica.
+    Si fa per Costringe il Transformer a imparare prima la struttura della sintassi musicale in modo indipendente ("incondizionato") e solo successivamente a correlarla alle emozioni, evitando che si affidi unicamente all'emozione ignorando la coerenza melodica, questa tecnica è nota come "Conditioning Dropout".
     \item Il modello elabora il contesto attraverso due flussi che si uniscono:
     \begin{itemize}
         \item     Embedding Emotivo: La coppia di valori continui $(V, A) \in [-1, 1]$ passa attraverso uno strato denso (nn.Linear) che la proietta in un vettore a 128 dimensioni. Questo vettore viene concatenato all'inizio della sequenza come primo token (prefisso).
@@ -107,7 +107,9 @@ L'addestramento funziona nelle seguenti fasi:
       Penalizza quindi i pesi sinaptici che crescono troppo, impedendo alla rete di fossilizzarsi e il Dropout ($0.2$) che disattiva casualmente il 20\% dei neuroni ad ogni passaggio per evitare la dipendenza tra singoli nodi.
      Inoltre è necessario specificare che la Loss è "pesata", il token 12 conta 1/5 rispetto agli altri, ciò è stato fatto per correggere il bias del modello verso la "nota ripetuta".
      
-     Bisogna poi dire che viene ignorato il padding e usa label smoothing 0.1.
+     Bisogna poi dire che non viene usata la tecnica del padding e usa label smoothing 0.1. Il label smoothing è una
+     tecnica di regolarizzazione del machine learning che modifica le etichette di addestramento rigide (hard targets) in etichette attenuate (soft targets) per impedire alle reti neurali di diventare eccessivamente sicure delle proprie predizioni, in questo caso assegnando una probabilità del 90\% (0.9) alla classe corretta e distribuendo il restante 10\% (0.1) in modo uniforme tra tutte le altre classi. 
+   
     \end{enumerate}
 \clearpage  
 \begin{figure}[h]
@@ -128,7 +130,7 @@ Il campionamento probabilistico della melodia dal Music Transformer trasforma i 
 Se $T<1.0$ allota $T$ comprime i logits rendendo i valori più alti nettamente dominanti. Dopo la normalizzazione Softmax, la distribuzione diventa più "appuntita", riducendo la casualità e favorendo intervalli musicali stabili e coerenti. 
 Se invece $T>1.0$ allora $T$ appiattisce la distribuzione rendendo le probabilità dei vari intervalli più omogenee, incrementando la varietà ma rischiando di generare linee melodiche caotiche.
 
-    \item Dopo aver scalato i logits con la temperatura, viene applicata la funzione Softmax per ricavare la probabilità di ciascun intervallo $p_i = \text{Softmax}(z'_i)$. Il campionamento Nucleus seleziona solo il sottoinsieme dinamico di token più plausibili fino a raggiungere una probabilità cumulata pari a $p = 0.90$, la selezione funziona in questo modo:
+    \item Dopo aver scalato i logits con la temperatura, viene applicata la funzione Softmax per ricavare la probabilità di ciascun intervallo $p_i = \text{Softmax}(z'_i)$. Il campionamento Nucleus (Top-p sampling) seleziona solo il sottoinsieme dinamico di token più plausibili fino a raggiungere una probabilità cumulata pari a $p = 0.90$, la selezione funziona in questo modo:
      \begin{enumerate}
         \item I token vengono ordinati in ordine decrescente di probabilità.
         \item Si accumulano i valori di probabilità partendo dal più alto; non appena la somma raggiunge o supera la soglia $p = 0.90$, tutti i token rimanenti vengono azzerati impostando il loro logit a $-\infty$.
@@ -146,9 +148,9 @@ Per quanto riguarda gli strumenti coi sono 2 possibilità:
     \item Li sceglie l'utente.
     \item Il modello li seleziona in automatico.
 \end{itemize}
-La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal, guarda il contenuto semantico del testo.
+La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal, si guarda il contenuto semantico del testo.
 
 Usa un classificatore Zero-Shot multilingue per confrontare la poesia con 6 "atmosfere" candidate (natura/bosco, sacro/religioso, epico/eroico, triste/malinconico, gioioso/festoso, notturno/sognante), ciascuna già mappata a una coppia (melodia, armonia) di strumenti.
 
-Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola V/A/T vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
+Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola Valence/Arousal/Tenderness che si basa sul dividere le parole in semplici categorie come "triste e felice", vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
 
