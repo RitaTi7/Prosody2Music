@@ -73,7 +73,7 @@ in cui ogni parola non è più un'entità isolata, ma incorpora informazioni pro
 
 
 
-\section{Trainig del modello}
+\section{Training del modello}
 L'obiettivo dell'addestramento è insegnare alla rete la grammatica e la sintassi melodica generale (come le note si susseguono in modo musicale) e come piegare questa melodia in base al contesto emotivo (Valenza e Arousal).
 
 L'addestramento funziona nelle seguenti fasi:
@@ -93,7 +93,7 @@ L'addestramento funziona nelle seguenti fasi:
     \item Il modello elabora il contesto attraverso due flussi che si uniscono:
     \begin{itemize}
         \item     Embedding Emotivo: La coppia di valori continui $(V, A) \in [-1, 1]$ passa attraverso uno strato denso (nn.Linear) che la proietta in un vettore a 128 dimensioni. Questo vettore viene concatenato all'inizio della sequenza come primo token (prefisso).
-        \item Causal Masking (Maschera Triangolare Superiore):Durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
+        \item Maschera causale:Durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
         \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
     \end{itemize} 
     \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
