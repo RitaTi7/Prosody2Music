@@ -1,12 +1,11 @@
 
-(...)
-\section{Analisi prosodica del testo}
+(\textbf{Analisi prosodica del testo})
 La prosodia è la parte della linguistica e della grammatica che studia gli elementi sonori del discorso, come l'intonazione, il ritmo, l'accento, 
 la durata e le pause. In questa fase iniziale della pipeline avviene l'analisi prosodica di un testo di input, con l'obiettivo di produrre 
 una rappresentazione ritmico-temporale che sarà la base di partenza per la fase successiva di generazione musicale. 
 Per questo progetto la lingua di riferimento è l'italiano, con le sue regole grammaticali, fonetiche e sugli accenti. 
 
-\subsection{Strumenti per l'analisi del testo}
+\section{Strumenti per l'analisi del testo}
 Prima di procedere con l'analisi prosodica vera e propria, è fondamentale definire formalmente le regole fonetiche e ortografiche della lingua italiana
 nell'ambiente computazionale. Affinché il sistema possa interpretare correttamente il ritmo di un verso, deve prima essere istruito a riconoscere 
 le unità cardine che compongono le parole.\\
@@ -26,13 +25,13 @@ il testo in ingresso viene "ripulito" per facilitarne le successivi analisi: ogn
 gli apostrofi, tutti i caratteri non alfabetici sono filtrati. Questo processo di standardizzazione dell'input riduce il rumore nei dati, preparando una 
 stringa uniforme, pronta per essere sottoposta alla successiva fase di suddivisione sillabica.
 
-\subsection{Sillabazione}
-La scomposizione di una parola in sillabe rappresenta il fondamento su cui si costruisce l'intera architettura ritmica del sistema(?). 
+\section{Sillabazione}
+La scomposizione di una parola in sillabe rappresenta il fondamento su cui si costruisce l'intera architettura ritmica del sistema. 
 Per la successiva generazione musicale, è fondamentale che la sillabazione rispecchi l'effettiva pronuncia e la scansione metrica del verso poetico. 
 Il sistema implementa un approccio ibrido a cascata, basato su un motore euristico principale supportato da meccanismi di riconciliazione su base 
 dizionariale e, solo in ultima istanza, da strumenti tipografici.
 
-\subsubsection{Motore euristico primario}
+\subsection{Motore euristico primario}
 Il primo livello di analisi è affidato alla funzione di classificazione basata su regole linguistiche. L'euristica responsabile della sillabazione riceve 
 in input una parola e restituisce una lista di sillabe. L'analisi avviene scorrendo sequenzialmente la stringa per individuare i "nuclei vocalici" 
 e  i successivi gruppi consonantici. Dall'analisi dei gruppi consonantici è possibile stabilire il punto esatto in cui termina la sillaba corrente:
@@ -54,25 +53,25 @@ e  i successivi gruppi consonantici. Dall'analisi dei gruppi consonantici è pos
 \end{itemize}
 L'algoritmo itera questo processo fino alla scomposizione in sillabe completa della parola.
 
-\subsubsection{Processo di riconciliazione}
+\subsection{Processo di riconciliazione}
 Poiché la lingua italiana presenta numerose eccezioni storiche e fonetiche difficilmente individuabili con l'utilizzo di sole euristiche, 
 viene introdotto un livello di validazione incrociata. Non sempre vocali miste (forti e deboli) adiacenti si comportano come dittonghi, bensì spesso 
-sono considerate iati a causa dell'etimologia della parola (fenomeni di dieresi o sineresi implicita). Questo può portare il precedente metodo 
+sono considerate iati a causa dell'etimologia della parola. Questo può portare il precedente metodo 
 di suddivisione sillabica a sottostimare il numero effettivo di sillabe, compromettendo l'analisi prosodica del testo.\\  
 Il risultato calcolato dall'euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
 (\textbf{descritto nel capitolo X}). 
 Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura di riconciliazione dinamica.
-Le sillabe della lista ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
+Le sillabe della parola ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
 la sillaba con un maggior numero di vocali perché candidata principale a contenere uno iato non individuato. In seguito, avviene un tentativo di scissione 
 nel punto che separa le due vocali adiacenti. Se la separazione è attuabile, la vecchia struttura viene sostituita con le due nuove unità sillabiche. 
 A questo punto, il sistema verifica se il numero totale di sillabe ha raggiunto il valore target riportato nel dizionario: in caso affermativo, la procedura 
 termina con successo; altrimenti, il processo di ordinamento e scissione viene iterato. Le iterazioni sono limitate da un numero di guardia (in questo caso 5), 
-oltre il quale algoritmo si interrompe con la restituzione del risultato parziale calcolato.
+oltre il quale l'algoritmo si interrompe con la restituzione del risultato parziale calcolato.
 
-\subsubsection{Meccanismo di fallback e architettura completa}
+\subsection{Meccanismo di fallback e architettura completa}
 Come meccanismo di sicurezza finale, o fallback, il sistema prevede l'utilizzo della libreria tipografica Pyphen nei casi in cui la sillabazione euristica 
 e il successivo meccanismo di riconciliazione non producano un risultato coerente con quello riportato nel dizionario. Questa libreria nasce come strumento 
-di \textit{hyphenation}, ossia per determinare possibili punti di divisione tipografica nelle parole, non come sistema di analisi prosodica. 
+di \textit{hyphenation}, ossia per determinare possibili punti di divisione tipografica nelle parole, non con l'obiettivo di attuare un'analisi prosodica. 
 Nel contesto del sistema, infatti, la sillabazione non rappresenta un fine autonomo, ma costituisce una fase intermedia dell'analisi prosodica, 
 dalla quale vengono ricavate informazioni utili nella costruzione dello schema ritmico. Basandosi su pattern predefiniti e regole deterministiche associate 
 ai dizionari linguistici, Pyphen può portare a suddivisioni non conformi alla reale scansione metrica, pertanto non è opportuno affidarsi ad essa come 
@@ -92,8 +91,31 @@ Conclusa questa architettura a cascata, il sistema ottiene per ogni parola una l
 Tuttavia, per poter tradurre queste unità testuali in un reale schema ritmico-musicale, la separazione sillabica non è sufficiente. Il passaggio 
 immediatamente successivo, fondamentale per l'analisi prosodica, consiste nell'individuazione della sillaba tonica, ossia contenente l'accento tonico primario.
 
-\subsection{Accento tonico}
-\subsection{Pause di punteggiatura}
-\subsection{Export del MIDI ritmico}
+\section{Accento tonico}
+Estremamente importante per la scrittura dello schema ritmico è la disposizione degli accenti tonici delle parole, essi  diventeranno gli "hit" che 
+guideranno la ritmica (?). La loro individuazione avviene mediante una catena a 5 livelli, il cui livello più sofisticato riporta l'utilizzo di un 
+modello di Machine Learning spiegato in una sotto-sezione apposita.\\
+A partire dalla parola e dalla lista delle sue sillabe, la ricerca si articola nelle seguenti fasi:
+\begin{enumerate}
+      \item Accento grafico esplicito: è il primo livello di verifica e ha la priorità assoluta in quanto ottimizza notevolmente l'intero meccanismo. 
+      In ortografia italiana, quando una parola presenta un accento grafico, esso coincide con l'accento tonico. Di conseguenza, il sistema cerca 
+      la presenza di lettere accentate nella parola, utilizzando la mappa di conversione definita tra gli strumenti per l'analisi del testo. 
+      In caso di riscontro positivo, restituisce la sillaba accentata.
+      \item Lookup nel dizionario: in assenza di accenti grafici espliciti, il sistema effettua la ricerca nel dizionario fonetico PhonItalia. 
+      Se la parola ha un riscontro nel database, viene restituito l'indice della sillaba tonica accentata.
+      \item Modello di Machine Learning: qualora la parola risulti assente nel dizionario, viene analizzata da un modello di Machine Learning supervisionato 
+      basato sull'algoritmo Random Forest. Analizzando le caratteristiche morfologiche della stringa, esso è in grado di predire la classe di accentazione.
+      \item Predizione statistica per desinenza: in caso di assenza del modello di ML o di restituzione di esiti non validi, entra in gioco il modulo 
+      probabilistico Q2Stress. Questo livello calcola la probabilità di posizione dell'accento basandosi unicamente sulle ultime tre lettere della parola, 
+      sfruttando le distribuzioni statistiche tipiche della lingua italiana. 
+      \item Euristica di default: come livello di sicurezza finale, nel caso di fallimento dei metodi precedenti, l'algoritmo assegna l'accento tonico di 
+      default alla penultima sillaba, individuando una parola piana. Nel caso limite in cui la parola sia monosillabica, l'accento ricade inevitabilmente 
+      sull'ultima sillaba.
+\end{enumerate} 
+Attraverso questo meccanismo a cascata, l'algoritmo assicura l'individuazione dell'accento tonico per qualunque parola passata in input.
+\subsection{Random Forest}
 
-\section{Analisi emotiva del testo}
+\section{Pause di punteggiatura}
+\section{Export del MIDI ritmico}
+
+
