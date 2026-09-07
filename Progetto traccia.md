@@ -268,12 +268,19 @@ Ricordare il significato di **prosodia**!!! C'è differenza con la metrica (non 
 - se non riusciamo a produrre un interfaccia minimale (ad esempio in html) si potrebbe anche optare per un notebook4
 - SCEGLIERE TESTI CHE VENGONO BENE, tra questi: qualcosa che abbia parole forti (per far uscire un suono cupo...), qualcosa che abbia emozioni carine e dolci... volendo anche canzoni vere (se fanno un bell effetto)
 - vedere se è possibile preparare un esempio che bypassi lo scheletro ritmico ma che lasci solo il transformer, per far vedere che (in teoria) il risultato è molto diverso
-- portare una specie di **cassa** (o cuffie?) per far sentire meglio il risultato XD 
+- portare una specie di **cassa** (o cuffie?) per far sentire meglio il risultato XD
+- portare 2 pc(?)
 
 
 #### Rifiniture finali:
 - controllare i commenti ai metodi/script
 - eliminare commenti "brutti" nel codice
 - rimuovere file che non servono nelle cartelle
+- ripulire TUTTE le cartelle
+
+
+#### possibili estensioni future:
+- aggiungere una memoria "persistenet" per non dover riaddestrare il random forest da capo ad ogni esecuzione
+- lingua inglese...
 
 

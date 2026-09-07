@@ -113,7 +113,95 @@ A partire dalla parola e dalla lista delle sue sillabe, la ricerca si articola n
       sull'ultima sillaba.
 \end{enumerate} 
 Attraverso questo meccanismo a cascata, l'algoritmo assicura l'individuazione dell'accento tonico per qualunque parola passata in input.
+
+
 \subsection{Random Forest}
+Quando la parola non è rintracciabile nel dizionario di riferimento, il sistema delega la ricerca della sillaba tonica a un modello di Machine Learning 
+basato sui Random Forest. Il Random forest è un algoritmo di apprendimento supervisionato di tipo ensemble che, durante la fase di addestramento, 
+costruisce numerosi alberi decisionali indipendenti e poi ne confronta i risultati. Ogni decision tree considera solo un sottoinsieme randomico di 
+caratteristiche, in modo da esplorare complessivamente lo spazio delle feature mantenendo unici si singoli percorsi, mitigando il rischio di overfitting. 
+Al termine del processo, la previsione finale viene determinata per maggioranza, selezionando la classe di appartenenza stimata più dalla maggioranza 
+degli alberi.\\
+L'implementazione è stata effettuata tramite la libreria Python di Machine Learning Scikit-Learn. L'obiettivo di questo classificatore è predire la 
+posizione dell'accento tonico mappando la parola nelle seguenti classi di appartenenza:
+
+\begin{itemize}
+      \item Ultima sillaba (parole tronche)
+      \item Penultima sillaba (parole piane)
+      \item Terzultima sillaba (parole sdrucciole)
+      \item Quartultima sillaba (parole bisdrucciole)
+\end{itemize}
+
+Per consentire al modello di generalizzare le regole di accentazione, ogni stringa viene trasformata in un vettore di 24 feature descrittive, 
+riportate di seguito:
+\begin{itemize}
+      \item Caratteristiche generali della parola:
+            \begin{itemize}
+                  \item Lunghezza complessiva della parola calcolata come numero di lettere (word\_len). 
+                  \item Conteggio di vocali (vowel\_count) e consonanti (consonant\_count). 
+                  \item Rapporto percentuale tra vocali e lunghezza totale della parola (vowel\_ratio). 
+                  \item Numero delle sillabe della parola, precedentemente ottenuto nella fase di sillabazione (\texttt{syll\_count}).
+                  \item Indicatori posizionali di chiusura rappresentati da flag binari che segnalano se la parola termina con una 
+                  vocale(ends\_with\_vowel) o una consonante (ends\_with\_consonant). Possono costituire un forte indizio di parole tronche.
+            \end{itemize}
+      \item Sequenze vocaliche: flag booleani che verificano la presenza interna di specifiche combinazioni di vocali forti e deboli. Influenzano 
+      notevolmente la struttura sillabica e la posizione dell'accento tonico. Sono rappresentate dalla feature "contains\_x" con x che racchiude tutte 
+      le possibili combinazioni: "ia", "ie", "io", "iu", "ua", "ue", "ui", "uo".
+      \item Sequenze consonantiche: intercettano pattern consonantico-vocalici ricorrenti con la lettera "t". Rappresentate con "contains\_x" con x indicante: 
+      "ta", "te", "ti", "to", "tu".
+      \item Desinenze: stringhe estratte dalla porzione finale della parola, corrispondenti all'ultima lettera (last1), alle ultime due (last2), tre (last3) 
+      e quattro (last4). Sono le feature categoriche più importanti perché codificano direttamente le desinenze morfologiche (es. -are, -issimo). 
+      Trattate con la codifica One-Hot Encoding di skit-learn, consentono di associare regolarità statistiche fisse alle relative classi di accento.
+\end{itemize}
+
+\subsection{Preparazione del dataset di addestramento}
+Per addestrare il modello il sistema unisce due dataset distinti: PhonItalia e Q2Stress. Usare più di un dataset permette di massimizzare la copertura 
+lessicale per garantire una maggiore robustezza statistica. L'elaborazione procede nel seguente modo:
+\begin{itemize}
+      \item Lessico di Phonitalia: i dati estratti dal dataset contengono la forma della parola, il conteggio delle sillabe e la posizione dell'accento 
+      calcolata a partire dalla fine della stringa (dove 1 corrisponde all'ultima sillaba). Poiché il classificatore richiede una codifica 0-based 
+      (a partire da 0), la funzione converte l'etichetta originaria in un target tra 0 e 3. Ciascuna voce viene poi convertita nel vettore di 24 feature.
+      \item Dataset word-level Q2Stress: per questo dizionario la codifica del pattern di accento è già formattata in base 0, pertanto non necessita 
+      di conversioni. Inoltre, quando il dataset fornisce esplicitamente il conteggio delle sillabe, questo parametro ha la precedenza assoluta rispetto 
+      all'euristica di sillabazione.
+\end{itemize}
+Al termine di queste elaborazioni, le due fonti vengono fuse in un unico dataframe complessivo ed epurate da eventuali record duplicati, fornendo una base 
+di apprendimento omogenea, densa e priva di ridondanze.
+
+\subsection{Addestramento del modello}
+Una volta strutturato il dataset, il modello viene addestrato seguendo varie fasi, incapsulate in un oggetto \texttt{Pipeline} della libreria scikit-learn. 
+La pipeline si articola in:
+\begin{enumerate}
+      \item \textbf{Preprocessing dei dati}: il vettore delle 24 feature presenta una natura eterogenea. Tramite \texttt{ColumnTransformer} vengono separati 
+      i flussi di informazione: le feature numeriche vengono normalizzate utilizzando uno \texttt{StandardScaler}, mentre le feature categoriche vengono 
+      trasformate in vettori binari tramite \texttt{OneHotEncoder}. Quest'ultimo codificatore permette di ignorare le categorie sconosciute, assicurando 
+      che il sistema non vada in errore.
+      \item \textbf{Bilanciamento dei pesi di una classe}: il lessico italiano presenta una netta predominanza statistica delle parole piane. 
+      Per evitare che il classificatore sviluppi un bias predittivo orientato esclusivamente verso la classe dominante, viene implementato un calcolo 
+      personalizzato dei pesi. Analizzando le frequenze del dataset, il sistema calcola dei pesi compensativi e li attenua tramite un parametro di 
+      smorzamento, restituendo la corretta importanza anche alle classi minoritarie.
+      \item \textbf{Configurazione del classificatore}: l'algoritmo predittivo finale è un \texttt{RandomForest}\-\texttt{Classifier} impostato per generare 
+      400 alberi decisionali. Per attenuare il rischio di overfitting, viene imposto un vincolo strutturale che richiede un minimo di due campioni 
+      per la creazione di un nodo foglia.
+\end{enumerate}
+L'incapsulamento di questi tre passaggi all'interno di un'unica struttura dati garantisce che il modello addestrato possa processare nuove parole 
+in modo coerente e sicuro.
+
+\subsection{Inferenza e validazione strutturale}
+Completata la fase di addestramento, il modello è pronto ad elaborare nuove parole fuori dal vocabolario. Tuttavia, l'algoritmo non adotta la predizione 
+assoluta restituita dal classificatore, ma implementa un meccanismo di validazione strutturale. Il processo di inferenza si articola nei seguenti passaggi:
+\begin{enumerate}
+      \item Definizione dei limiti strutturali: sulla base del conteggio sillabico della parola, viene calcolata la classe metrica massima ammissibile.
+      \item Valutazione probabilistica: invece di ottenere una predizione netta e univoca, vengono estratte le probabilità stimate per ciascuna delle 
+      quattro classi possibili.
+      \item Filtraggio e selezione: l'algoritmo, seguendo i limiti strutturali, scarta tutte le probabilità delle classi non ammissibili per quella parola. 
+      Tra le classi candidate, viene selezionata quella con probabilità più alta.
+\end{enumerate}
+Questo approccio ibrido, che unisce la potenza statistica del Machine Learning ai vincoli logico-deduttivi della metrica, assicura la generazione di output 
+coerenti e previene errori strutturali irreversibili nella successiva stesura dello schema ritmico.\\
+Inoltre, per garantire prestazioni ottimali ed evitare di ripetere il gravoso processo di training per ogni parola analizzata, l'intera pipeline addestrata 
+viene memorizzata in un meccanismo di caching interno a livello di sessione. In questo modo, l'addestramento avviene un'unica volta all'avvio, e la memoria 
+si azzera automaticamente al termine dell'esecuzione.
 
 \section{Pause di punteggiatura}
 \section{Export del MIDI ritmico}
