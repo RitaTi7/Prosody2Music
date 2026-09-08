@@ -13,33 +13,7 @@ import argparse
 TICKS_PER_BEAT = 480  # Risoluzione MIDI standard
 
 '''
-def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
-                          base_velocity_jitter=(-3, 3), articulation=0.92):        #prima: articulation=0.92
-    """Scrive una traccia monofonica (una nota alla volta) sul canale MIDI
-    dato: usata sia per la melodia sia — dopo questa modifica — per basso
-    e arpeggio, che hanno la stessa forma (lista di Note in sequenza)."""
-    track = MidiTrack()
-    mid.tracks.append(track)
-    track.append(MetaMessage('track_name', name=name, time=0))
-    track.append(Message('program_change', program=program, channel=channel, time=0))
-    if channel == 0:
-        track.append(Message('control_change', channel=channel, control=11, value=127, time=0))
 
-    last_rest_ticks = 0
-    for note in notes:
-        duration_ticks = int(note.duration * TICKS_PER_BEAT)
-        vel = note.velocity
-        if humanize:
-            vel = max(1, min(127, vel + random.randint(*base_velocity_jitter)))
-
-        play_ticks = int(duration_ticks * articulation)
-        rest_ticks = duration_ticks - play_ticks
-
-        track.append(Message('note_on', note=note.pitch, velocity=vel, channel=channel, time=last_rest_ticks))
-        track.append(Message('note_off', note=note.pitch, velocity=0, channel=channel, time=play_ticks))
-
-        last_rest_ticks = rest_ticks
-    return track
 '''
 
 def _write_melodic_track(mid, notes, channel, program, name, humanize=True,
@@ -249,21 +223,7 @@ def parse_args():
 
 '''
 
-if __name__ == "__main__":
-    from prosody import analyze_poem
-    from emotion import analyze_emotion
-    from music_transformer import MusicTransformer
 
-    demo = "Nel mezzo del cammin di nostra vita\nmi ritrovai per una selva oscura"
-    pa = analyze_poem(demo)
-    em = analyze_emotion(demo)
-    mt = MusicTransformer(seed=42)
-    melody, harmony, meta = mt.generate(pa, em, text_seed=demo)
-
-    # 1. Generazione del file MIDI
-    path = build_midi(melody, harmony, tempo=meta["tempo"],
-                      melody_instrument="flute", harmony_instrument="organ")
-    print("File MIDI generato con protocollo Mido:", path)
 '''
 
 #!!! serve solo nel caso in cui si voglia eseguire questo script da solo
@@ -292,9 +252,3 @@ if __name__ == "__main__":
                       out_path=args.out)
     print("File MIDI generato con protocollo Mido:", path)
     
-
-
-
-    # 2. (Opzionale) Decommenta per trasmettere il flusso MIDI dal vivo
-    # stream_live_midi(melody, harmony, tempo=meta["tempo"],
-    #                  melody_instrument="flute", harmony_instrument="organ")
