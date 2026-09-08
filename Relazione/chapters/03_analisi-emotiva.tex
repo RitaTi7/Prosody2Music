@@ -114,4 +114,12 @@ L'output finale della pipeline restituisce un dizionario contenente le tre coord
 e un indicatore quantitativo di coverage, calcolato come rapporto tra le parole trovate nei dizionari e il totale dei token di contenuto analizzati.
 
 \section{Rappresentazione Visiva e Proiezione Spaziale}
+agregazione vettoriale basata su magnitude: L'ultimo passaggio fonde i vettori delle singole parole in un unico embedding emotivo 
+    rappresentativo dell'intera frase. L'uso di una media aritmetica standard comporterebbe un grave difetto strutturale: una parola emotivamente 
+    fortissima verrebbe drasticamente diluita se accompagnata da termini neutri. Per ovviare a ciò, l'algoritmo calcola una media pesata, 
+    dove il peso assegnato a ogni parola è proporzionale al valore assoluto più alto raggiunto sui tre assi, assicurando che i termini emotivamente 
+    più intensi fungano da traino per il risultato. Per impedire errori matematici o annacquamenti, vengono applicate una tolleranza (epsilon), 
+    che ignora i contributi vettoriali troppo vicini allo zero, e un peso minimo (floor), che impedisce l'azzeramento del contributo per termini a 
+    carica modesta.
+
 

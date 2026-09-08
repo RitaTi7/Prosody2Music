@@ -11,7 +11,7 @@ Dietro le quinte , il sistema convalida i nomi degli strumenti e li converte in 
 \section{Protocollo MIDI}
 Il MIDI, acronimo di Musical Instrument Digital Interface, è un protocollo standard che consente il collegamento e la comunicazione tra più strumenti musicali elettronici.
 
-Essenzialmente, è un linguaggio informatico basato sullo scambio di messaggi e informazioni tra hardware.
+Essenzialmente, è un linguaggio digitale basato sullo scambio di messaggi e informazioni tra hardware.
 
 All’interno del protocollo MIDI, gli strumenti possono essere di due tipi:
 \begin{itemize}
@@ -28,7 +28,7 @@ Esistono due grandi famiglie di messaggi:
 
 \begin{itemize}
     \item Channel Message (messaggi di canale): sono messaggi indirizzati a canali specifici (da 1 a 16).
-    \item System Common Message (messaggi di sistema): sono messaggi che nono sono indirizzati a un canale specifico, e quindi sono ricevuti da tutti.
+    \item System Common Message (messaggi di sistema): sono messaggi che sono sono indirizzati a un canale specifico, e quindi sono ricevuti da tutti.
 
 \end{itemize}
 Fanno parte dei Channel Message: Note On, Note Off, Program Change (per cambiare preset), Control Change (messaggi concepiti per trasmettere valori che variano nel tempo), e molti altri.
@@ -48,7 +48,7 @@ Utilizzando la libreria mido, il file viene costruito inviando pacchetti di prot
 \end{enumerate}
 
 \section{Synth}
-Mentre la parte dell'algoritmo dedicata al protocollo MIDI si limita a compilare uno "spartito digitale", la parte di sintetizzazione si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAV.
+Mentre la parte dell'algoritmo dedicata al protocollo MIDI si limita a compilare uno "spartito digitale", la parte di sintetizzazione si occupa di trasformare quelle istruzioni in veri e propri file audio stereo in formato WAVE.
 
 
 Sono supportati due approcci per generare la musica:

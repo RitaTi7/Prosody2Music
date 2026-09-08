@@ -1,12 +1,12 @@
 Una volta completata l'analisi prosodica ed emotiva si può passare alla parte di produzione mulsicale.
 
-In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la generazione del modello con i vari token (non ancora musicale quindi), e successivamente gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
+In breve: Per svolgere questo task si farà prima uso di un transformer che si occuperà della parte riguardante la generazione del modello con i vari token e, successivamente, gli intervalli "grezzi" precedentemente generati saranno agganciati alla scala musicale scelta in base a prosodia ed emozione.
 Così facendo saranno create la melodia e l'armonia.
 
 
 
 \section{Transformer}
-Il transformer è un modello di apprendimento profondo che adotta il meccanismo della auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
+Il transformer è un modello di apprendimento profondo che adotta il meccanismo dell'auto-attenzione, pesando differentemente la significatività di ogni parte dei dati in ingresso. 
 
 Come le reti neurali ricorrenti (RNN), i trasformatori sono progettati per processare dati sequenziali come, ad esempio, testi in linguaggio naturale, con applicazioni alla loro generazione e traduzione automatica. Tuttavia, a differenza delle RNN, i trasformatori elaborano l'intero insieme di dati d'ingresso simultaneamente. Il cosiddetto meccanismo di attenzione fornisce il contesto per ogni posizione nella sequenza di ingresso. Per esempio, se i dati rappresentano una frase, il trasformatore non deve elaborare una parola alla volta: questo permette una maggiore parallelizzazione rispetto alle RNN e perciò porta a ridurre i tempi di addestramento.
 
@@ -45,7 +45,7 @@ Ogni elemento di un input $x_i$ viene proiettato, tramite tre matrici di peso ap
 
     \item \textbf{Keys} ($K$): rappresentano i punti di riferimento della sequenza. Ogni parola, inclusa quella attualmente focalizzata, possiede un vettore chiave corrispondente. Le chiavi fungono da termine di confronto per il vettore di query, aiutano cioè il modello a determinare quanto ciascuna parola della sequenza sia correlata alla parola attualmente focalizzata.
 
-    \item \textbf{Values} ($V$): rappresentano il contenuto informativo pesato, ciò che il modello utilizza in definitiva per costruire la propria comprensione della sequenza. Ogni parola è associata a un vettore di valore, che ne contiene il significato contestuale. Una volta determinato — tramite il confronto tra query e chiavi — quanta attenzione dedicare a ciascuna parola, il modello utilizza i vettori di valore per costruire una rappresentazione ponderata del contesto.
+    \item \textbf{Values} ($V$): rappresentano il contenuto informativo pesato, ciò che il modello utilizza in definitiva per costruire la propria comprensione della sequenza. Ogni parola è associata a un vettore di valore, che ne contiene il significato contestuale. Una volta determinato (tramite il confronto tra query e chiavi) quanta attenzione dedicare a ciascuna parola, il modello utilizza i vettori di valore per costruire una rappresentazione ponderata del contesto.
 \end{itemize}
 
 
@@ -80,7 +80,7 @@ L'addestramento funziona nelle seguenti fasi:
 \begin{enumerate}
     \item Invece di insegnare alla rete le note assolute (es. Do, Re, Mi), il modello impara gli intervalli melodici in semitoni tra una nota e la successiva (es. $+2$ per un salto di tono in avanti, $-3$ per una terza minore all'indietro).
     Un salto di +2 semitoni ha la stessa "funzione melodica" sia in Do maggiore che in Fa\# maggiore. Questo riduce il vocabolario a soli 26 token (25 intervalli + 1 token di PAD dedicato).
-    La mappaatura dei token funziona attraverso la seguente formula:
+    La mappatura dei token funziona attraverso la seguente formula:
     \[
     \text{Token ID} = \text{Intervallo (in semitoni)}+12
     \]
@@ -93,7 +93,7 @@ L'addestramento funziona nelle seguenti fasi:
     \item Il modello elabora il contesto attraverso due flussi che si uniscono:
     \begin{itemize}
         \item     Embedding Emotivo: La coppia di valori continui $(V, A) \in [-1, 1]$ passa attraverso uno strato denso (nn.Linear) che la proietta in un vettore a 128 dimensioni. Questo vettore viene concatenato all'inizio della sequenza come primo token (prefisso).
-        \item Maschera causale:Durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
+        \item Maschera causale: durante l'addestramento, il Transformer vede l'intera sequenza contemporaneamente per calcolare il gradiente in parallelo. Per evitare che il modello "spii" le note future per predire quella attuale, si applica una maschera causale:
         \[\text{Mask}_{ij} = \begin{cases} 0 & \text{se } i \ge j \quad (\text{può guardare solo al passato}) \\ -\infty & \text{se } i < j \quad (\text{bloccato}) \end{cases}\]
     \end{itemize} 
     \item La rete viene addestrata con un approccio Self-Supervised (Autoregressivo): data una sequenza di intervalli fino al tempo $t$, la rete deve predire il token dell'intervallo al tempo $t+1$.
@@ -127,7 +127,7 @@ Il campionamento probabilistico della melodia dal Music Transformer trasforma i 
 
 \begin{enumerate}
     \item I logits grezzi $z_i$ prodotti dall'ultimo strato lineare rappresentano i punteggi non normalizzati associati a ciascun token/intervallo. Applicando il parametro di Temperatura $T$ ($T = 0.85$), i logits vengono riscalati tramite divisione:  $$z'_i = \frac{z_i}{T}$$
-Se $T<1.0$ allota $T$ comprime i logits rendendo i valori più alti nettamente dominanti. Dopo la normalizzazione Softmax, la distribuzione diventa più "appuntita", riducendo la casualità e favorendo intervalli musicali stabili e coerenti. 
+Se $T<1.0$ allora $T$ comprime i logits rendendo i valori più alti nettamente dominanti. Dopo la normalizzazione Softmax, la distribuzione diventa più "appuntita", riducendo la casualità e favorendo intervalli musicali stabili e coerenti. 
 Se invece $T>1.0$ allora $T$ appiattisce la distribuzione rendendo le probabilità dei vari intervalli più omogenee, incrementando la varietà ma rischiando di generare linee melodiche caotiche.
 
     \item Dopo aver scalato i logits con la temperatura, viene applicata la funzione Softmax per ricavare la probabilità di ciascun intervallo $p_i = \text{Softmax}(z'_i)$. Il campionamento Nucleus (Top-p sampling) seleziona solo il sottoinsieme dinamico di token più plausibili fino a raggiungere una probabilità cumulata pari a $p = 0.90$, la selezione funziona in questo modo:
@@ -136,7 +136,7 @@ Se invece $T>1.0$ allora $T$ appiattisce la distribuzione rendendo le probabilit
         \item Si accumulano i valori di probabilità partendo dal più alto; non appena la somma raggiunge o supera la soglia $p = 0.90$, tutti i token rimanenti vengono azzerati impostando il loro logit a $-\infty$.
         \item A differenza del Top-k (che mantiene un numero fisso di opzioni), il Top-p adatta la dimensione del sottoinsieme alla certezza del modello. Se la rete è molto sicura, il nucleo conterrà pochi intervalli; se è incerta, il nucleo si espanderà per includere più alternative ragionevoli.
     \end{enumerate}
-    \item Sui token superstiti che rientrano nel nucleo del $90\%$, viene ri-calcolata la distribuzione di probabilità ed eseguito un campionamento stocastico mediante estrazione multinomiale
+    \item Sui token superstiti che rientrano nel nucleo del $90\%$, viene ri-calcolata la distribuzione di probabilità ed eseguito un campionamento stocastico mediante estrazione multinomiale.
 \end{enumerate}
 Questo approccio combinato previene due problemi comuni della generazione autonoma: evita che la rete scelga sempre l'intervallo più probabile (evitando melodie monotone ed uguali ad ogni esecuzione) e impedisce che vengano estratti intervalli totalmente improbabili o stonati presenti nella "coda lunga" della distribuzione.
 
@@ -152,5 +152,5 @@ La selezione automatica funziona così: Invece di guardare solo Valenza/Arousal,
 
 Usa un classificatore Zero-Shot multilingue per confrontare la poesia con 6 "atmosfere" candidate (natura/bosco, sacro/religioso, epico/eroico, triste/malinconico, gioioso/festoso, notturno/sognante), ciascuna già mappata a una coppia (melodia, armonia) di strumenti.
 
-Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se 'inferenza va a buon fine, se non va a buon fine si usa la regola Valence/Arousal/Tenderness che si basa sul dividere le parole in semplici categorie come "triste e felice", vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
+Viene usato NLP Zero-Shot (l'apprendimento zero-shot e il few-shot migliorano l'NLP utilizzando dati etichettati minimi) sul testo se l'inferenza va a buon fine, se non va a buon fine si usa la regola Valence/Arousal/Tenderness che si basa sul dividere le parole in semplici categorie come "triste e felice", vista prima, se neanche l'emozione è disponibile si ricadra su ("piano", "strings").
 
