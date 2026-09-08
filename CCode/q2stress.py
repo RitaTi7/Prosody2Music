@@ -20,20 +20,6 @@ farebbe un lettore umano davanti a una parola sconosciuta.
 Cartella sorgente attesa (dall'archivio scaricato):
     repo_q2stress/Q2Stress/summary tables/adults/endings/endings/types_{ccv,vcc,vcv,vvv}.txt
 
-NOVITÀ — dataset Q2Stress a livello di PAROLA
------------------------------------------------
-Oltre alle tabelle per desinenza sopra (usate per il fallback statistico,
-livello 4 della catena d'accento in rhythm.py), l'archivio Q2Stress
-contiene anche un file a livello di singola parola (lexElem.txt o
-"phonItalia 1.10.1 - word forms.txt", con colonne word/StressPattern/
-SumSylls), usato invece come dato di ARRICCHIMENTO per il training del
-Random Forest in rhythm.py (insieme al lessico di phon_italia.py). Le
-funzioni load_wordlevel_dataframe()/find_wordlevel_dataset() qui sotto
-sono indipendenti dalle tabelle per desinenza sopra: gestiscono un file
-diverso, con un ruolo diverso (training set, non fallback a runtime), ma
-vivono nello stesso modulo perché appartengono comunque al dataset
-Q2Stress nel suo complesso — evita di sparpagliare la risoluzione dei
-percorsi Q2Stress su più file del progetto.
 """
 
 import csv
@@ -140,19 +126,6 @@ def stress_index_for_syllables(word: str, syllables: list, cues=None):
     idx = max(0, min(n - 1, idx))
     return idx, confidence, source
 
-
-# ============================================================
-# DATASET Q2STRESS A LIVELLO DI PAROLA (per il training del Random
-# Forest — vedi nota in testa al file)
-# ============================================================
-# Stesso pattern di risoluzione percorsi di DEFAULT_DIR sopra e di
-# phon_italia.DEFAULT_PATH: parte dalla cartella di questo file e sale
-# di un livello (..) per trovare Progetto/, che è dove vivono sia
-# phonItaliaR/ sia Q2Stress/ quando gli script stanno in una cartella
-# sorella (es. CCode/ e Progetto/ allo stesso livello). Se in futuro la
-# struttura cambia ancora, prova anche i percorsi senza risalita, così
-# non serve toccare il codice per un semplice spostamento di cartelle —
-# e in ultima istanza si può sempre passare un path esplicito.
 
 WORDLEVEL_CANDIDATES = [
     os.path.join(os.path.dirname(__file__), "..", "Progetto", "Q2Stress",

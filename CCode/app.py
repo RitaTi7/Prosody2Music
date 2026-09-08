@@ -1,13 +1,7 @@
 """
-app.py — Interfaccia grafica per la pipeline Prosody2Music.
-
 Avvio:
     streamlit run app.py
 
-Gira in locale (è un'app Streamlit vera, non una pagina web statica),
-quindi usa esattamente la stessa pipeline Python del progetto — PhonItalia,
-Q2Stress, NRC EmoLex, corpus Lakh MIDI, il transformer melodico addestrato —
-nessuna riscrittura, solo un'interfaccia sopra a run_pipeline().
 """
 
 import os

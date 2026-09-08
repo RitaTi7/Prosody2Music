@@ -171,12 +171,7 @@ def mix_and_export(melody, harmony, tempo,
         harm_events.append((chord.pitches, t, dur_sec * 0.98, 45))
         t += dur_sec
 
-    # 3. Basso Profondo (Centro) e 4. Arpeggio/Pizzicato (Destra): se non
-    # vengono passati esplicitamente (bass_notes/arpeggio_notes, tipicamente
-    # da music_transformer.derive_bass_and_arpeggio — la STESSA fonte usata
-    # da midi_builder.py per il file .mid, cosicché .mid e .wav coincidano),
-    # si ricade sul calcolo diretto dall'armonia per compatibilità con le
-    # chiamate esistenti che non li forniscono.
+   
     bass_timbre = INSTRUMENT_PRESETS[validate_instrument(bass_instrument)]["timbre"]
     arpeggio_timbre = INSTRUMENT_PRESETS[validate_instrument(arpeggio_instrument)]["timbre"]
 
@@ -280,17 +275,7 @@ def _resolve_fluidsynth_executable():
 
 #per la sintesi del file midi usando un sintetizzatore autonomo
 def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
-#    base_dir = os.path.dirname(__file__)
-#    fluidsynth_exe = os.path.join(base_dir, "fluidsynth", "bin", "fluidsynth.exe")
 
-#    if not os.path.exists(fluidsynth_exe):
-#        fluidsynth_exe = "fluidsynth"
-
-    # Le opzioni (-ni, -F, -r) DEVONO stare prima di soundfont_path e midi_path.
-    # Avvolto in try/except: FluidSynth è un extra (il synth additivo in
-    # mix_and_export produce comunque un WAV valido) — un binario mancante,
-    # incompatibile con la piattaforma (es. .exe su Linux/Mac) o un
-    # soundfont non trovato non deve far fallire l'intera generazione.
     try:
         fluidsynth_exe= _resolve_fluidsynth_executable()
         subprocess.run([
@@ -306,10 +291,3 @@ def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav
         print(f"[synth] FluidSynth non disponibile o fallito ({e}); uso solo il synth additivo interno.")
         return None
 
-#per la sintesi del file midi usando un sintetizzatore autonomo
-#def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav", sample_rate=44100):
-#    subprocess.run([
-#        "fluidsynth", "-ni", soundfont_path, midi_path,
-#        "-F", out_path, "-r", str(sample_rate)
-#    ], check=True)
-#    return out_path

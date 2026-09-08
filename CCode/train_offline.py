@@ -1,6 +1,4 @@
 """
-versione di gemini che corregge il bug della predizione continua del token 12
-
 
 train_offline.py — Script autonomo per l'addestramento offline del Transformer (Fase 1)
 """

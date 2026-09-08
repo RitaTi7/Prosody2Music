@@ -11,15 +11,8 @@ import torch.nn.functional as F
 
 MODEL_PATH = os.path.join("data", "melody_transformer.pt")
 
-# Token di padding dedicato, DIVERSO dal token 12 (che rappresenta un vero
-# intervallo musicale di 0 semitoni, cioè una nota ripetuta). Prima di questo
-# fix, il padding riusava il token 12 e la loss non li distingueva: il
-# modello veniva rinforzato a predire "nota ripetuta" anche solo per
-# riempire sequenze corte, gonfiando artificialmente quella probabilità
-# ben oltre la sua reale frequenza nei dati (~21-42% osservato, contro
-# 76-92% appreso dal modello prima del fix — verificato empiricamente).
 PAD_TOKEN = 25
-VOCAB_SIZE = 26  # 25 intervalli (0..24, cioè -12..+12 semitoni) + 1 PAD
+VOCAB_SIZE = 26 
 
 
 # --- SAMPLING: Top-p (Nucleus) + Temperature ---
@@ -57,7 +50,6 @@ class MelodyTransformerModel(nn.Module):
         self.fc_out = nn.Linear(d_model, vocab_size)
 
     def forward(self, x, emotion):
-        # x: [batch, seq_len], emotion: [batch, 2]
         seq_len = x.size(1)
         emb = self.embedding(x)
         emo_emb = self.emotion_fc(emotion).unsqueeze(1)  # [batch, 1, d_model]
