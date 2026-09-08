@@ -1,8 +1,117 @@
 (Analisi emotiva del testo)
 
+In questo capitolo si completa l'analisi prosodica del testo analizzandolo dal punto di vista emotivo e della semantica. 
+Questa fase è particolarmente importante per la successiva  generazione musicale che guida e orienta l'atmosfera melodica e la scelta automatica 
+degli strumenti. A tale scopo, il sistema elabora il testo di input utilizzando un approccio ibrido che fonde risorse lessicali interne al programma 
+con database esterni. Per rappresentare le emozioni è stato predisposto un modello dimensionale, che mappa valori numerici estrapolati dalle singole 
+parole in uno spazio vettoriale continuo (con valori normalizzati tra -1.0 e +1.0) lungo tre assi fondamentali: 
+\begin{itemize}
+    \item \textbf{Valenza} (polarità positiva/negativa): estendendosi da stati di dolore a stati di gioia, questo asse guida principalmente le scelte modali 
+    e armoniche (es. l'utilizzo di scale maggiori o minori).
+    \item \textbf{Arousal} (energia/calma): Misura il livello di attivazione e tensione. In ambito musicale, si traduce tipicamente in variazioni di tempo, 
+    densità ritmica e intensità dinamica.
+    \item \textbf{Tenerezza} (affetto/distacco): Asse cruciale per il dominio poetico, permette di isolare sentimenti di dolcezza e intimità, distinguendo 
+    ad esempio un brano genericamente positivo da uno profondamente affettuoso, influenzando la scelta dei timbri strumentali.
+\end{itemize}
 
-\section{Architettura fonti lessicali}
-\section{Pipeline e preprocessing linguistico}
-\section{Modulatori sintattici(?)}
-\section{Algoritmo di aggregazione e metriche di copertura}
+
+
+\section{Risorse lessicali}
+Il calcolo dell' \textit{embedding emotivo} si fonda su un approccio \textit{dictionary-based}, in cui ogni termine del testo viene cercato all'interno di 
+specifici lessici per ottenerne le coordinate dimensionali. I dizionari curati manualmente offrono altissima precisione per un dominio specifico, ma hanno 
+una copertura limitata; al contrario, i grandi lessici del Natural Language Processing (NLP) offrono una copertura vastissima, ma possono risultare 
+imprecisi o sbilanciati rispetto alle necessità del dominio poetico-musicale. Per risolvere questo \textit{trade-off}, il sistema implementa un'architettura 
+ibrida che interroga gerarchicamente tre diverse fonti di dati: un dizionario interno dedicato e due risorse esterne appartenenti al progetto NRC 
+(National Research Council Canada).
+
+\subsection{Dizionario interno (Lexicon)}
+Il nucleo dell'analisi è costituito dal dizionario interno (\texttt{LEXICON}), una struttura dati costruita e tarata ad hoc per il software. 
+Ogni lemma al suo interno è associato a una tupla di tre valori compresi tra -1 e +1, corrispondenti rispettivamente a Valenza, Arousal e Tenerezza. 
+Questo modulo è fornito di supporto a quelli esterni estremamente più completi e precisi ma poveri di parole in sfumature nei quadranti a valenza positiva.
+Per ovviare questo sbilanciamento e permettere al motore di generazione musicale di esplorare l'intero spettro sonoro, il dizionario interno è stato 
+integrato con lemmi mirati a coprire specifiche aree del piano Valenza/Arousal: 
+\begin{itemize}
+    \item Calma e Serenità (V+, A-): Termini come calmo, pacifico, silenzioso, adagio, fondamentali per generare atmosfere musicali distese.
+    \item Gioia ad alta intensità (V+, A+): Termini come entusiasmo, trionfo o danza, per stimolare generazioni musicali energiche e brillanti.
+    \item  Affetto (Tenerezza): L'inserimento manuale del terzo asse per lemmi come amore, carezza o sogno garantisce che il calore del testo venga 
+    tradotto correttamente in musica, distinguendolo da parole genericamente positive ma "fredde".
+\end{itemize}
+
+\subsection{Modello continuo: NRC VAD Lexicon}
+Qualora un termine non sia presente nel dizionario interno (dopo averne estratto il lemma tramite la libreria `simplemma`), il sistema interroga il suo 
+fallback primario: l'NRC VAD Lexicon.\\
+A differenza di altri dizionari basati su categorie discrete, il VAD Lexicon contiene punteggi continui annotati direttamente da esseri umani per i tre 
+assi di Valenza, Arousal e Dominanza. Questa caratteristica lo rende strutturalmente affine al modello dimensionale implementato.\\
+L'uso di misurazioni dirette risolve nativamente il bias dell'Arousal tipico di altri database: non dovendo derivare l'intensità energetica da 
+etichette predefinite, il VAD Lexicon mappa con estrema precisione anche le parole a bassissima energia (come calma, sonno, quiete).\\
+A livello implementativo, il modulo relativo è stato dotato di una funzione di rilevamento automatico della scala metrica. Poiché le diverse versioni 
+storiche del dataset NRC (2018 vs 2025) utilizzano scale differenti (da [0, 1] a [-1, 1]), il loader normalizza automaticamente i valori sulla 
+scala standard del software (da -1 a +1) applicando la trasformazione lineare $v_{\mathit{new}} = v_{\mathit{old}} \times 2 - 1$, garantendo l'omogeneità 
+dei dati in ingresso.
+
+\subsection{Modello categoriale: NRC Emotion Lexicon (EmoLex)}       
+Qualora il lemma risulti assente anche nel VAD, il sistema ricorre al fallback secondario: l'NRC Emotion Lexicon. Questo database è inoltre impiegato 
+come sorgente esterna esclusiva per derivare l'asse della Tenerezza, non presente nel dataset VAD.\\
+L'integrazione dell'EmoLex ha richiesto un importante lavoro di adattamento algoritmico. Essendo un lessico categoriale basato sulle 8 emozioni di base 
+di Plutchik, le etichette binarie (es. \texttt{joy=1}, \texttt{anger=1}) sono state matematicamente proiettate sullo spazio vettoriale di Russell 
+assegnando coordinate costanti a ciascuna categoria (\texttt{CATEGORY\_TO\_VA}). Tuttavia, l'uso dell'EmoLex nella sua traduzione italiana presentava 
+sbilanciamenti sistemici (il risultato tendeva a posizionarsi sempre su un Arousal positivo). Per ovviare a questo problema, il modulo implementa 
+due euristiche correttive:
+\begin{itemize}
+    \item Ponderazione dell'affidabilità categoriale (CATEGORY\_RELIABILITY): L'EmoLex italiano, essendo generato per traduzione automatica dal lemma inglese, 
+    presenta "rumore" semantico. L'algoritmo non effettua una media semplice delle categorie attive, ma applica pesi ridotti a quelle più rumorose, 
+    permettendo a emozioni più stabili e ad Arousal negativo (come sadness) di prevalere nel calcolo vettoriale.
+    \item Correzione della polarità grezza (POLARITY\_TO\_VA): Quando una parola presenta solo un flag grezzo negative (senza emozioni specifiche), 
+    l'Arousal di default è stato forzato in negativo (-0.15). Questa scelta riflette l'assunto psico-linguistico per cui la negatività "pura" 
+    si avvicini maggiormente a stati di letargia o tristezza, piuttosto che all'alta attivazione della rabbia vincolati a  valori di Arousal positivi.
+\end{itemize}
+
+\subsection{Logica di fusione e assegnazione dei pesi}
+Infine viene gestita l'estrazione vettoriale finale per una singola parola. Per massimizzare le probabilità di match, il sistema tenta prima di cercare 
+il lemma della parola e, in caso di fallimento, tenta con la parola flessa originale.\\
+La criticità principale si verifica quando un termine è presente contemporaneamente nel dizionario interno e in una delle risorse esterne (VAD o EmoLex). 
+Sostituire del tutto il valore generico esterno al valore manuale vanificherebbe il lavoro di calibrazione fatto sul dominio poetico. Pertanto, l'algoritmo 
+fonde i dati applicando una media pesata lineare. I pesi sono stati definiti empiricamente nel codice:
+\begin{itemize}
+    \item HAND\_WEIGHT = 0.6
+    \item NRC\_WEIGHT = 0.4
+\end{itemize}
+Questa proporzione (60\% al lessico manuale, 40\% a quello NLP) garantisce che il dizionario interno LEXICON mantenga la priorità assoluta, 
+fungendo da "centro di gravità" per l'interpretazione emotiva della parola, pur permettendo al dato esterno di smussare il risultato finale, 
+arricchendolo con le sfumature statistiche calcolate su vasta scala.
+
+\section{Pipeline di analisi emotiva}
+Una volta stabilite e ponderate le risorse lessicali, il sistema elabora l'intero testo in ingresso per calcolarne l'emotività globale. 
+Questo processo non consiste in una semplice media matematica delle parole trovate, ma richiede una pipeline algoritmica divisa in fasi logiche sequenziali.
+\begin{enumerate}
+    \item \textbf{Preprocessing e normalizzazione linguistica}: Il testo viene convertito in minuscolo, privato della punteggiatura e suddiviso in 
+    token isolati. Successivamente, ogni parola viene sottoposta a lemmatizzazione tramite la libreria simplemma. Questo passaggio è fondamentale 
+    per il trattamento della lingua italiana: riconducendo i verbi coniugati all'infinito e le parole flesse al singolare maschile, si massimizza 
+    la probabilità di riscontro all'interno dei dizionari vettoriali. Contestualmente, i termini puramente funzionali privi di carico emotivo 
+    (come articoli, preposizioni, congiunzioni e forme verbali comuni) vengono scartati tramite un set di STOPWORDS (?), affinché non alterino i 
+    calcoli successivi.
+    \item Valutazione del contesto sintattico (modificatori): L'analisi semantica non si limita al mero rintracciamento lessicale (approccio \textit{bag of words}): 
+    il significato emotivo di una parola dipende fortemente dai termini che la precedono. Il modulo gestisce questa dinamica in modo stateful, 
+    avvalendosi di costrutti logici attivati da specifici modificatori:
+    \begin{itemize}
+        \item Negazioni: Quando l'algoritmo incontra termini come "non" o "senza", attiva un flag che modifica i valori del bersaglio successivo. 
+        Valenza e Arousal vengono invertiti di segno e attenuati (rispettivamente del 60\% e 50\%), poiché negare una parola come "felice" non equivale a
+        un odio assoluto, ma genera una negatività moderata. La Tenerezza subisce invece una forte smorzatura verso lo zero, indicando distacco o assenza di 
+        calore.
+        \item Intensificatori: L'incontro con termini come "molto" o "profondamente" incrementa del 30\% le coordinate vettoriali della parola successiva. 
+        Per garantire robustezza all'analisi, il parser riconosce un'eccezione definita SCOPE \_ NEUTRAL: avverbi comuni che si interpongono tra modificatore 
+        e bersaglio (come "veramente" o "davvero") vengono ignorati, permettendo allo scope del modificatore di persistere intatto. 
+    \end{itemize}
+    \item agregazione vettoriale basata su magnitude: L'ultimo passaggio fonde i vettori delle singole parole in un unico embedding emotivo 
+    rappresentativo dell'intera frase. L'uso di una media aritmetica standard comporterebbe un grave difetto strutturale: una parola emotivamente 
+    fortissima verrebbe drasticamente diluita se accompagnata da termini neutri. Per ovviare a ciò, l'algoritmo calcola una media pesata, 
+    dove il peso assegnato a ogni parola è proporzionale al valore assoluto più alto raggiunto sui tre assi, assicurando che i termini emotivamente 
+    più intensi fungano da traino per il risultato. Per impedire errori matematici o annacquamenti, vengono applicate una tolleranza (epsilon), 
+    che ignora i contributi vettoriali troppo vicini allo zero, e un peso minimo (floor), che impedisce l'azzeramento del contributo per termini a 
+    carica modesta.
+\end{enumerate}
+L'output finale della pipeline restituisce un dizionario contenente le tre coordinate aggregate (Valenza, Arousal, Tenerezza), le parole matchate 
+e un indicatore quantitativo di coverage, calcolato come rapporto tra le parole trovate nei dizionari e il totale dei token di contenuto analizzati.
+
+\section{Rappresentazione Visiva e Proiezione Spaziale}
 

@@ -276,7 +276,8 @@ Ricordare il significato di **prosodia**!!! C'è differenza con la metrica (non 
 - controllare i commenti ai metodi/script
 - eliminare commenti "brutti" nel codice
 - rimuovere file che non servono nelle cartelle
-- ripulire TUTTE le cartelle
+- rinominare le cartelle
+- aggiungere commenti utili al codice
 
 
 #### possibili estensioni future:
