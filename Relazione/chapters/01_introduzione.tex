@@ -1,50 +1,33 @@
-Il progetto nasce dall'idea di poter associare una melodia ad un testo poetico.
-Molto spesso quando si legge un testo poetico, la mente del lettore potrebbe associare inconsciamente una melodia al testo stesso.
-Difatti la lingua italiana è essa stessa ritmata e bella da ascoltare, non c'è quindi da stupirsi se la sola lettura di una poesia possa far suonare nella propria mente una determinata colonna sonora.
+Il progetto Prosody To Music nasce dall'idea di associare una melodia a un testo in lingua italiana.
+Spesso, durante la lettura di un testo, può succedere di seguire un flusso melodico, dando intonazione alle parole; di fatti la lingua italiana è di 
+per sé musicale e ritmata.
+Sfruttando dunque la prosodia ricavabile dal susseguirsi di parole in forma scritta, questo programma è in grado di produrre una base musicale 
+coerente con l'input testuale.
 
-Questo progetto mira a creare una pipeline che possa rendere tutto questo realtà trasformando un testo poetico italiano in una melodia coerente con il testo stesso.
-
-Questa introduzione mira a fornire a chi legge una panoramica degli obiettivi e delle metodologie utilizzate in questo progetto.
 
 \section{Obiettivi}
-Il progetto ha come obiettivo principale la definizione di una pipeline coerente per trasformare un input testuale in una rappresentazione musicale espressiva e controllabile.
-Nello specifico il progetto mira a raggiungere i seguenti obbiettivi:
+Il progetto ha come obiettivo principale la definizione di una pipeline coerente per trasformare un input testuale in una rappresentazione musicale espressiva 
+e controllabile.
+Nello specifico, il progetto mira al raggiungimento dei seguenti obiettivi:
 
-Il progetto mira al raggiungimento dei seguenti obiettivi:
 \begin{enumerate}
-    \item Prendere in input un testo ed estrapolare secondo le regole della lingua italiana le varie tipologie di accenti.
-    \item Produrre uno schema ritmico musicale coerente con la distribuzione degli accenti ritmici del testo.
+    \item Prendere in input un testo ed estrapolare, secondo le regole della lingua italiana, varie tipologie di accenti, pause respiratorie e 
+    significati sintattici.
+    \item Produrre uno schema ritmico musicale coerente con la distribuzione degli accenti ritmici e dei silenzi.
     \item Generare una melodia coerente con il ritmo ottenuto precedentemente lasciando libertà di personalizzazione all'utente.
 \end{enumerate}
 \section{Metodologia in breve}
 Al fine di raggiungere gli obiettivi precedemente presentati sarà seguita la seguente pipeline:
 \begin{enumerate}
-    \item \textbf{Analisi del testo:} L'analisi del testo sarà svolta parallelamente dal punto di vista semantico e da quello prosodico (degli accenti). 
-     
-    L'analisi semantica sarà effettuata per "assegnare" la musica corretta in base al significato e al contesto emotivo del testo.
-    
-    L'analisi prosodica sarà usata con il fine di trovare gli accenti per la produzione dello schema ritmico.
-    \item \textbf{Produzione dello schema ritmico:} Traduzione dello studio prosodico in un ritmo musicale, in modo da ottenere una ritmica coerente con il testo.
-    \item \textbf{Addestramento del modello:} Per la generazione della melodia, in questa fase si addestrerà un modello Transformer su un dataset di brani musicali.
-    \item \textbf{Generazione musicale:} Sarà generato un file MIDI coerente con il ritmo e con la semantica del testo, per fare ciò si farà uso il modello Transformer precedentemente allenato.
-    \item \textbf{Sintesi del brano:} Il file precedentemente ottenuto darà sintetizzato (quindi trasformato in un file WAVE) utilizzando gli strumenti necessari.      
+    \item \textbf{Analisi del testo:} l'analisi del testo sarà svolta parallelamente dal punto di vista semantico e da quello ritmico per completare un processo di analisi prosodica del testo.  La semantica servirà a generare un'atmosfera musicale coerente con il significato e il contesto emotivo del testo. La prosodia servirà ad individuare gli accenti ritmici e le pause per la produzione dello schema ritmico.
+    \item \textbf{Produzione dello schema ritmico:} traduzione dello studio prosodico in un ritmo musicale, in modo da ottenere una ritmica coerente con il testo.
+    \item \textbf{Addestramento del modello:} per la generazione della melodia, in questa fase si addestrerà un modello Transformer su un dataset di brani musicali.
+    \item \textbf{Generazione musicale:} sarà generato un file MIDI coerente con il ritmo e con la semantica del testo, per fare ciò si farà uso il modello Transformer precedentemente allenato.
+    \item \textbf{Sintesi del brano:} il file precedentemente ottenuto darà sintetizzato (quindi trasformato in un file WAVE) utilizzando gli strumenti necessari.      
 \end{enumerate}
-\section{Requisiti}
-In questa sezione saranno presentati i requisiti del progetto che saranno divisi in requisiti
-funzionali e requisiti non funzionali.
-I requisiti funzionali sono un'insieme di requisiti necessari al fine del funzionamento del
-progetto, se anche uno di loro non viene rispettato allora il progetto è irrealizzabile.
-
-I requisiti non funzionali sono invece dei cosiddetti "nice to have" ovvero delle aggiunte
-che seppur non necessarie possono migliorare di molto sia la qualità nel lavoro che i
-risultati del progetto.
-
-
-\subsection{Requisiti funzionali}
-\subsection{Requisiti non funzionali}
-\section{Criticità}
 
 
 \section{Specifiche del progetto}
-Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di numerose librerie che saranno presentate in un capitolo dedicato, estremamte utili allo svolgimento del progetto.
+Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di numerose librerie estremamte utili alla progettazione 
+che saranno presentate in un capitolo dedicato.
 Inoltre per l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
