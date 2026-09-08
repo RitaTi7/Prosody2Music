@@ -255,13 +255,13 @@ Ricordare il significato di **prosodia**!!! C'è differenza con la metrica (non 
 
 #### Cose da fare nella relazione:
 - introduzione (da vedere cosa aggiungere)
-- panoramica su Adam
-- panoramica su MIDI
-- panoramica su FluidSynth
+- ~~panoramica su Adam~~
+- ~~panoramica su MIDI~~
+- ~~panoramica su FluidSynth~~
 - Conclusioni (e sviluppi futuri)
 - elimina capitolo Metodi (dopo aver visto bene gli argomenti)
 - cambia appendice-> è diventata la sitografia
-
+- capire come gestire la parte MIDI (anche nell'analisi rimtica del testo)
 
 #### Idee per la presentazione:
 - sfruttare: la lunghezza e la profondità sintattica delle frasi (syntactic_depth, sentence_word_count) già calcolate da spaCy. Usabili per decidere il fraseggio musicale — frasi sintatticamente semplici e brevi diventano frasi musicali più dirette, frasi lunghe e subordinate introducono più respiro o un cambio di registro. È un modo elegante di far "sentire" la struttura grammaticale del testo, non solo l'accento delle singole parole.

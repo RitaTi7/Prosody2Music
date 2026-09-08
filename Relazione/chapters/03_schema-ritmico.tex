@@ -203,7 +203,78 @@ Inoltre, per garantire prestazioni ottimali ed evitare di ripetere il gravoso pr
 viene memorizzata in un meccanismo di caching interno a livello di sessione. In questo modo, l'addestramento avviene un'unica volta all'avvio, e la memoria 
 si azzera automaticamente al termine dell'esecuzione.
 
-\section{Pause di punteggiatura}
-\section{Export del MIDI ritmico}
+
+
+\section{Individuazione delle pause ritmiche}
+Dopo aver trovato le sillabe di maggior intensità sonora delle parole, il passo successivo per costruire un efficace schema ritmico ripone la sua attenzione 
+nell'analisi dei silenzi. La punteggiatura e il modo di trascrivere una poesia, sono elementi rilevanti per l'individuazione delle pause ritmiche. 
+Tali pause sono indispensabili per avvicinarsi ad un'analisi prosodica di un testo esposto vocalmente, in quanto esse simulano l'andamento che la voce è 
+portata a seguire.\\
+Per lo studio dei silenzi, è necessaria una definizione di un meccanismo di tokenizzazione dei caratteri testuali per riconoscere la punteggiatura, e di 
+interpretare pattern impliciti nascosti nei versi come gli enjambement.
+
+\subsection{Tokenizzazione e analisi della punteggiatura}
+La scomposizione del testo poetico è basata sull'uso della libreria Python Regex (\textbf{riferimento alla libreria X}) che permette l'implementazione 
+di espressioni regolari ad hoc. Si è scelto di utilizzare questa libreria leggera in quanto ottimizza notevolmente la computazione, ed evita il sovraccarico 
+computazionale che avrebbero arrecato librerie di NLP complesse come spaCy. Il testo di input viene analizzato verso per verso,  e per ciascuno, viene 
+restituita una sequenza strutturata di dizionari contenenti una parola e l'eventuale segno di punteggiatura immediatamente successivo.\\
+Una volta isolata la punteggiatura del testo, viene mappata su specifiche durate musicali, misurate in "impulsi" (dove in notazione MIDI corrisponde 
+a una croma o a 0.5 quarterLength). Il sistema distingue tre categorie di pause infra-verso:
+\begin{itemize}
+      \item Pause brevi: dedicate a virgole, punti e virgola o due punti, a cui viene assegnata una durata di 1 impulso.
+      \item Pause lunghe: riguardanti punti,  punti esclamativi o punti interrogativi, che impongono un arresto maggiore pari ai 3 impulsi.
+      \item Pause sospensive: attivate dai punti di sospensione che dilatano ulteriormente il silenzio estendendolo a 4 impulsi.
+\end{itemize}
+In assenza di punteggiatura, le parole vengono concatenate musicalmente senza pause aggiuntive. Questa mappatura diretta tra tipografia e valori 
+ritmici permette al sistema di emulare la metrica respiratoria della recitazione.
+
+\subsection{Gestione transizioni di fine verso}
+La sola analisi della punteggiatura intra-verso risulta insufficiente a modellare la complessità ritmica della poesia, poiché la transizione tra un 
+verso e il successivo impone intrinsecamente una pausa strutturale. Tuttavia, tale arresto deve essere ricalibrato in presenza di un enjambement, 
+ovvero quando la struttura sintattica si protrae da un verso all'altro.\\
+Per identificare automaticamente questi contesti, il sistema si avvale di un metodo euristico comprendente una lista mirata di elementi grammaticali 
+a forte propensione sintattica trasversale. L'insieme comprende:
+\begin{itemize}
+      \item Preposizioni e articoli: sia semplici che articolati (es. \textit{di, a, da, nello, del}), la cui funzione di reggenza nominale impedisce 
+      per definizione un'interruzione di respiro.
+      \item Congiunzioni e particelle subordinanti: elementi connettivi che legano indissolubilmente sintagmi o introducono proposizioni dipendenti 
+      (es. \textit{che, e, ma, o}).
+      \item Pronomi atoni e clitici: particelle proclitiche o enclitiche prive di autonomia accentuativa (es. \textit{mi, ti, si, ne}).
+\end{itemize}
+Quando l'ultima parola di un verso appartiene a questo insieme, l'algoritmo rileva un potenziale enjambement. In risposta, il sistema attenua la durata 
+della pausa a fine verso, impedendo che venga inserito un silenzio innaturale laddove la sintassi impone continuità ritmica.\\
+Inoltre, per evitare artefatti acustici dovuti alla sovrapposizione temporale, viene attuato un controllo di mutua esclusività: se l'ultimo token di un 
+verso presenta già un segno di punteggiatura, la pausa strutturale di fine verso viene annullata. Questo meccanismo impedisce la somma di silenzi consecutivi, 
+preservando la coerenza ritmica. 
+
+
+\section{Sintesi MIDI dello schema ritmico}
+La fase conclusiva di tutta questa prima fase di analisi dell'input, traduce la rappresentazione prodotta dall'analisi prosodica del testo in un file 
+MIDI standard (.mid), avvalendosi della libreria di Python music21 (\textbf{riferimenti alla libreria e al MIDI}). Il processo si articola in due momenti 
+logici principali: la linearizzazione della struttura in una sequenza ordinata di eventi discreti e la loro successiva conversione in oggetti musicali, 
+come note e pause, organizzate in uno stream temporizzato.\\
+Nel dettaglio:
+\begin{itemize}
+      \item Linearizzazione e allineamento temporale: la struttura gerarchica dell'analisi prosodica, viene appiattita in un'unica sequenza monodimensionale 
+      di eventi, classificati come note o pause. Le pause vengono inserite nella sequenza subito dopo la sillaba a cui sono state associate, così da 
+      mantenere la corrispondenza tra accenti linguistici e silenzi strutturali.
+      \item Sistema di durate a impulsi: ad ogni evento  una durata espressa in un'unità ritmica astratta, l'impulso: uno per le sillabe atone, due per 
+      le toniche, e per le pause coerentemente all'analisi discussa sopra. In fase di esportazione, l'impulso viene convertito nell'unità temporale nativa 
+      di music21 (\textbf{riferimenti...}), la \texttt{quarterLength}, tramite un fattore di scala fisso, dove un impulso equivale a una croma 
+      (0.5 quarterLength).
+      \item Mappatura acustica e profili dinamici: per rendere udibile la gerarchia accentuativa, alle sillabe toniche e atone vengono assegnate altezze 
+      fisse distinte (di default rispettivamente C4 e A3) e valori di \texttt{velocity} differenti (100 e 60 su una scala 0–127), replicando a livello 
+      sonoro il contrasto tra elementi forti e deboli individuato nell'analisi linguistica.
+      \item Canale percussivo General MIDI: in alternativa alla riproduzione intonata, il sistema supporta una modalità di esportazione che instrada 
+      gli eventi sul canale 10, riservato dallo standard General MIDI ai suoni percussivi non intonati. Le sillabe toniche vengono mappate sulla nota 
+      della grancassa (\texttt{bass drum}, MIDI 36) e quelle atone sull'\texttt{hi-hat} chiuso (MIDI 42), generando un pattern puramente ritmico.
+      \item Serializzazione e metadati strutturali: gli eventi convertiti vengono accumulati in un'unica traccia (\texttt{Part}), preceduta da un 
+      marcatore di tempo espresso in BPM. il file viene poi serializzato su disco nel formato MIDI standard. A fini di controllo, la durata complessiva 
+      della traccia in quarterLength viene convertita in secondi sulla base del tempo impostato, garantendo la coerenza temporale tra il testo analizzato 
+      e il brano generato.
+\end{itemize}
+Questo modulo rappresenta quindi il punto di chiusura della prima fase della pipeline su cui si fonda l'intero sistema: dal prodotto 
+dell'analisi prosodica del testo si è generato uno scheletro ritmico deterministico. La base ritmica prodotta diventerà l'input per la 
+successiva fase di generazione musicale intelligente.
 
 
