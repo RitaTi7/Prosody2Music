@@ -255,25 +255,32 @@ Ricordare il significato di **prosodia**!!! C'è differenza con la metrica (non 
 
 #### Cose da fare nella relazione:
 - introduzione (da vedere cosa aggiungere)
-- panoramica su Adam
-- panoramica su MIDI
-- panoramica su FluidSynth
+- ~~panoramica su Adam~~
+- ~~panoramica su MIDI~~
+- ~~panoramica su FluidSynth~~
 - Conclusioni (e sviluppi futuri)
 - elimina capitolo Metodi (dopo aver visto bene gli argomenti)
 - cambia appendice-> è diventata la sitografia
-
+- capire come gestire la parte MIDI (anche nell'analisi rimtica del testo)
 
 #### Idee per la presentazione:
 - sfruttare: la lunghezza e la profondità sintattica delle frasi (syntactic_depth, sentence_word_count) già calcolate da spaCy. Usabili per decidere il fraseggio musicale — frasi sintatticamente semplici e brevi diventano frasi musicali più dirette, frasi lunghe e subordinate introducono più respiro o un cambio di registro. È un modo elegante di far "sentire" la struttura grammaticale del testo, non solo l'accento delle singole parole.
 - se non riusciamo a produrre un interfaccia minimale (ad esempio in html) si potrebbe anche optare per un notebook4
 - SCEGLIERE TESTI CHE VENGONO BENE, tra questi: qualcosa che abbia parole forti (per far uscire un suono cupo...), qualcosa che abbia emozioni carine e dolci... volendo anche canzoni vere (se fanno un bell effetto)
 - vedere se è possibile preparare un esempio che bypassi lo scheletro ritmico ma che lasci solo il transformer, per far vedere che (in teoria) il risultato è molto diverso
-- portare una specie di **cassa** (o cuffie?) per far sentire meglio il risultato XD 
+- portare una specie di **cassa** (o cuffie?) per far sentire meglio il risultato XD
+- portare 2 pc(?)
 
 
 #### Rifiniture finali:
 - controllare i commenti ai metodi/script
 - eliminare commenti "brutti" nel codice
 - rimuovere file che non servono nelle cartelle
+- ripulire TUTTE le cartelle
+
+
+#### possibili estensioni future:
+- aggiungere una memoria "persistenet" per non dover riaddestrare il random forest da capo ad ogni esecuzione
+- lingua inglese...
 
 

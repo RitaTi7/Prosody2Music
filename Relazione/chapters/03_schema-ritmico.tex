@@ -1,12 +1,11 @@
 
-(...)
-\section{Analisi prosodica del testo}
+(\textbf{Analisi prosodica del testo})
 La prosodia è la parte della linguistica e della grammatica che studia gli elementi sonori del discorso, come l'intonazione, il ritmo, l'accento, 
 la durata e le pause. In questa fase iniziale della pipeline avviene l'analisi prosodica di un testo di input, con l'obiettivo di produrre 
 una rappresentazione ritmico-temporale che sarà la base di partenza per la fase successiva di generazione musicale. 
 Per questo progetto la lingua di riferimento è l'italiano, con le sue regole grammaticali, fonetiche e sugli accenti. 
 
-\subsection{Strumenti per l'analisi del testo}
+\section{Strumenti per l'analisi del testo}
 Prima di procedere con l'analisi prosodica vera e propria, è fondamentale definire formalmente le regole fonetiche e ortografiche della lingua italiana
 nell'ambiente computazionale. Affinché il sistema possa interpretare correttamente il ritmo di un verso, deve prima essere istruito a riconoscere 
 le unità cardine che compongono le parole.\\
@@ -26,13 +25,13 @@ il testo in ingresso viene "ripulito" per facilitarne le successivi analisi: ogn
 gli apostrofi, tutti i caratteri non alfabetici sono filtrati. Questo processo di standardizzazione dell'input riduce il rumore nei dati, preparando una 
 stringa uniforme, pronta per essere sottoposta alla successiva fase di suddivisione sillabica.
 
-\subsection{Sillabazione}
-La scomposizione di una parola in sillabe rappresenta il fondamento su cui si costruisce l'intera architettura ritmica del sistema(?). 
+\section{Sillabazione}
+La scomposizione di una parola in sillabe rappresenta il fondamento su cui si costruisce l'intera architettura ritmica del sistema. 
 Per la successiva generazione musicale, è fondamentale che la sillabazione rispecchi l'effettiva pronuncia e la scansione metrica del verso poetico. 
 Il sistema implementa un approccio ibrido a cascata, basato su un motore euristico principale supportato da meccanismi di riconciliazione su base 
 dizionariale e, solo in ultima istanza, da strumenti tipografici.
 
-\subsubsection{Motore euristico primario}
+\subsection{Motore euristico primario}
 Il primo livello di analisi è affidato alla funzione di classificazione basata su regole linguistiche. L'euristica responsabile della sillabazione riceve 
 in input una parola e restituisce una lista di sillabe. L'analisi avviene scorrendo sequenzialmente la stringa per individuare i "nuclei vocalici" 
 e  i successivi gruppi consonantici. Dall'analisi dei gruppi consonantici è possibile stabilire il punto esatto in cui termina la sillaba corrente:
@@ -54,25 +53,25 @@ e  i successivi gruppi consonantici. Dall'analisi dei gruppi consonantici è pos
 \end{itemize}
 L'algoritmo itera questo processo fino alla scomposizione in sillabe completa della parola.
 
-\subsubsection{Processo di riconciliazione}
+\subsection{Processo di riconciliazione}
 Poiché la lingua italiana presenta numerose eccezioni storiche e fonetiche difficilmente individuabili con l'utilizzo di sole euristiche, 
 viene introdotto un livello di validazione incrociata. Non sempre vocali miste (forti e deboli) adiacenti si comportano come dittonghi, bensì spesso 
-sono considerate iati a causa dell'etimologia della parola (fenomeni di dieresi o sineresi implicita). Questo può portare il precedente metodo 
+sono considerate iati a causa dell'etimologia della parola. Questo può portare il precedente metodo 
 di suddivisione sillabica a sottostimare il numero effettivo di sillabe, compromettendo l'analisi prosodica del testo.\\  
 Il risultato calcolato dall'euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
 (\textbf{descritto nel capitolo X}). 
 Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura di riconciliazione dinamica.
-Le sillabe della lista ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
+Le sillabe della parola ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
 la sillaba con un maggior numero di vocali perché candidata principale a contenere uno iato non individuato. In seguito, avviene un tentativo di scissione 
 nel punto che separa le due vocali adiacenti. Se la separazione è attuabile, la vecchia struttura viene sostituita con le due nuove unità sillabiche. 
 A questo punto, il sistema verifica se il numero totale di sillabe ha raggiunto il valore target riportato nel dizionario: in caso affermativo, la procedura 
 termina con successo; altrimenti, il processo di ordinamento e scissione viene iterato. Le iterazioni sono limitate da un numero di guardia (in questo caso 5), 
-oltre il quale algoritmo si interrompe con la restituzione del risultato parziale calcolato.
+oltre il quale l'algoritmo si interrompe con la restituzione del risultato parziale calcolato.
 
-\subsubsection{Meccanismo di fallback e architettura completa}
+\subsection{Meccanismo di fallback e architettura completa}
 Come meccanismo di sicurezza finale, o fallback, il sistema prevede l'utilizzo della libreria tipografica Pyphen nei casi in cui la sillabazione euristica 
 e il successivo meccanismo di riconciliazione non producano un risultato coerente con quello riportato nel dizionario. Questa libreria nasce come strumento 
-di \textit{hyphenation}, ossia per determinare possibili punti di divisione tipografica nelle parole, non come sistema di analisi prosodica. 
+di \textit{hyphenation}, ossia per determinare possibili punti di divisione tipografica nelle parole, non con l'obiettivo di attuare un'analisi prosodica. 
 Nel contesto del sistema, infatti, la sillabazione non rappresenta un fine autonomo, ma costituisce una fase intermedia dell'analisi prosodica, 
 dalla quale vengono ricavate informazioni utili nella costruzione dello schema ritmico. Basandosi su pattern predefiniti e regole deterministiche associate 
 ai dizionari linguistici, Pyphen può portare a suddivisioni non conformi alla reale scansione metrica, pertanto non è opportuno affidarsi ad essa come 
@@ -92,8 +91,190 @@ Conclusa questa architettura a cascata, il sistema ottiene per ogni parola una l
 Tuttavia, per poter tradurre queste unità testuali in un reale schema ritmico-musicale, la separazione sillabica non è sufficiente. Il passaggio 
 immediatamente successivo, fondamentale per l'analisi prosodica, consiste nell'individuazione della sillaba tonica, ossia contenente l'accento tonico primario.
 
-\subsection{Accento tonico}
-\subsection{Pause di punteggiatura}
-\subsection{Export del MIDI ritmico}
+\section{Accento tonico}
+Estremamente importante per la scrittura dello schema ritmico è la disposizione degli accenti tonici delle parole, essi  diventeranno gli "hit" che 
+guideranno la ritmica (?). La loro individuazione avviene mediante una catena a 5 livelli, il cui livello più sofisticato riporta l'utilizzo di un 
+modello di Machine Learning spiegato in una sotto-sezione apposita.\\
+A partire dalla parola e dalla lista delle sue sillabe, la ricerca si articola nelle seguenti fasi:
+\begin{enumerate}
+      \item Accento grafico esplicito: è il primo livello di verifica e ha la priorità assoluta in quanto ottimizza notevolmente l'intero meccanismo. 
+      In ortografia italiana, quando una parola presenta un accento grafico, esso coincide con l'accento tonico. Di conseguenza, il sistema cerca 
+      la presenza di lettere accentate nella parola, utilizzando la mappa di conversione definita tra gli strumenti per l'analisi del testo. 
+      In caso di riscontro positivo, restituisce la sillaba accentata.
+      \item Lookup nel dizionario: in assenza di accenti grafici espliciti, il sistema effettua la ricerca nel dizionario fonetico PhonItalia. 
+      Se la parola ha un riscontro nel database, viene restituito l'indice della sillaba tonica accentata.
+      \item Modello di Machine Learning: qualora la parola risulti assente nel dizionario, viene analizzata da un modello di Machine Learning supervisionato 
+      basato sull'algoritmo Random Forest. Analizzando le caratteristiche morfologiche della stringa, esso è in grado di predire la classe di accentazione.
+      \item Predizione statistica per desinenza: in caso di assenza del modello di ML o di restituzione di esiti non validi, entra in gioco il modulo 
+      probabilistico Q2Stress. Questo livello calcola la probabilità di posizione dell'accento basandosi unicamente sulle ultime tre lettere della parola, 
+      sfruttando le distribuzioni statistiche tipiche della lingua italiana. 
+      \item Euristica di default: come livello di sicurezza finale, nel caso di fallimento dei metodi precedenti, l'algoritmo assegna l'accento tonico di 
+      default alla penultima sillaba, individuando una parola piana. Nel caso limite in cui la parola sia monosillabica, l'accento ricade inevitabilmente 
+      sull'ultima sillaba.
+\end{enumerate} 
+Attraverso questo meccanismo a cascata, l'algoritmo assicura l'individuazione dell'accento tonico per qualunque parola passata in input.
 
-\section{Analisi emotiva del testo}
+
+\subsection{Random Forest}
+Quando la parola non è rintracciabile nel dizionario di riferimento, il sistema delega la ricerca della sillaba tonica a un modello di Machine Learning 
+basato sui Random Forest. Il Random forest è un algoritmo di apprendimento supervisionato di tipo ensemble che, durante la fase di addestramento, 
+costruisce numerosi alberi decisionali indipendenti e poi ne confronta i risultati. Ogni decision tree considera solo un sottoinsieme randomico di 
+caratteristiche, in modo da esplorare complessivamente lo spazio delle feature mantenendo unici si singoli percorsi, mitigando il rischio di overfitting. 
+Al termine del processo, la previsione finale viene determinata per maggioranza, selezionando la classe di appartenenza stimata più dalla maggioranza 
+degli alberi.\\
+L'implementazione è stata effettuata tramite la libreria Python di Machine Learning Scikit-Learn. L'obiettivo di questo classificatore è predire la 
+posizione dell'accento tonico mappando la parola nelle seguenti classi di appartenenza:
+
+\begin{itemize}
+      \item Ultima sillaba (parole tronche)
+      \item Penultima sillaba (parole piane)
+      \item Terzultima sillaba (parole sdrucciole)
+      \item Quartultima sillaba (parole bisdrucciole)
+\end{itemize}
+
+Per consentire al modello di generalizzare le regole di accentazione, ogni stringa viene trasformata in un vettore di 24 feature descrittive, 
+riportate di seguito:
+\begin{itemize}
+      \item Caratteristiche generali della parola:
+            \begin{itemize}
+                  \item Lunghezza complessiva della parola calcolata come numero di lettere (word\_len). 
+                  \item Conteggio di vocali (vowel\_count) e consonanti (consonant\_count). 
+                  \item Rapporto percentuale tra vocali e lunghezza totale della parola (vowel\_ratio). 
+                  \item Numero delle sillabe della parola, precedentemente ottenuto nella fase di sillabazione (\texttt{syll\_count}).
+                  \item Indicatori posizionali di chiusura rappresentati da flag binari che segnalano se la parola termina con una 
+                  vocale(ends\_with\_vowel) o una consonante (ends\_with\_consonant). Possono costituire un forte indizio di parole tronche.
+            \end{itemize}
+      \item Sequenze vocaliche: flag booleani che verificano la presenza interna di specifiche combinazioni di vocali forti e deboli. Influenzano 
+      notevolmente la struttura sillabica e la posizione dell'accento tonico. Sono rappresentate dalla feature "contains\_x" con x che racchiude tutte 
+      le possibili combinazioni: "ia", "ie", "io", "iu", "ua", "ue", "ui", "uo".
+      \item Sequenze consonantiche: intercettano pattern consonantico-vocalici ricorrenti con la lettera "t". Rappresentate con "contains\_x" con x indicante: 
+      "ta", "te", "ti", "to", "tu".
+      \item Desinenze: stringhe estratte dalla porzione finale della parola, corrispondenti all'ultima lettera (last1), alle ultime due (last2), tre (last3) 
+      e quattro (last4). Sono le feature categoriche più importanti perché codificano direttamente le desinenze morfologiche (es. -are, -issimo). 
+      Trattate con la codifica One-Hot Encoding di skit-learn, consentono di associare regolarità statistiche fisse alle relative classi di accento.
+\end{itemize}
+
+\subsection{Preparazione del dataset di addestramento}
+Per addestrare il modello il sistema unisce due dataset distinti: PhonItalia e Q2Stress. Usare più di un dataset permette di massimizzare la copertura 
+lessicale per garantire una maggiore robustezza statistica. L'elaborazione procede nel seguente modo:
+\begin{itemize}
+      \item Lessico di Phonitalia: i dati estratti dal dataset contengono la forma della parola, il conteggio delle sillabe e la posizione dell'accento 
+      calcolata a partire dalla fine della stringa (dove 1 corrisponde all'ultima sillaba). Poiché il classificatore richiede una codifica 0-based 
+      (a partire da 0), la funzione converte l'etichetta originaria in un target tra 0 e 3. Ciascuna voce viene poi convertita nel vettore di 24 feature.
+      \item Dataset word-level Q2Stress: per questo dizionario la codifica del pattern di accento è già formattata in base 0, pertanto non necessita 
+      di conversioni. Inoltre, quando il dataset fornisce esplicitamente il conteggio delle sillabe, questo parametro ha la precedenza assoluta rispetto 
+      all'euristica di sillabazione.
+\end{itemize}
+Al termine di queste elaborazioni, le due fonti vengono fuse in un unico dataframe complessivo ed epurate da eventuali record duplicati, fornendo una base 
+di apprendimento omogenea, densa e priva di ridondanze.
+
+\subsection{Addestramento del modello}
+Una volta strutturato il dataset, il modello viene addestrato seguendo varie fasi, incapsulate in un oggetto \texttt{Pipeline} della libreria scikit-learn. 
+La pipeline si articola in:
+\begin{enumerate}
+      \item \textbf{Preprocessing dei dati}: il vettore delle 24 feature presenta una natura eterogenea. Tramite \texttt{ColumnTransformer} vengono separati 
+      i flussi di informazione: le feature numeriche vengono normalizzate utilizzando uno \texttt{StandardScaler}, mentre le feature categoriche vengono 
+      trasformate in vettori binari tramite \texttt{OneHotEncoder}. Quest'ultimo codificatore permette di ignorare le categorie sconosciute, assicurando 
+      che il sistema non vada in errore.
+      \item \textbf{Bilanciamento dei pesi di una classe}: il lessico italiano presenta una netta predominanza statistica delle parole piane. 
+      Per evitare che il classificatore sviluppi un bias predittivo orientato esclusivamente verso la classe dominante, viene implementato un calcolo 
+      personalizzato dei pesi. Analizzando le frequenze del dataset, il sistema calcola dei pesi compensativi e li attenua tramite un parametro di 
+      smorzamento, restituendo la corretta importanza anche alle classi minoritarie.
+      \item \textbf{Configurazione del classificatore}: l'algoritmo predittivo finale è un \texttt{RandomForest}\-\texttt{Classifier} impostato per generare 
+      400 alberi decisionali. Per attenuare il rischio di overfitting, viene imposto un vincolo strutturale che richiede un minimo di due campioni 
+      per la creazione di un nodo foglia.
+\end{enumerate}
+L'incapsulamento di questi tre passaggi all'interno di un'unica struttura dati garantisce che il modello addestrato possa processare nuove parole 
+in modo coerente e sicuro.
+
+\subsection{Inferenza e validazione strutturale}
+Completata la fase di addestramento, il modello è pronto ad elaborare nuove parole fuori dal vocabolario. Tuttavia, l'algoritmo non adotta la predizione 
+assoluta restituita dal classificatore, ma implementa un meccanismo di validazione strutturale. Il processo di inferenza si articola nei seguenti passaggi:
+\begin{enumerate}
+      \item Definizione dei limiti strutturali: sulla base del conteggio sillabico della parola, viene calcolata la classe metrica massima ammissibile.
+      \item Valutazione probabilistica: invece di ottenere una predizione netta e univoca, vengono estratte le probabilità stimate per ciascuna delle 
+      quattro classi possibili.
+      \item Filtraggio e selezione: l'algoritmo, seguendo i limiti strutturali, scarta tutte le probabilità delle classi non ammissibili per quella parola. 
+      Tra le classi candidate, viene selezionata quella con probabilità più alta.
+\end{enumerate}
+Questo approccio ibrido, che unisce la potenza statistica del Machine Learning ai vincoli logico-deduttivi della metrica, assicura la generazione di output 
+coerenti e previene errori strutturali irreversibili nella successiva stesura dello schema ritmico.\\
+Inoltre, per garantire prestazioni ottimali ed evitare di ripetere il gravoso processo di training per ogni parola analizzata, l'intera pipeline addestrata 
+viene memorizzata in un meccanismo di caching interno a livello di sessione. In questo modo, l'addestramento avviene un'unica volta all'avvio, e la memoria 
+si azzera automaticamente al termine dell'esecuzione.
+
+
+
+\section{Individuazione delle pause ritmiche}
+Dopo aver trovato le sillabe di maggior intensità sonora delle parole, il passo successivo per costruire un efficace schema ritmico ripone la sua attenzione 
+nell'analisi dei silenzi. La punteggiatura e il modo di trascrivere una poesia, sono elementi rilevanti per l'individuazione delle pause ritmiche. 
+Tali pause sono indispensabili per avvicinarsi ad un'analisi prosodica di un testo esposto vocalmente, in quanto esse simulano l'andamento che la voce è 
+portata a seguire.\\
+Per lo studio dei silenzi, è necessaria una definizione di un meccanismo di tokenizzazione dei caratteri testuali per riconoscere la punteggiatura, e di 
+interpretare pattern impliciti nascosti nei versi come gli enjambement.
+
+\subsection{Tokenizzazione e analisi della punteggiatura}
+La scomposizione del testo poetico è basata sull'uso della libreria Python Regex (\textbf{riferimento alla libreria X}) che permette l'implementazione 
+di espressioni regolari ad hoc. Si è scelto di utilizzare questa libreria leggera in quanto ottimizza notevolmente la computazione, ed evita il sovraccarico 
+computazionale che avrebbero arrecato librerie di NLP complesse come spaCy. Il testo di input viene analizzato verso per verso,  e per ciascuno, viene 
+restituita una sequenza strutturata di dizionari contenenti una parola e l'eventuale segno di punteggiatura immediatamente successivo.\\
+Una volta isolata la punteggiatura del testo, viene mappata su specifiche durate musicali, misurate in "impulsi" (dove in notazione MIDI corrisponde 
+a una croma o a 0.5 quarterLength). Il sistema distingue tre categorie di pause infra-verso:
+\begin{itemize}
+      \item Pause brevi: dedicate a virgole, punti e virgola o due punti, a cui viene assegnata una durata di 1 impulso.
+      \item Pause lunghe: riguardanti punti,  punti esclamativi o punti interrogativi, che impongono un arresto maggiore pari ai 3 impulsi.
+      \item Pause sospensive: attivate dai punti di sospensione che dilatano ulteriormente il silenzio estendendolo a 4 impulsi.
+\end{itemize}
+In assenza di punteggiatura, le parole vengono concatenate musicalmente senza pause aggiuntive. Questa mappatura diretta tra tipografia e valori 
+ritmici permette al sistema di emulare la metrica respiratoria della recitazione.
+
+\subsection{Gestione transizioni di fine verso}
+La sola analisi della punteggiatura intra-verso risulta insufficiente a modellare la complessità ritmica della poesia, poiché la transizione tra un 
+verso e il successivo impone intrinsecamente una pausa strutturale. Tuttavia, tale arresto deve essere ricalibrato in presenza di un enjambement, 
+ovvero quando la struttura sintattica si protrae da un verso all'altro.\\
+Per identificare automaticamente questi contesti, il sistema si avvale di un metodo euristico comprendente una lista mirata di elementi grammaticali 
+a forte propensione sintattica trasversale. L'insieme comprende:
+\begin{itemize}
+      \item Preposizioni e articoli: sia semplici che articolati (es. \textit{di, a, da, nello, del}), la cui funzione di reggenza nominale impedisce 
+      per definizione un'interruzione di respiro.
+      \item Congiunzioni e particelle subordinanti: elementi connettivi che legano indissolubilmente sintagmi o introducono proposizioni dipendenti 
+      (es. \textit{che, e, ma, o}).
+      \item Pronomi atoni e clitici: particelle proclitiche o enclitiche prive di autonomia accentuativa (es. \textit{mi, ti, si, ne}).
+\end{itemize}
+Quando l'ultima parola di un verso appartiene a questo insieme, l'algoritmo rileva un potenziale enjambement. In risposta, il sistema attenua la durata 
+della pausa a fine verso, impedendo che venga inserito un silenzio innaturale laddove la sintassi impone continuità ritmica.\\
+Inoltre, per evitare artefatti acustici dovuti alla sovrapposizione temporale, viene attuato un controllo di mutua esclusività: se l'ultimo token di un 
+verso presenta già un segno di punteggiatura, la pausa strutturale di fine verso viene annullata. Questo meccanismo impedisce la somma di silenzi consecutivi, 
+preservando la coerenza ritmica. 
+
+
+\section{Sintesi MIDI dello schema ritmico}
+La fase conclusiva di tutta questa prima fase di analisi dell'input, traduce la rappresentazione prodotta dall'analisi prosodica del testo in un file 
+MIDI standard (.mid), avvalendosi della libreria di Python music21 (\textbf{riferimenti alla libreria e al MIDI}). Il processo si articola in due momenti 
+logici principali: la linearizzazione della struttura in una sequenza ordinata di eventi discreti e la loro successiva conversione in oggetti musicali, 
+come note e pause, organizzate in uno stream temporizzato.\\
+Nel dettaglio:
+\begin{itemize}
+      \item Linearizzazione e allineamento temporale: la struttura gerarchica dell'analisi prosodica, viene appiattita in un'unica sequenza monodimensionale 
+      di eventi, classificati come note o pause. Le pause vengono inserite nella sequenza subito dopo la sillaba a cui sono state associate, così da 
+      mantenere la corrispondenza tra accenti linguistici e silenzi strutturali.
+      \item Sistema di durate a impulsi: ad ogni evento  una durata espressa in un'unità ritmica astratta, l'impulso: uno per le sillabe atone, due per 
+      le toniche, e per le pause coerentemente all'analisi discussa sopra. In fase di esportazione, l'impulso viene convertito nell'unità temporale nativa 
+      di music21 (\textbf{riferimenti...}), la \texttt{quarterLength}, tramite un fattore di scala fisso, dove un impulso equivale a una croma 
+      (0.5 quarterLength).
+      \item Mappatura acustica e profili dinamici: per rendere udibile la gerarchia accentuativa, alle sillabe toniche e atone vengono assegnate altezze 
+      fisse distinte (di default rispettivamente C4 e A3) e valori di \texttt{velocity} differenti (100 e 60 su una scala 0–127), replicando a livello 
+      sonoro il contrasto tra elementi forti e deboli individuato nell'analisi linguistica.
+      \item Canale percussivo General MIDI: in alternativa alla riproduzione intonata, il sistema supporta una modalità di esportazione che instrada 
+      gli eventi sul canale 10, riservato dallo standard General MIDI ai suoni percussivi non intonati. Le sillabe toniche vengono mappate sulla nota 
+      della grancassa (\texttt{bass drum}, MIDI 36) e quelle atone sull'\texttt{hi-hat} chiuso (MIDI 42), generando un pattern puramente ritmico.
+      \item Serializzazione e metadati strutturali: gli eventi convertiti vengono accumulati in un'unica traccia (\texttt{Part}), preceduta da un 
+      marcatore di tempo espresso in BPM. il file viene poi serializzato su disco nel formato MIDI standard. A fini di controllo, la durata complessiva 
+      della traccia in quarterLength viene convertita in secondi sulla base del tempo impostato, garantendo la coerenza temporale tra il testo analizzato 
+      e il brano generato.
+\end{itemize}
+Questo modulo rappresenta quindi il punto di chiusura della prima fase della pipeline su cui si fonda l'intero sistema: dal prodotto 
+dell'analisi prosodica del testo si è generato uno scheletro ritmico deterministico. La base ritmica prodotta diventerà l'input per la 
+successiva fase di generazione musicale intelligente.
+
+
