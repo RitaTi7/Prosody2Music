@@ -27,7 +27,7 @@
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{listings}
-\usepackage[numbers,sort&compress]{natbib}
+% natbib rimosso: usiamo biblatex (backend=biber)
 
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{2}
@@ -73,6 +73,14 @@
 \small{LM-32 Ingegneria Informatica}\\
 \small{Corso Artificial Intelligence from Engineering to Arts}}
 \date{}
+
+\usepackage[backend=biber,style=authoryear]{biblatex}
+\addbibresource{bibliografia.bib}
+
+% Comando per inserire la dicitura "Fonte: ..." seguita dalla citazione
+\newcommand{\Fonte}[1]{\textbf{Fonte: }\cite{#1}}
+
+
 
 \begin{document}
 

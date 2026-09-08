@@ -14,13 +14,13 @@ Questa libreria offre delle operazioni svolgibili sulle espressioni regolari.
 
 Un espressione regolare specifica un set di stringhe che combacia con essa. Le funzioni di questa libreria permettono di verificare se una particolare stringa combacia con una particolare espressione regolare.
 Le espressioni regolari possono essere concatenate per formare nuove espressioni regolari; se A e B sono entrambe espressioni regolari, allora AB è anch'essa un'espressione regolare. In generale, se una stringa p corrisponde ad A e un'altra stringa q corrisponde a B, la stringa pq corrisponderà ad AB. Questo vale a meno che A o B contengano operazioni a bassa priorità; condizioni ai confini tra A e B; o riferimenti a gruppi numerati. 
-Fonte:https://docs.python.org/3/library/re.html
+\Fonte{python-re}
 
 Nel codice implemetato la libreria re serve per usare la funzione re.sub che rimuove tutti i caratteri di punteggiatura da una parola mantenendo solo le lettere e i caratteri accentati.
 \subsection{UnicodeData}
 La libreria da accesso all'Unicode Character Database (UCD) che definisce le proprietà dei caratteri di tutti i caratteri Unicode. 
 
-Fonte: https://docs.python.org/3/library/unicodedata.html
+\Fonte{python-unicodedata}
 
 Viene importata per gestire correttamente la codifica dei caratteri speciali e accentati.
 In particolare viene usato il metodo lookup che cerca un carattere dal nome. Se un carattere con tale nome viene trovato ritorna il carattere corrispondente, altrimenti viene lanciato un Keyerror.

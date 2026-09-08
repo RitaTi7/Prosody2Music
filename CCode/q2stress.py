@@ -166,10 +166,6 @@ def load_wordlevel_dataframe(explicit_path=None, force_reload=False, verbose=Tru
     non è stato trovato. Cache a livello di modulo (come load_cues sopra
     e phon_italia.load_lexicon), non ricarica da disco a ogni chiamata.
 
-    NB: richiede pandas, ma l'import è locale a questa funzione — chi usa
-    solo il fallback per desinenza (load_cues/predict_stress_from_end,
-    che usano solo csv/glob della standard library) non paga il costo di
-    un import extra.
     """
     global _WORDLEVEL_DF_CACHE
     if not force_reload and _WORDLEVEL_DF_CACHE["loaded"]:
