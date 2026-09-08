@@ -13,7 +13,6 @@ import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-# IMPORTANTE: Importiamo anche PAD_TOKEN e VOCAB_SIZE
 from transformer_melody import MelodyTransformerModel, MODEL_PATH, PAD_TOKEN, VOCAB_SIZE
 from visualizer import plot_training_loss
 
@@ -135,7 +134,7 @@ def train_offline_model(epochs=15, batch_size=32, lr=1e-3):
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-2)
     
-    # --- LA MAGIA INIZIA QUI: PESI E LABEL SMOOTHING ---
+    # --- PESI E LABEL SMOOTHING ---
     
     # Creiamo un tensore di pesi pari a 1 per tutti i token
     class_weights = torch.ones(VOCAB_SIZE, device=device)
