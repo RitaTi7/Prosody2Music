@@ -291,3 +291,23 @@ def render_with_fluidsynth(midi_path, soundfont_path, out_path="output_fluid.wav
         print(f"[synth] FluidSynth non disponibile o fallito ({e}); uso solo il synth additivo interno.")
         return None
 
+def normalize_wav_peak(path, target=0.92):
+    """
+    Rialza (o abbassa) il volume di un file WAV già scritto su disco,
+    portando il picco assoluto al livello target (0-1) — stessa logica
+    di normalizzazione già usata da mix_and_export/render_rhythm_skeleton_wav
+    per il synth interno. Utile perché FluidSynth, a differenza del synth
+    interno, non normalizza da solo: usa un gain fisso piuttosto basso
+    di default, quindi il suo output suona sistematicamente più piano.
+    """
+    sr, data = wavfile.read(path)
+    audio = data.astype(np.float32)
+
+    peak = np.max(np.abs(audio))
+    if peak > 0:
+        scale = (target * 32767) / peak
+        audio = audio * scale
+
+    audio = np.clip(audio, -32768, 32767).astype(np.int16)
+    wavfile.write(path, sr, audio)
+    return path

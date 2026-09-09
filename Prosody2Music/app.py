@@ -9,7 +9,7 @@ import glob
 import time
 import streamlit as st
 
-from main import run_pipeline
+from main import run_pipeline, run_rhythm_only_pipeline
 from instruments import INSTRUMENT_PRESETS
 
 DEMO_POEM = """Nel mezzo del cammin di nostra vita
@@ -90,6 +90,12 @@ with st.sidebar:
     use_random_seed = st.checkbox("Seed casuale", value=True)
     seed = None if use_random_seed else st.number_input("Seed", value=42, step=1)
 
+    st.divider()
+    st.header("Solo schema ritmico")
+    rhythm_bpm = st.slider("Tempo schema ritmico (BPM)", 40, 200, 100)
+    rhythm_use_drums = st.checkbox("Usa percussioni GM invece delle note intonate", value=False)
+    generate_rhythm = st.button("🥁 Genera solo schema ritmico", use_container_width=True)
+
     generate = st.button("🎵 Genera", type="primary", use_container_width=True)
 
 # ============================== GENERAZIONE ==============================
@@ -125,11 +131,36 @@ if generate:
     st.session_state["last_result"] = {
         "midi_path": midi_path,
         "wav_path": wav_path,
-        "wav_fluid_path": os.path.join(OUT_DIR, f"{basename}_fluid.wav"),
+        "wav_fluid_path": os.path.join(OUT_DIR, "music", f"{basename}_fluid.wav"),
         "meta": meta,
         "emotion": emotion,
-        "melody_plot": os.path.join(OUT_DIR, "melody_rhythm.png"),
-        "emotion_plot": os.path.join(OUT_DIR, "emotion_space.png"),
+        "melody_plot": os.path.join(OUT_DIR, "plots", f"{basename}_melody_rhythm.png"),
+        "emotion_plot": os.path.join(OUT_DIR, "plots", f"{basename}_emotion_space.png"),
+    }
+
+if generate_rhythm:
+    if not poem_text.strip():
+        st.error("Il testo della poesia è vuoto.")
+        st.stop()
+
+    basename_rhythm = f"rhythm_{int(time.time())}"
+    with st.spinner("Analisi prosodica e generazione dello schema ritmico in corso..."):
+        try:
+            r_midi_path, r_wav_fluid_path = run_rhythm_only_pipeline(
+                poem_text,
+                out_dir=OUT_DIR,
+                basename=basename_rhythm,
+                bpm=rhythm_bpm,
+                use_drums=rhythm_use_drums,
+                verbose=False,
+            )
+        except Exception as e:
+            st.error(f"Errore durante la generazione dello schema ritmico: {e}")
+            st.stop()
+
+    st.session_state["last_rhythm_result"] = {
+        "midi_path": r_midi_path,
+        "wav_fluid_path": r_wav_fluid_path,
     }
 
 # ============================== OUTPUT ==============================
@@ -198,3 +229,27 @@ else:
         else:
             st.caption("FluidSynth non ha prodotto un file su questa macchina "
                        "(binario/soundfont non disponibili) — resta comunque il synth interno.")
+
+rhythm_result = st.session_state.get("last_rhythm_result")
+if rhythm_result is not None:
+    st.divider()
+    st.subheader("Schema ritmico (solo Fase 1, via FluidSynth)")
+
+    if os.path.isfile(rhythm_result["wav_fluid_path"]):
+        with open(rhythm_result["wav_fluid_path"], "rb") as f:
+            r_fluid_bytes = f.read()
+        st.audio(r_fluid_bytes, format="audio/wav")
+
+        rdl1, rdl2 = st.columns(2)
+        rdl1.download_button("⬇️ Scarica WAV ritmo (FluidSynth)", r_fluid_bytes,
+                              file_name=os.path.basename(rhythm_result["wav_fluid_path"]))
+        if os.path.isfile(rhythm_result["midi_path"]):
+            with open(rhythm_result["midi_path"], "rb") as f:
+                r_midi_bytes = f.read()
+            rdl2.download_button("⬇️ Scarica MIDI (ritmo)", r_midi_bytes,
+                                  file_name=os.path.basename(rhythm_result["midi_path"]))
+    else:
+        st.warning(
+            "FluidSynth non ha prodotto un file su questa macchina "
+            "(binario/soundfont non disponibili)."
+        )
