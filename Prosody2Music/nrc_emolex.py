@@ -49,7 +49,6 @@ visualizer.py), indipendentemente dal contenuto emotivo reale del testo:
 File sorgente atteso:
     repo_nrc/NRC-Emotion-Lexicon/OneFilePerLanguage/Italian-NRC-EmoLex.txt
 
-DA SISTEMARE: esiste un file NRC che contiene anche i valori dell'arousal!!! importante!!!!
 """
 
 #nrc_emolex.py
@@ -114,7 +113,7 @@ CATEGORY_RELIABILITY = {
     "trust": 1.0,
     "sadness": 1.0,         #consigliato 1.2
     "anger": 1.0,
-    "fear": 1.0,            #perplexity consiglia 1.1
+    "fear": 1.0,            #consigliato anche 1.1
     "disgust": 1.0,
     "anticipation": 0.5,
     "surprise": 0.4,

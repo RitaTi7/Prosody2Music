@@ -1,6 +1,4 @@
 """
-
-versione con le pause
  
 music_transformer.py — Blocco generativo in sola INFERENZA ONLINE (Fase 2)
 

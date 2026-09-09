@@ -2,10 +2,6 @@
 phon_italia.py — Interfaccia Python al lessico PhonItalia (Goslin, Galluzzi &
 Romani, 2014), clonato da https://github.com/stefanocoretta/phonItaliaR.
 
-Sostituisce l'euristica "parola piana di default" di prosody.py con un vero
-lookup su 120.000 forme di parola italiane, ciascuna annotata con numero di
-sillabe e posizione dell'accento tonico (dati empirici, non regole).
-
 File sorgente atteso (già presente clonando il repo):
     repo_phonItaliaR/data-raw/phonItalia-1.10/phonItalia-1.10-wordforms.tsv
 

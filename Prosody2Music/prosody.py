@@ -1,18 +1,9 @@
 """
-rhythm.py — Analisi ritmica del testo poetico italiano.
+prosody.py — Analisi ritmica del testo poetico italiano.
 
-Sostituisce prosody.py come modulo di sillabazione/accento/ritmo della
-pipeline Prosody2Music. Terza versione: nasce dal confronto a tre tra
-Fase1.py/Accenti.py (la versione originale, funzionante, con spaCy),
-prosody.py (la versione "leggera" senza spaCy) e una prima riscrittura
-di rhythm.py — prendendo di ognuna solo le parti che si sono rivelate
-davvero migliori delle alternative, invece di sceglierne una intera.
-
-Cosa viene da dove, e perché
------------------------------
-- Sillabazione: motore a regole dittongo/iato (di prosody.py), usato come
+- Sillabazione: motore a regole dittongo/iato, usato come
   fonte PRIMARIA — non pyphen. Verificato empiricamente sulla versione
-  precedente (Fase1.py) che pyphen come sillabatore primario sbaglia
+  precedente che pyphen come sillabatore primario sbaglia
   sistematicamente lo iato (es. "poesia" -> "poe-sia" invece di
   "po-e-si-a", perché le sue regole sono pensate per l'a-capo tipografico,
   non per la sillaba metrica). pyphen resta come ultima risorsa, e solo
@@ -69,26 +60,12 @@ Cosa viene da dove, e perché
   fondo a questo file (vedi sotto) le sa leggere e le rende come veri
   silenzi (music21 Rest).
 
-- Analisi semantica: ASSENTE per scelta — resta in emotion.py, che fa
-  già un lavoro più ricco (valenza/arousal/tenerezza, lessico curato +
-  NRC) di quanto farebbe una riscrittura qui.
-
-- NOVITÀ rispetto a tutte le versioni precedenti di rhythm.py/prosody.py:
-  export MIDI dello scheletro ritmico in fondo al file (build_midi_from_
-  poem_analysis), ripreso concettualmente da build_midi_from_skeleton di
-  Fase1.py (stesse durate, stesso supporto batteria via canale GM 10) ma
-  adattato alla struttura a "verso" di analyze_poem() invece che alla
-  lista piatta di Fase1.py, e con la lettura delle pause dalla lista
-  "pauses" invece che da flag has_pause_after/has_sentence_end.
-
+  
 Interfaccia esposta
 --------------------
 analyze_poem(text) -> lista di versi:
     {"text": str, "syllables": [...], "rhythm": [...], "pauses": [...]}
-"syllables"/"rhythm" hanno la stessa identica forma di prosody.py, quindi
-in main.py basta cambiare `from prosody import analyze_poem` in
-`from rhythm import analyze_poem` senza toccare music_transformer.py.
-
+"syllables"/"rhythm" 
 build_midi_from_poem_analysis(poem_analysis, output_path, ...) esporta lo
 stesso risultato di analyze_poem() in un file .mid (richiede music21).
 
