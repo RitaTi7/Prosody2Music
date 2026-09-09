@@ -1,7 +1,7 @@
-Il progetto Prosody To Music nasce dall'idea di associare una melodia a un testo in lingua italiana.
-Spesso, durante la lettura di un testo, può succedere di seguire un flusso melodico, dando intonazione alle parole; di fatti la lingua italiana è di 
-per sé musicale e ritmata.
-Sfruttando dunque la prosodia ricavabile dal susseguirsi di parole in forma scritta, questo programma è in grado di produrre una base musicale 
+Il progetto Prosody To Music nasce dall'idea di associare una composizione musicale a testo in lingua italiana.
+Spesso, durante la lettura, può succedere di seguire un flusso melodico spontaneo, dando intonazione alle parole; difatti, la lingua italiana è di 
+per sé fortemente musicale e ritmica.
+Sfruttando dunque la prosodia ricavabile dal susseguirsi di parole, questo programma è in grado di produrre una base musicale 
 coerente con l'input testuale.
 
 
@@ -14,20 +14,20 @@ Nello specifico, il progetto mira al raggiungimento dei seguenti obiettivi:
     \item Prendere in input un testo ed estrapolare, secondo le regole della lingua italiana, varie tipologie di accenti, pause respiratorie e 
     significati sintattici.
     \item Produrre uno schema ritmico musicale coerente con la distribuzione degli accenti ritmici e dei silenzi.
-    \item Generare una melodia coerente con il ritmo ottenuto precedentemente lasciando libertà di personalizzazione all'utente.
+    \item Generare una melodia coerente con il ritmo ottenuto precedentemente, lasciando libertà di personalizzazione all'utente.
 \end{enumerate}
 \section{Metodologia in breve}
-Al fine di raggiungere gli obiettivi precedemente presentati sarà seguita la seguente pipeline:
+Al fine di raggiungere gli obiettivi presentati sarà seguita la seguente pipeline:
 \begin{enumerate}
     \item \textbf{Analisi del testo:} l'analisi del testo sarà svolta parallelamente dal punto di vista semantico e da quello ritmico per completare un processo di analisi prosodica del testo.  La semantica servirà a generare un'atmosfera musicale coerente con il significato e il contesto emotivo del testo. La prosodia servirà ad individuare gli accenti ritmici e le pause per la produzione dello schema ritmico.
-    \item \textbf{Produzione dello schema ritmico:} traduzione dello studio prosodico in un ritmo musicale, in modo da ottenere una ritmica coerente con il testo.
+    \item \textbf{Produzione dello schema ritmico:} traduzione dello studio prosodico in una struttura ritmicas coerente con il testo di input.
     \item \textbf{Addestramento del modello:} per la generazione della melodia, in questa fase si addestrerà un modello Transformer su un dataset di brani musicali.
-    \item \textbf{Generazione musicale:} sarà generato un file MIDI coerente con il ritmo e con la semantica del testo, per fare ciò si farà uso il modello Transformer precedentemente allenato.
-    \item \textbf{Sintesi del brano:} il file precedentemente ottenuto darà sintetizzato (quindi trasformato in un file WAVE) utilizzando gli strumenti necessari.      
+    \item \textbf{Generazione musicale:} sarà generato un file MIDI coerente con il ritmo e con la semantica del testo, attraverso il Transformer precedentemente allenato.
+    \item \textbf{Sintesi del brano:} il file MIDI sarà infine sintetizzato e convertito in un file audio (WAVE).      
 \end{enumerate}
 
 
 \section{Specifiche del progetto}
-Lo strumento principale usato per la realizzazione di questo progetto sarà Python, in quanto dotato di numerose librerie estremamte utili alla progettazione 
-che saranno presentate in un capitolo dedicato.
-Inoltre per l'addestramento dei modelli si farà uso di dataset reperibili online ricchi di informazioni utili.
+Il linguaggio di programmazione adottato per la realizzazione di questo progetto è Python, in quanto dotato di numerose librerie estremamte utili 
+per l'implementazione. Inoltre, per l'addestramento dei modelli sono previsti dataset reperibili online contenenti dati e strutturati e pertinenti.
+I dataset e le librerie saranno presentate nel dettaglio del capitolo successivo.

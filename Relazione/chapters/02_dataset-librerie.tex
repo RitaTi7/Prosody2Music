@@ -7,23 +7,34 @@ Utilizzando dati derivati da questo lessico, è anche possibile generare un insi
 
 \Fonte{springer-2013}
 
-In questo progetto il dataset PhonItaliaR è estremamante importante.
 
-Sarà usato per individuare su quale sillaba cade l'accento di una parola. È annotato da linguisti su 120.000 forme, non dedotto da regole, è quindi la fonte più affidabile.
-
-Inoltre verrà fatto uso di PhonItaliaR anche per il conteggio delle sillabe, l'integrazione più recente fornisce il numero "vero" di sillabe (SumSylls), usato per correggere la sillabazione quando l'euristica interna sbaglia (tipicamente sui casi di iato: "poesia", "farmacia").
 \subsection{Q2Stress}
 Q2Stress è un database per l'italiano che contiene informazioni su molteplici segnali che i lettori possono
- utilizzare per assegnare l'accento. In particolare, il database offre misure di frequenza di tipo e token dei pattern di accento in funzione del numero di sillabe, della categoria grammaticale, dell'inizio delle parole, delle terminazioni delle parole e delle strutture consonanti-vocali. Sono disponibili dati sia per adulti, sia per i bambini.
- 
- Q2Stress può aiutare i ricercatori a rispondere a domande empiriche e teoriche sull'assegnazione dell'accento e sulla relazione tra ortografia e fonologia nella lettura. Q2Stress è progettato come una risorsa facile da usare, poiché include script che permettono ai ricercatori di esplorare e selezionare i propri stimoli secondo diversi criteri, oltre a tabelle riassuntive per l'analisi complessiva dei dati.
- \Fonte{istc-q2stress}
+utilizzare per assegnare l'accento. In particolare, il database offre misure di frequenza di tipo e token dei pattern di accento in funzione del numero 
+di sillabe, della categoria grammaticale, dell'inizio delle parole, delle terminazioni delle parole e delle strutture consonanti-vocali. Sono disponibili dati 
+sia per adulti, sia per i bambini.
+Q2Stress può aiutare i ricercatori a rispondere a domande empiriche e teoriche sull'assegnazione dell'accento e sulla relazione tra ortografia e fonologia 
+nella lettura. È progettato come una risorsa facile da usare, poiché include script che permettono ai ricercatori di esplorare e selezionare i propri 
+stimoli secondo diversi criteri, oltre a tabelle riassuntive per l'analisi complessiva dei dati.
 
-In questo progetto il dataset Q2Strss sarà usato in sinergia con PhonItaliaR per l'analisi fonetica.
-In particolare Q2Stress in questo progetto sarà un "ripiego", per quando PhonItalia non ha la parola (neologismi, forme rare, parole poetiche/arcaiche).
-Invece di ricadere subito sull'euristica grezza ("parola piana di default"). 
-Q2Stress guarda la desinenza delle ultime 3 lettere e restituisce la posizione dell'accento più probabile secondo le statistiche reali sull'italiano (es. l'80\% delle parole che finiscono in "-ino" sono piane).
-\subsection{NRC}
+\Fonte{istc-q2stress}
+
+
+ \subsection{NRC Emotion Lexicon}
+ Il NRC Emotion Lexicon (o Word-Emotion Association Lexicon) è un ampio database lessicale per la Sentiment Analysis sviluppato dal National Research Council 
+ Canada. È un dataset che associa un vasto vocabolario (disponibile in oltre 100 lingue, tra cui l'italiano) a otto emozioni di base (rabbia, paura, 
+ anticipazione, fiducia, sorpresa, tristezza, gioia, disgusto) del modello psicologico di Plutchik tramite valori binari e a due polarità (positivo/negativo), 
+ consentendo l'analisi delle emozioni in testi.
+
+ \Fonte{NRC-EmoLex}
+
+
+ \subsection{NRC VAD Lexicon}
+Sviluppato dal National Research Council Canada, è un dizionario che fornisce punteggi continui (annotati da esseri umani) per oltre 20.000 termini lungo 
+i tre assi fondamentali dell'emozione: Valenza, Arousal e Dominanza. A differenza dei modelli categoriali, permette una misurazione dimensionale diretta, 
+rivelandosi strutturalmente affine allo spazio vettoriale del software.
+
+\Fonte{NRC-VAD}
 
 
 \subsection{lakh-midi}
@@ -43,7 +54,8 @@ Si farà inoltre uso di torch.softmax / F.softmax che permettono l'uso della fun
 \subsection{Pyphen}
 Pyphen è una libreria Python dedicata alla sillabazione automatica e alla ricerca dei punti di divisione delle parole, basata su dizionari di 
 sillabazione compatibili con il formato utilizzato da Hunspell. La libreria mette inoltre a disposizione dizionari per numerose lingue, tra cui l'italiano.
-(da chatgpt)
+
+
 \subsection{re}
 Questa libreria offre delle operazioni svolgibili sulle espressioni regolari.
 
@@ -59,6 +71,5 @@ La libreria da accesso all'Unicode Character Database (UCD) che definisce le pro
 
 Viene importata per gestire correttamente la codifica dei caratteri speciali e accentati.
 In particolare viene usato il metodo lookup che cerca un carattere dal nome. Se un carattere con tale nome viene trovato ritorna il carattere corrispondente, altrimenti viene lanciato un Keyerror.
-\subsection{Dataclasses}
-\subsection{mido}
+
 

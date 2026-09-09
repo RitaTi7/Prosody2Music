@@ -1,5 +1,3 @@
-
-(\textbf{Analisi prosodica del testo})
 La prosodia è la parte della linguistica e della grammatica che studia gli elementi sonori del discorso, come l'intonazione, il ritmo, l'accento, 
 la durata e le pause. In questa fase iniziale della pipeline avviene l'analisi prosodica di un testo di input, con l'obiettivo di produrre 
 una rappresentazione ritmico-temporale che sarà la base di partenza per la fase successiva di generazione musicale. 
@@ -17,10 +15,10 @@ Un'altra classificazione è quella dei \textit{digrammi}, ossia sequenze di due 
 L'identificazione a priori di queste stringhe è essenziale per evitare che l'algoritmo di sillabazione separi le lettere che costituiscono un suono 
 indivisibile. Un'attenzione particolare è riservata al digramma "sc" che richiede regole contestuali: è trattato come tale solo quando è seguito dalle 
 vocali "e" o "i" (es. scena), mentre viene separato in altri contesti (es. scala).\\
-Per facilitare l'individuazione deterministica dell'accento tonico (\textbf{descritta nel sotto-paragrafo X}), è stata implementata una mappa di conversione che 
+Per facilitare l'individuazione deterministica dell'accento tonico, è stata implementata una mappa di conversione che 
 associa ogni lettera con accento grafico alla sua corrispondente vocale non accentata. Quando una parola presenta un accento grafico, questo coincide 
 sempre con l'accento tonico principale di quella parola.\\
-Infine, il sistema si compone anche di uno strumento di normalizzazione del testo. Tramite l'uso di espressioni regolari (ragex, \textbf{riferimento alla libreria...}) 
+Infine, il sistema si compone anche di uno strumento di normalizzazione del testo. Tramite l'uso di espressioni regolari (ragex) 
 il testo in ingresso viene "ripulito" per facilitarne le successivi analisi: ogni parola è convertita in minuscolo, vengono rimossi gli spazi bianchi e 
 gli apostrofi, tutti i caratteri non alfabetici sono filtrati. Questo processo di standardizzazione dell'input riduce il rumore nei dati, preparando una 
 stringa uniforme, pronta per essere sottoposta alla successiva fase di suddivisione sillabica.
@@ -58,8 +56,7 @@ Poiché la lingua italiana presenta numerose eccezioni storiche e fonetiche diff
 viene introdotto un livello di validazione incrociata. Non sempre vocali miste (forti e deboli) adiacenti si comportano come dittonghi, bensì spesso 
 sono considerate iati a causa dell'etimologia della parola. Questo può portare il precedente metodo 
 di suddivisione sillabica a sottostimare il numero effettivo di sillabe, compromettendo l'analisi prosodica del testo.\\  
-Il risultato calcolato dall'euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia 
-(\textbf{descritto nel capitolo X}). 
+Il risultato calcolato dall'euristica viene confrontato con le annotazioni di un dizionario fonetico di riferimento: PhonItalia. 
 Se il numero di sillabe calcolato differisce dal conteggio reale presente nel dataset, si avvia una procedura di riconciliazione dinamica.
 Le sillabe della parola ricevuta in input vengono poste in ordine decrescente rispetto al numero di vocali che ciascuna contiene. Viene selezionata 
 la sillaba con un maggior numero di vocali perché candidata principale a contenere uno iato non individuato. In seguito, avviene un tentativo di scissione 
@@ -214,7 +211,7 @@ Per lo studio dei silenzi, è necessaria una definizione di un meccanismo di tok
 interpretare pattern impliciti nascosti nei versi come gli enjambement.
 
 \subsection{Tokenizzazione e analisi della punteggiatura}
-La scomposizione del testo poetico è basata sull'uso della libreria Python Regex (\textbf{riferimento alla libreria X}) che permette l'implementazione 
+La scomposizione del testo poetico è basata sull'uso della libreria Python Regex che permette l'implementazione 
 di espressioni regolari ad hoc. Si è scelto di utilizzare questa libreria leggera in quanto ottimizza notevolmente la computazione, ed evita il sovraccarico 
 computazionale che avrebbero arrecato librerie di NLP complesse come spaCy. Il testo di input viene analizzato verso per verso,  e per ciascuno, viene 
 restituita una sequenza strutturata di dizionari contenenti una parola e l'eventuale segno di punteggiatura immediatamente successivo.\\
@@ -250,7 +247,7 @@ preservando la coerenza ritmica.
 
 \section{Sintesi MIDI dello schema ritmico}
 La fase conclusiva di tutta questa prima fase di analisi dell'input, traduce la rappresentazione prodotta dall'analisi prosodica del testo in un file 
-MIDI standard (.mid), avvalendosi della libreria di Python music21 (\textbf{riferimenti alla libreria e al MIDI}). Il processo si articola in due momenti 
+MIDI standard (.mid), avvalendosi della libreria di Python music21. Il processo si articola in due momenti 
 logici principali: la linearizzazione della struttura in una sequenza ordinata di eventi discreti e la loro successiva conversione in oggetti musicali, 
 come note e pause, organizzate in uno stream temporizzato.\\
 Nel dettaglio:
@@ -260,7 +257,7 @@ Nel dettaglio:
       mantenere la corrispondenza tra accenti linguistici e silenzi strutturali.
       \item Sistema di durate a impulsi: ad ogni evento  una durata espressa in un'unità ritmica astratta, l'impulso: uno per le sillabe atone, due per 
       le toniche, e per le pause coerentemente all'analisi discussa sopra. In fase di esportazione, l'impulso viene convertito nell'unità temporale nativa 
-      di music21 (\textbf{riferimenti...}), la \texttt{quarterLength}, tramite un fattore di scala fisso, dove un impulso equivale a una croma 
+      di music21, la \texttt{quarterLength}, tramite un fattore di scala fisso, dove un impulso equivale a una croma 
       (0.5 quarterLength).
       \item Mappatura acustica e profili dinamici: per rendere udibile la gerarchia accentuativa, alle sillabe toniche e atone vengono assegnate altezze 
       fisse distinte (di default rispettivamente C4 e A3) e valori di \texttt{velocity} differenti (100 e 60 su una scala 0–127), replicando a livello 
